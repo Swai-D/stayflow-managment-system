@@ -1,0 +1,31 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "reservations": "Reservations",
+    "rooms": "Rooms",
+    "guests": "Guests",
+    "housekeeping": "Housekeeping",
+    "accounting": "Accounting",
+    "settings": "Settings"
+  },
+  "booking": {
+    "new": "New Booking",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "checked_in": "Checked In",
+      "checked_out": "Checked Out",
+      "cancelled": "Cancelled"
+    }
+  }
+}

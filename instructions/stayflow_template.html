@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StayFlow - Hotel Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --blue-dark: #1a2b4a;
+    --blue-mid: #2563eb;
+    --blue-light: #dbeafe;
+    --blue-pale: #eff6ff;
+    --accent-purple: #2563eb;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #eab308;
+    --sand: #fef3c7;
+    --sand-dark: #f5e6c8;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --border-light: #f3f4f6;
+    --bg: #f0f2f5;
+    --white: #ffffff;
+    --sidebar-w: 240px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-size: 13.5px;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--white);
+    border-radius: 16px;
+    margin: 16px 0 16px 16px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow);
+    flex-shrink: 0;
+    height: calc(100vh - 32px);
+    position: sticky;
+    top: 16px;
+    overflow-y: auto;
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  .sidebar-user img {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #c7d2fe;
+  }
+  .sidebar-user-info .name { font-weight: 600; font-size: 13px; }
+  .sidebar-user-info .role { font-size: 11px; color: var(--text-muted); }
+  .sidebar-user .chevron { margin-left: auto; color: var(--text-muted); font-size: 11px; }
+
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    position: relative;
+    text-decoration: none;
+    margin-bottom: 2px;
+  }
+  .sidebar-nav-item:hover { background: var(--border-light); color: var(--text-primary); }
+  .sidebar-nav-item.active { background: var(--blue-pale); color: var(--blue-mid); }
+  .sidebar-nav-item .icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+  .sidebar-nav-item.active .icon { opacity: 1; }
+  .sidebar-nav-item .badge {
+    margin-left: auto;
+    background: var(--red);
+    color: white;
+    border-radius: 20px;
+    font-size: 10px;
+    padding: 1px 6px;
+    font-weight: 600;
+  }
+
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding: 12px 12px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-section-label .chevron { font-size: 10px; cursor: pointer; }
+
+  .sidebar-bottom { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-light); }
+
+  /* ─── MAIN ─── */
+  .main {
+    flex: 1;
+    padding: 16px 16px 16px 12px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .topbar-title { font-size: 22px; font-weight: 700; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 15px;
+  }
+  .topbar-date {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ─── CARD ─── */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+
+  /* ─── PAGES ─── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ─── DASHBOARD PAGE ─── */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr 1.4fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .stat-mini { padding: 16px; }
+  .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; display: flex; align-items: baseline; gap: 6px; }
+  .stat-change { font-size: 11px; color: var(--green); font-weight: 500; display: flex; align-items: center; gap: 2px; }
+  .stat-change.down { color: var(--red); }
+  .stat-icon-circle {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--border-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* checkin chart card */
+  .checkin-card {
+    padding: 16px;
+    position: relative;
+  }
+  .checkin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .checkin-title { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .toggle-tabs { display: flex; gap: 4px; }
+  .toggle-tab {
+    font-size: 11px; padding: 3px 10px; border-radius: 6px; cursor: pointer;
+    color: var(--text-muted); font-weight: 500;
+  }
+  .toggle-tab.active { background: var(--blue-mid); color: white; }
+  .checkin-number { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .checkin-number .change { font-size: 12px; color: var(--red); font-weight: 500; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; margin-top: 10px; }
+  .bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .bar {
+    width: 100%; border-radius: 6px 6px 0 0;
+    background: var(--blue-light);
+    min-width: 14px;
+    transition: height 0.3s;
+  }
+  .bar.active { background: var(--blue-mid); }
+  .bar-label { font-size: 9px; color: var(--text-muted); }
+  .chart-tooltip {
+    position: absolute;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    box-shadow: var(--shadow-md);
+    top: 80px; right: 60px;
+  }
+  .chart-tooltip .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+
+  /* booking by platform */
+  .platform-card { padding: 16px; }
+  .platform-title { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  .platform-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 14px; }
+  .platform-chart { position: relative; height: 130px; }
+  .platform-dots { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .platform-dot { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .dot-circle { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* staff */
+  .staff-card { padding: 16px; }
+  .staff-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .staff-title { font-size: 14px; font-weight: 700; }
+  .staff-sub { font-size: 11px; color: var(--text-muted); }
+  .staff-stats { display: flex; gap: 12px; margin-bottom: 14px; }
+  .staff-stat { flex: 1; }
+  .staff-stat-label { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+  .staff-stat-val { font-size: 18px; font-weight: 700; }
+  .staff-stat-unit { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+  .staff-list { display: flex; flex-direction: column; gap: 10px; }
+  .staff-row { display: flex; align-items: center; gap: 10px; }
+  .staff-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--border-light); flex-shrink: 0; overflow: hidden; }
+  .staff-avatar svg { width: 100%; height: 100%; }
+  .staff-info { flex: 1; }
+  .staff-name { font-weight: 600; font-size: 12px; }
+  .staff-role { font-size: 10px; color: var(--text-muted); }
+  .staff-meta { display: flex; gap: 14px; }
+  .staff-meta-item { font-size: 11px; color: var(--text-muted); }
+  .staff-meta-item strong { color: var(--text-primary); font-weight: 600; display: block; font-size: 12px; }
+
+  /* room status mini */
+  .room-status-mini { padding: 16px; }
+  .rooms-grid-mini { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 12px; }
+  .room-box-mini {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    background: var(--blue-pale);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--blue-mid);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .room-box-mini:hover { transform: scale(1.05); }
+  .room-box-mini.occupied { background: var(--blue-mid); color: white; }
+  .room-box-mini.sand { background: var(--sand); color: #92400e; }
+  .room-box-mini.dark { background: var(--blue-dark); color: white; }
+  .room-box-mini.cleaning { background: #e0e7ff; color: #3730a3; }
+
+  /* weekly visitors */
+  .visitors-card { padding: 16px; display: flex; gap: 16px; align-items: center; }
+  .radar-wrap { flex-shrink: 0; }
+  .visitors-info { flex: 1; }
+  .visitors-num { font-size: 26px; font-weight: 700; }
+  .visitors-tag { color: var(--blue-mid); font-size: 11px; font-weight: 600; margin-bottom: 10px; }
+  .visitor-legend { display: flex; flex-direction: column; gap: 5px; }
+  .vl-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+  .vl-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* staff featured */
+  .staff-featured { flex: 1; background: var(--white); border-radius: var(--radius); padding: 16px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
+  .staff-featured-img { width: 70px; height: 90px; object-fit: cover; border-radius: 8px; background: var(--border-light); }
+  .moon-icon { font-size: 18px; margin-bottom: 4px; }
+  .sf-name { font-weight: 700; font-size: 14px; }
+  .sf-role { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .sf-nav { display: flex; gap: 8px; margin-top: 8px; }
+  .sf-btn { width: 26px; height: 26px; border-radius: 50%; background: var(--border-light); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+  /* booking list mini */
+  .booking-mini { padding: 16px; }
+  .bm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .bm-title { font-size: 14px; font-weight: 700; }
+  .bm-sub { font-size: 11px; color: var(--text-muted); }
+  .bm-table { width: 100%; border-collapse: collapse; }
+  .bm-table th { font-size: 10px; color: var(--text-muted); font-weight: 600; text-align: left; padding: 0 0 8px; border-bottom: 1px solid var(--border); }
+  .bm-table td { font-size: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); color: var(--text-secondary); }
+  .bm-table td:first-child { color: var(--text-primary); font-weight: 500; }
+  .th-sort { display: flex; align-items: center; gap: 3px; }
+
+  /* ─── RESERVATIONS PAGE ─── */
+  .res-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 16px; }
+  .res-tab {
+    padding: 7px 14px; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .res-tab.active { background: var(--blue-pale); color: var(--blue-mid); border-color: var(--blue-light); }
+  .res-tab:hover:not(.active) { background: var(--border-light); }
+  .res-tab-icon { font-size: 13px; }
+  .new-booking-btn {
+    margin-left: auto;
+    background: var(--blue-mid);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+  }
+  .new-booking-btn:hover { background: #1d4ed8; }
+
+  .stat-cards-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { padding: 16px 18px; }
+  .sc-label { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-weight: 500; }
+  .sc-value { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sc-date { font-size: 10px; background: var(--blue-pale); color: var(--blue-mid); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+  .sc-mini-chart { height: 36px; }
+
+  .booking-list-section { }
+  .bl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .bl-title { font-size: 18px; font-weight: 700; }
+  .bl-controls { display: flex; align-items: center; gap: 10px; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px;
+    font-size: 12px; color: var(--text-muted);
+    min-width: 180px;
+  }
+  .floor-select {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 12px;
+    font-size: 12px; color: var(--text-secondary);
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table thead th {
+    text-align: left; font-size: 11px; color: var(--text-muted);
+    font-weight: 600; padding: 8px 12px; border-bottom: 1px solid var(--border);
+  }
+  .data-table tbody tr { border-bottom: 1px solid var(--border-light); }
+  .data-table tbody tr:hover { background: var(--border-light); }
+  .data-table tbody td { padding: 14px 12px; font-size: 13px; color: var(--text-secondary); }
+  .data-table tbody td:first-child { color: var(--text-primary); font-weight: 500; }
+  .th-inner { display: flex; align-items: center; gap: 4px; }
+  .sort-icon { font-size: 9px; color: var(--text-muted); }
+
+  .status-badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .badge-checked-in { background: #dbeafe; color: var(--blue-mid); }
+  .badge-arriving { background: var(--blue-dark); color: white; }
+  .badge-late-co { background: #fee2e2; color: var(--red); }
+  .badge-pending { background: #fef9c3; color: #854d0e; }
+  .badge-arriving-light { background: #dcfce7; color: #166534; }
+
+  /* ─── ROOMS PAGE ─── */
+  .rooms-stats { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 14px; margin-bottom: 20px; }
+  .rooms-stat-pair { display: grid; grid-template-rows: 1fr 1fr; gap: 10px; }
+
+  .rooms-grid-full { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 14px; }
+  .room-card {
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    min-height: 90px;
+    position: relative;
+  }
+  .room-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+  .room-card.available { background: var(--border-light); }
+  .room-card.available-blue { background: var(--blue-pale); }
+  .room-card.occupied-light { background: #bfdbfe; }
+  .room-card.occupied-mid { background: var(--blue-mid); color: white; }
+  .room-card.occupied-dark { background: var(--blue-dark); color: white; }
+  .room-card.sand { background: var(--sand); }
+  .room-card.cleaning { background: #e0e7ff; color: #3730a3; }
+
+  .room-num { font-size: 15px; font-weight: 700; }
+  .room-dates { font-size: 9px; margin-top: 2px; opacity: 0.7; }
+  .room-guest { font-size: 10px; font-weight: 600; margin-top: 2px; }
+  .room-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .room-action-btn {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; color: inherit;
+  }
+  .room-guest-icon {
+    position: absolute; bottom: 8px; right: 8px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--blue-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: white;
+  }
+  .room-guest-icon.dark { background: var(--blue-dark); }
+
+  .rooms-legend { display: flex; gap: 16px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+  .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  /* radar chart */
+  .radar-card { padding: 16px; }
+  .radar-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  .radar-container { display: flex; gap: 20px; align-items: center; }
+  .radar-legend-list { display: flex; flex-direction: column; gap: 6px; font-size: 11px; }
+  .radar-legend-item { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: var(--text-secondary); }
+  .radar-legend-item strong { font-weight: 600; color: var(--text-primary); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 24px;
+    width: 560px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    transform: translateY(10px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--border-light); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 14px;
+    color: var(--text-muted);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .form-input {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--blue-mid); }
+  .form-select {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+    background: var(--white);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+  }
+  .input-with-icon { position: relative; }
+  .input-with-icon .form-input { padding-right: 36px; }
+  .input-with-icon .icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+  .time-row { display: flex; align-items: center; gap: 8px; }
+  .time-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+  .phone-row { display: flex; gap: 8px; }
+  .phone-code {
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: 13px; cursor: pointer;
+    background: var(--white); color: var(--text-primary);
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+  }
+  .image-upload-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .upload-thumb { width: 60px; height: 60px; border-radius: 8px; background: var(--border-light); overflow: hidden; }
+  .upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .upload-btn {
+    width: 60px; height: 60px; border-radius: 8px;
+    border: 2px dashed var(--border); background: none;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 9px; color: var(--text-muted); gap: 3px;
+  }
+  .dropdown-list {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 4px;
+    box-shadow: var(--shadow-md);
+  }
+  .dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; cursor: pointer;
+    transition: background 0.1s;
+    font-size: 13px;
+  }
+  .dropdown-item:hover { background: var(--border-light); }
+  .dropdown-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--border); overflow: hidden; }
+  .btn-primary {
+    width: 100%; padding: 12px;
+    background: var(--blue-mid); color: white;
+    border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: background 0.15s; margin-top: 6px;
+  }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-outline {
+    width: 100%; padding: 12px;
+    background: none; color: var(--blue-mid);
+    border: 1.5px solid var(--blue-mid); border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all 0.15s; margin-bottom: 8px;
+  }
+  .btn-outline:hover { background: var(--blue-pale); }
+
+  /* room details modal */
+  .room-details-header { display: flex; gap: 16px; margin-bottom: 20px; }
+  .rdh-info { flex: 1; }
+  .rdh-room-num { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .rdh-floor { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+  .rdh-type { font-size: 16px; font-weight: 700; margin: 4px 0 10px; }
+  .rdh-img { width: 200px; height: 130px; border-radius: 10px; background: var(--border); overflow: hidden; object-fit: cover; }
+  .rdh-img-row { display: flex; gap: 8px; margin-top: 8px; }
+  .rdh-img-sm { width: 90px; height: 60px; border-radius: 8px; background: var(--border-light); overflow: hidden; }
+
+  .todo-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .todo-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+  .todo-item.done { color: var(--text-muted); text-decoration: line-through; }
+  .todo-check {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 9px;
+  }
+  .todo-check.checked { background: var(--blue-mid); border-color: var(--blue-mid); color: white; }
+
+  .staff-section { margin-top: 18px; }
+  .staff-section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  .staff-cards-row { display: flex; gap: 10px; overflow-x: auto; }
+  .staff-card-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    min-width: 180px;
+    flex-shrink: 0;
+  }
+  .sci-name { font-weight: 600; font-size: 13px; }
+  .sci-role { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .sci-stats { display: flex; gap: 12px; margin-bottom: 8px; }
+  .sci-stat { font-size: 10px; color: var(--text-muted); }
+  .sci-stat strong { font-size: 15px; font-weight: 700; color: var(--text-primary); display: block; }
+  .sci-img { width: 50px; height: 60px; border-radius: 6px; background: var(--border-light); margin-top: 6px; overflow: hidden; }
+  .sci-time-row { display: flex; gap: 10px; font-size: 10px; color: var(--text-muted); }
+  .sci-time-row strong { font-size: 12px; color: var(--text-primary); display: block; font-weight: 600; }
+
+  /* ─── LOGIN ─── */
+  .login-page {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background: var(--bg);
+  }
+  .login-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: var(--white);
+  }
+  .login-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .login-logo { font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 40px; display: flex; align-items: center; gap: 8px; }
+  .login-logo span { color: var(--blue-mid); }
+  .login-form { width: 100%; max-width: 340px; }
+  .login-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .login-field { margin-bottom: 16px; }
+  .login-field label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px; }
+  .login-field-row { position: relative; }
+  .login-input {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .login-input.error { border-color: var(--red); }
+  .login-input:focus { border-color: var(--blue-mid); }
+  .login-error { display: flex; align-items: center; gap: 6px; color: var(--red); font-size: 11px; margin-top: 6px; }
+  .forgot-link { color: var(--blue-mid); font-size: 12px; font-weight: 600; text-decoration: none; position: absolute; right: 0; top: -22px; }
+  .login-btn {
+    width: 100%; padding: 12px;
+    background: var(--blue-mid); color: white; border: none;
+    border-radius: 10px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    margin-top: 8px; transition: background 0.15s;
+  }
+  .login-btn:hover { background: #1d4ed8; }
+  .login-copyright { font-size: 11px; color: var(--text-muted); margin-top: 40px; text-align: center; }
+  .eye-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 14px; }
+
+  .preview-card {
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    width: 420px;
+    max-width: 100%;
+  }
+  .preview-sidebar { background: var(--white); border-right: 1px solid var(--border-light); width: 140px; padding: 16px; height: 100%; }
+  .preview-main { flex: 1; padding: 16px; background: var(--bg); }
+
+  /* ─── MINI SVG CHARTS ─── */
+  .sparkline { width: 100%; height: 40px; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN PAGE (shown first) ════ -->
+<div id="loginPage" style="width:100%;min-height:100vh;display:flex;background:#f0f2f5;position:fixed;inset:0;z-index:999;">
+  <div class="login-left">
+    <div class="login-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7v10l9 5 9-5V7L12 2z" fill="#1a2b4a" stroke="#1a2b4a" stroke-width="0.5"/>
+        <path d="M12 7l-5 3v4l5 3 5-3v-4L12 7z" fill="white"/>
+      </svg>
+      Stay<span>Flow</span>
+    </div>
+    <div class="login-form">
+      <div class="login-title">Welcome Back</div>
+      <div class="login-sub">Access your dashboard and keep things running smoothly.</div>
+      <div class="login-field">
+        <label>Username</label>
+        <input type="text" class="login-input" value="Amanda Rawles" id="loginUser">
+      </div>
+      <div class="login-field">
+        <label>Password <a href="#" class="forgot-link">Forgot your password?</a></label>
+        <div class="login-field-row">
+          <input type="password" class="login-input error" value="········" id="loginPass">
+          <span class="eye-toggle" onclick="togglePw()">👁</span>
+        </div>
+        <div class="login-error" id="loginErr">
+          <span>⚠</span> Wrong password. Try again or click to Forgot password to reset it
+        </div>
+      </div>
+      <button class="login-btn" onclick="doLogin()">Log in</button>
+    </div>
+    <div class="login-copyright">© Copyright 2025 StayFlow. All rights reserved.</div>
+  </div>
+  <div class="login-right" style="background:#e8edf4;">
+    <!-- mini preview cards -->
+    <div style="display:flex;gap:10px;align-items:flex-start;transform:perspective(800px) rotateY(-8deg) rotateX(3deg);box-shadow:20px 20px 60px rgba(0,0,0,0.15);border-radius:14px;overflow:hidden;background:white;width:480px;max-width:100%;">
+      <!-- mini sidebar -->
+      <div style="width:130px;background:white;padding:14px 12px;border-right:1px solid #f3f4f6;min-height:500px;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:#c7d2fe;"></div>
+          <div>
+            <div style="font-size:10px;font-weight:700;">Ronald Richards</div>
+            <div style="font-size:9px;color:#9ca3af;">Admin</div>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:600;background:#eff6ff;color:#2563eb;padding:6px 8px;border-radius:6px;margin-bottom:6px;">📊 Overview</div>
+        <div style="font-size:10px;color:#9ca3af;padding:8px 8px 4px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Daily Operation</div>
+        <div style="font-size:10px;color:#6b7280;padding:5px 8px;display:flex;align-items:center;justify-content:space-between;">📅 Reservations <span style="background:#ef4444;color:white;border-radius:10px;padding:0 4px;font-size:8px;">6</span></div>
+        <div style="font-size:10px;color:#6b7280;padding:5px 8px;">👤 Guests</div>
+        <div style="font-size:10px;color:#6b7280;padding:5px 8px;">🚪 Rooms</div>
+        <div style="font-size:10px;color:#6b7280;padding:5px 8px;">🧹 Housekeeping</div>
+      </div>
+      <!-- mini dashboard -->
+      <div style="flex:1;background:#f0f2f5;padding:14px;min-height:500px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">Dashboard</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:white;border-radius:8px;padding:10px;">
+            <div style="font-size:9px;color:#9ca3af;">Available room</div>
+            <div style="font-size:18px;font-weight:700;">126 <span style="font-size:9px;color:#22c55e;">↑30%</span></div>
+          </div>
+          <div style="background:white;border-radius:8px;padding:10px;">
+            <div style="font-size:9px;color:#9ca3af;">Check out</div>
+            <div style="font-size:18px;font-weight:700;">36 <span style="font-size:9px;color:#22c55e;">↑30%</span></div>
+          </div>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div style="font-size:9px;color:#9ca3af;margin-bottom:6px;">Staff</div>
+          <div style="display:flex;gap:8px;">
+            <div><div style="font-size:9px;color:#9ca3af;">Total</div><div style="font-size:13px;font-weight:700;">32 <span style="font-size:9px;font-weight:400;color:#9ca3af;">employee</span></div></div>
+            <div><div style="font-size:9px;color:#9ca3af;">Cleaned</div><div style="font-size:13px;font-weight:700;">42 <span style="font-size:9px;font-weight:400;color:#9ca3af;">rooms</span></div></div>
+            <div><div style="font-size:9px;color:#9ca3af;">Pending</div><div style="font-size:13px;font-weight:700;">24 <span style="font-size:9px;font-weight:400;color:#9ca3af;">rooms</span></div></div>
+          </div>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px;">
+          <div style="font-size:9px;color:#9ca3af;margin-bottom:4px;">Room Status</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">
+            <div style="aspect-ratio:1;border-radius:5px;background:#eff6ff;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#bfdbfe;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#2563eb;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#fef3c7;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#eff6ff;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;background:#1a2b4a;font-size:8px;font-weight:700;color:white;">110</div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#dbeafe;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#eff6ff;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#bfdbfe;"></div>
+            <div style="aspect-ratio:1;border-radius:5px;background:#fef3c7;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ APP SHELL ════ -->
+<div id="appShell" style="display:none;width:100%;min-height:100vh;display:flex;">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-user">
+    <div style="width:38px;height:38px;border-radius:50%;background:#c7d2fe;display:flex;align-items:center;justify-content:center;font-size:16px;">👤</div>
+    <div class="sidebar-user-info">
+      <div class="name">Ronald Richards</div>
+      <div class="role">Admin</div>
+    </div>
+    <span class="chevron">▾</span>
+  </div>
+  
+  <a class="sidebar-nav-item active" onclick="showPage('dashboard')" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+    Overview
+  </a>
+  
+  <div class="sidebar-section-label">Daily Operation <span class="chevron">▾</span></div>
+  
+  <a class="sidebar-nav-item" onclick="showPage('reservations')" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 2v2M11 2v2M2 7h12"/></svg>
+    Reservations
+    <span class="badge">6</span>
+  </a>
+  
+  <a class="sidebar-nav-item" onclick="showPage('guests')" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+    Guests
+  </a>
+  
+  <a class="sidebar-nav-item" onclick="showPage('rooms')" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M5 13v1M11 13v1M1 8h14"/></svg>
+    Rooms
+  </a>
+  
+  <a class="sidebar-nav-item" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L2 5v3c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V5L8 2z"/></svg>
+    Housekeeping
+  </a>
+  
+  <div class="sidebar-section-label">Accounting <span class="chevron">▾</span></div>
+  
+  <a class="sidebar-nav-item" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4"/><path d="M14 14l-3.5-3.5"/></svg>
+    Expense Tracking
+  </a>
+  
+  <a class="sidebar-nav-item" href="#">
+    <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="8" width="3" height="6" rx="1"/><rect x="6" y="5" width="3" height="9" rx="1"/><rect x="11" y="2" width="3" height="12" rx="1"/></svg>
+    Revenue Management
+  </a>
+  
+  <div class="sidebar-section-label">System Option <span class="chevron">▾</span></div>
+  
+  <div class="sidebar-bottom">
+    <a class="sidebar-nav-item" href="#">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+      Settings
+    </a>
+    <a class="sidebar-nav-item" href="#" onclick="doLogout()">
+      <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M10 11l3-3-3-3M13 8H6"/></svg>
+      Log out
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ══ DASHBOARD ══ -->
+  <div id="page-dashboard" class="page active">
+    <div class="topbar">
+      <h1 class="topbar-title">Dashboard</h1>
+      <div style="flex:1;max-width:260px;margin:0 20px;">
+        <div class="search-box" style="background:white;">
+          🔍 <span style="color:#9ca3af;">Search..</span>
+          <span style="margin-left:auto;font-size:11px;">🎤</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-icon">🌙</div>
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-date">📅 Tue, 13 March</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <!-- Left col: 2 small stat cards -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card stat-mini">
+          <div class="stat-icon-circle">🚪</div>
+          <div class="stat-label">Available room</div>
+          <div class="stat-value">126 <span class="stat-change">↑ 30%</span></div>
+        </div>
+        <div class="card stat-mini">
+          <div class="stat-icon-circle" style="background:#fff7ed;">↩️</div>
+          <div class="stat-label">Check out</div>
+          <div class="stat-value">36 <span class="stat-change">↑ 30%</span></div>
+        </div>
+      </div>
+
+      <!-- Mid col: Check-in bar chart -->
+      <div class="card checkin-card">
+        <div class="checkin-header">
+          <div class="checkin-title">Check in</div>
+          <div class="toggle-tabs">
+            <div class="toggle-tab active">Month</div>
+            <div class="toggle-tab">Year</div>
+          </div>
+        </div>
+        <div class="checkin-number">14 <span class="change">↓ 30%</span></div>
+        <div class="chart-tooltip">
+          <div style="font-size:10px;color:#9ca3af;margin-bottom:3px;">3 Nov</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;"><span class="dot" style="background:#2563eb;"></span>This month <strong>14</strong></div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af;"><span class="dot" style="background:#e5e7eb;"></span>Last month <strong>20</strong></div>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-col"><div class="bar" style="height:40px;"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-col"><div class="bar active" style="height:70px;"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-col"><div class="bar" style="height:55px;"></div><span class="bar-label">Mar</span></div>
+          <div class="bar-col"><div class="bar" style="height:30px;"></div><span class="bar-label">Apr</span></div>
+        </div>
+      </div>
+
+      <!-- Right col: Booking by platform -->
+      <div class="card platform-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div>
+            <div class="platform-title">Booking by Platform</div>
+            <div class="platform-sub">Platform booking trends</div>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;cursor:pointer;">⋯</span>
+        </div>
+        <svg viewBox="0 0 220 120" style="width:100%;height:120px;">
+          <!-- grid lines -->
+          <line x1="10" y1="20" x2="210" y2="20" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="10" y1="45" x2="210" y2="45" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="10" y1="70" x2="210" y2="70" stroke="#f3f4f6" stroke-width="1"/>
+          <line x1="10" y1="95" x2="210" y2="95" stroke="#f3f4f6" stroke-width="1"/>
+          <!-- Booking.com dots -->
+          <circle cx="20" cy="60" r="4" fill="#1e3a5f"/><circle cx="50" cy="40" r="4" fill="#1e3a5f"/><circle cx="80" cy="55" r="4" fill="#1e3a5f"/><circle cx="110" cy="30" r="4" fill="#1e3a5f"/><circle cx="140" cy="50" r="4" fill="#1e3a5f"/><circle cx="170" cy="25" r="4" fill="#1e3a5f"/><circle cx="200" cy="45" r="4" fill="#1e3a5f"/>
+          <polyline points="20,60 50,40 80,55 110,30 140,50 170,25 200,45" fill="none" stroke="#1e3a5f" stroke-width="1.5" opacity="0.5"/>
+          <!-- Expedia dots -->
+          <circle cx="20" cy="75" r="3" fill="#c8c8c8"/><circle cx="50" cy="65" r="3" fill="#c8c8c8"/><circle cx="80" cy="80" r="3" fill="#c8c8c8"/><circle cx="110" cy="60" r="3" fill="#c8c8c8"/><circle cx="140" cy="70" r="3" fill="#c8c8c8"/><circle cx="170" cy="55" r="3" fill="#c8c8c8"/><circle cx="200" cy="65" r="3" fill="#c8c8c8"/>
+          <polyline points="20,75 50,65 80,80 110,60 140,70 170,55 200,65" fill="none" stroke="#c8c8c8" stroke-width="1.5" opacity="0.5"/>
+        </svg>
+        <div class="platform-dots">
+          <div class="platform-dot"><div class="dot-circle" style="background:#1e3a5f;"></div>Booking.com</div>
+          <div class="platform-dot"><div class="dot-circle" style="background:#c8c8c8;"></div>Expedia</div>
+          <div class="platform-dot"><div class="dot-circle" style="background:#ef4444;"></div>Hotels.com</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Staff + Room Status + Weekly Visitors -->
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px;">
+      
+      <!-- Staff card -->
+      <div class="card staff-card">
+        <div class="staff-header">
+          <div>
+            <div class="staff-title">Staff</div>
+            <div class="staff-sub" style="font-size:11px;color:#9ca3af;">Staff productivity overview</div>
+          </div>
+          <div class="floor-select" style="font-size:11px;">All staff ▾</div>
+        </div>
+        <div class="staff-stats">
+          <div class="staff-stat">
+            <div class="staff-stat-label">Total 👤</div>
+            <div class="staff-stat-val">32 <span class="staff-stat-unit">employee</span></div>
+          </div>
+          <div class="staff-stat">
+            <div class="staff-stat-label">Cleaned 🧹</div>
+            <div class="staff-stat-val">42 <span class="staff-stat-unit">rooms</span></div>
+          </div>
+          <div class="staff-stat">
+            <div class="staff-stat-label">Pending ⏱</div>
+            <div class="staff-stat-val">24 <span class="staff-stat-unit">rooms</span></div>
+          </div>
+          <div class="staff-stat">
+            <div class="staff-stat-label">Progress</div>
+            <div style="font-size:13px;font-weight:700;color:#22c55e;">62% <div style="height:4px;background:#e5e7eb;border-radius:2px;margin-top:4px;"><div style="width:62%;height:100%;background:#22c55e;border-radius:2px;"></div></div></div>
+          </div>
+        </div>
+        <div class="staff-list">
+          <div class="staff-row">
+            <div class="staff-avatar" style="background:#fde68a;display:flex;align-items:center;justify-content:center;font-size:14px;">👨‍🍳</div>
+            <div class="staff-info"><div class="staff-name">Guy Hawkins</div><div class="staff-role">Chef</div></div>
+            <div class="staff-meta">
+              <div class="staff-meta-item"><strong>28</strong>Total room</div>
+              <div class="staff-meta-item"><strong>8:00 AM</strong>Start work</div>
+              <div class="staff-meta-item"><strong>8:00 PM</strong>End work</div>
+            </div>
+          </div>
+          <div class="staff-row">
+            <div class="staff-avatar" style="background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:14px;">👩‍💼</div>
+            <div class="staff-info"><div class="staff-name">Eleanor Pena</div><div class="staff-role">Receptionist</div></div>
+            <div class="staff-meta">
+              <div class="staff-meta-item"><strong>16</strong>Total room</div>
+              <div class="staff-meta-item"><strong>8:00 AM</strong>Start work</div>
+              <div class="staff-meta-item"><strong>4:00 PM</strong>End work</div>
+            </div>
+          </div>
+          <div class="staff-row">
+            <div class="staff-avatar" style="background:#fed7aa;display:flex;align-items:center;justify-content:center;font-size:14px;">🧹</div>
+            <div class="staff-info"><div class="staff-name">Robert Fox</div><div class="staff-role">Cleaner</div></div>
+            <div class="staff-meta">
+              <div class="staff-meta-item"><strong>20</strong>Total room</div>
+              <div class="staff-meta-item"><strong>8:00 AM</strong>Start work</div>
+              <div class="staff-meta-item"><strong>6:00 PM</strong>End work</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Room Status mini -->
+      <div class="card room-status-mini">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">Room Status</div>
+            <div style="font-size:11px;color:#9ca3af;">View real-time room availability</div>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;cursor:pointer;">⋯</span>
+        </div>
+        <div class="rooms-grid-mini">
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini sand"></div>
+          <div class="room-box-mini occupied-light"></div>
+          <div class="room-box-mini sand"></div>
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini dark">110</div>
+          <div class="room-box-mini occupied-light"></div>
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini occupied-light"></div>
+          <div class="room-box-mini sand"></div>
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini occupied-mid"></div>
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini sand"></div>
+          <div class="room-box-mini available-blue"></div>
+          <div class="room-box-mini occupied-light"></div>
+          <div class="room-box-mini sand"></div>
+          <div class="room-box-mini available-blue"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;">
+          <div class="legend-item"><div class="legend-dot" style="background:#1a2b4a;"></div>Do not disturb</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#93c5fd;"></div>Need cleaning</div>
+          <div class="legend-item" style="color:#374151;">Booked</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Radar + Staff featured + Booking List -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:14px;">
+      <!-- Weekly Visitors radar -->
+      <div class="card" style="padding:16px;">
+        <svg viewBox="0 0 140 140" style="width:130px;height:130px;display:block;margin:0 auto 10px;">
+          <polygon points="70,10 110,35 110,95 70,120 30,95 30,35" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+          <polygon points="70,25 98,42 98,88 70,105 42,88 42,42" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+          <polygon points="70,40 86,50 86,80 70,90 54,80 54,50" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+          <polygon points="70,10 88,55 110,95 70,108 30,95 52,55" fill="rgba(37,99,235,0.15)" stroke="#2563eb" stroke-width="1.5"/>
+          <text x="70" y="7" text-anchor="middle" font-size="8" fill="#9ca3af">Mon</text>
+          <text x="117" y="38" font-size="8" fill="#9ca3af">Tue</text>
+          <text x="117" y="96" font-size="8" fill="#9ca3af">Wed</text>
+          <text x="70" y="128" text-anchor="middle" font-size="8" fill="#9ca3af">Thu</text>
+          <text x="10" y="96" font-size="8" fill="#9ca3af">Fri</text>
+          <text x="10" y="38" font-size="8" fill="#9ca3af">Sat</text>
+        </svg>
+        <div style="font-size:10px;font-weight:600;text-align:center;color:#6b7280;margin-bottom:6px;">Weekly Visitors</div>
+        <div style="font-size:22px;font-weight:700;text-align:center;">120 <span style="font-size:11px;font-weight:400;color:#9ca3af;">visitors</span></div>
+        <div style="font-size:11px;color:#2563eb;font-weight:600;text-align:center;margin-bottom:8px;">keep it up! 🏆</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div class="vl-item"><div class="vl-dot" style="background:#2563eb;"></div>New visitors</div>
+          <div class="vl-item"><div class="vl-dot" style="background:#93c5fd;"></div>Returning visitors</div>
+          <div class="vl-item"><div class="vl-dot" style="background:#e5e7eb;"></div>Non-returning visitors</div>
+        </div>
+      </div>
+
+      <!-- Staff of the day -->
+      <div class="card" style="padding:16px;display:flex;gap:12px;align-items:flex-start;">
+        <div>
+          <div style="font-size:18px;margin-bottom:4px;">🌙</div>
+          <div style="font-size:14px;font-weight:700;">Bryan Rawles</div>
+          <div style="font-size:11px;color:#9ca3af;margin-bottom:10px;">Receptionist</div>
+          <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">New visitors</div>
+          <div style="font-size:10px;color:#9ca3af;">Returning visitors</div>
+          <div style="font-size:10px;color:#9ca3af;">Non-returning visitors</div>
+          <div style="display:flex;gap:6px;margin-top:10px;">
+            <button class="sf-btn">‹</button>
+            <button class="sf-btn">⚙</button>
+          </div>
+        </div>
+        <div style="width:70px;height:100px;border-radius:10px;background:#f0f2f5;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:30px;margin-top:20px;">👨‍💼</div>
+      </div>
+
+      <!-- Booking list mini -->
+      <div class="card booking-mini">
+        <div class="bm-header">
+          <div>
+            <div class="bm-title">Booking List</div>
+            <div class="bm-sub" style="font-size:11px;color:#9ca3af;">All bookings at a glance.</div>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;cursor:pointer;">⋯</span>
+        </div>
+        <table class="bm-table">
+          <thead>
+            <tr>
+              <th><div class="th-sort">Name <span>↕</span></div></th>
+              <th><div class="th-sort">Room No. <span>↕</span></div></th>
+              <th><div class="th-sort">Room <span>↕</span></div></th>
+              <th><div class="th-sort">Check in <span>↕</span></div></th>
+              <th><div class="th-sort">Check out <span>↕</span></div></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Floyd Miles</td><td>113</td><td>King</td><td>5 March</td><td>8 March</td></tr>
+            <tr><td>Devon Lane</td><td>101</td><td>Deluxe</td><td>9 March</td><td>10 March</td></tr>
+            <tr><td>Jane Cooper</td><td>108</td><td>Suite</td><td>11 March</td><td>14 March</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RESERVATIONS ══ -->
+  <div id="page-reservations" class="page">
+    <div class="topbar">
+      <h1 class="topbar-title">All Reservation</h1>
+      <div class="topbar-right">
+        <div class="topbar-icon">🌙</div>
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-date">📅 Tue, 13 March</div>
+      </div>
+    </div>
+
+    <div class="res-tabs">
+      <div class="res-tab active"><span class="res-tab-icon">📋</span> All reservation</div>
+      <div class="res-tab"><span class="res-tab-icon">💻</span> Online reservation</div>
+      <div class="res-tab"><span class="res-tab-icon">📅</span> Direct reservation</div>
+      <button class="new-booking-btn" onclick="openNewBookingModal()">+ New booking</button>
+    </div>
+
+    <div class="stat-cards-row">
+      <div class="card stat-card">
+        <div class="sc-label">Total Checkin</div>
+        <div class="sc-value">32 <span style="font-size:13px;">🔔</span></div>
+        <div class="sc-date">From Jan 01, 2025 - April 30, 2025</div>
+        <svg class="sparkline" viewBox="0 0 100 36" style="margin-top:6px;">
+          <polyline points="0,28 20,18 40,22 60,10 80,16 100,8" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="card stat-card">
+        <div class="sc-label">Total Checkout</div>
+        <div class="sc-value">24 <span style="font-size:13px;">🔄</span></div>
+        <div style="font-size:10px;color:#6b7280;margin-top:4px;">From Jan 01, 2025 - April 30, 2025</div>
+        <svg class="sparkline" viewBox="0 0 100 36" style="margin-top:6px;">
+          <polyline points="0,8 20,16 40,12 60,22 80,18 100,28" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="card stat-card">
+        <div class="sc-label">Total Guest</div>
+        <div class="sc-value">24 <span style="font-size:13px;">👤</span></div>
+        <div style="font-size:10px;color:#6b7280;margin-top:4px;">From Jan 01, 2025 - April 30, 2025</div>
+        <svg class="sparkline" viewBox="0 0 100 36" style="margin-top:6px;">
+          <polyline points="0,28 20,18 40,22 60,10 80,16 100,8" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="card stat-card">
+        <div class="sc-label">Occupancy Rate</div>
+        <div class="sc-value">24 <span style="font-size:13px;">🏠</span></div>
+        <div style="font-size:10px;color:#6b7280;margin-top:4px;">From Jan 01, 2025 - April 30, 2025</div>
+        <svg class="sparkline" viewBox="0 0 100 36" style="margin-top:6px;">
+          <polyline points="0,8 20,14 40,10 60,20 80,16 100,26" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="bl-header">
+        <div class="bl-title">Booking list</div>
+        <div class="bl-controls">
+          <div class="search-box">🔍 Search.. <span style="margin-left:auto;font-size:12px;">⚙</span></div>
+          <div class="floor-select">4th floor ▾</div>
+        </div>
+      </div>
+      <table class="data-table" id="bookingTable">
+        <thead>
+          <tr>
+            <th><div class="th-inner">Full name <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Order No. <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Room <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Check in <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Day <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Guests <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Origins <span class="sort-icon">↕</span></div></th>
+            <th><div class="th-inner">Status <span class="sort-icon">↕</span></div></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Arthur Tam</td><td>A1228</td><td>Suite</td><td>Mon, 09 March</td><td>3D 2N</td><td>3 Guests</td><td>USA</td>
+            <td><span class="status-badge badge-checked-in">Checked in</span></td>
+          </tr>
+          <tr>
+            <td><strong>Gladys Soh</strong></td><td>A1268</td><td>Deluxe</td><td>Wed, 04 March</td><td>4D 3N</td><td>2 Guests</td><td>IDN</td>
+            <td><span class="status-badge badge-arriving">Arriving today</span></td>
+          </tr>
+          <tr>
+            <td>Shawn Yo</td><td>A1365</td><td>Family</td><td>Tue, 3 March</td><td>3D 2N</td><td>4 Guests</td><td>HKG</td>
+            <td><span class="status-badge badge-late-co">Late CO</span></td>
+          </tr>
+          <tr>
+            <td>Eduardo</td><td>A2673</td><td>Superior</td><td>Mon, 1 March</td><td>7D 6N</td><td>4 Guests</td><td>TWN</td>
+            <td><span class="status-badge badge-checked-in">Checked in</span></td>
+          </tr>
+          <tr>
+            <td>Leslie Xin</td><td>A8273</td><td>Family</td><td>Sun, 28 Feb</td><td>2D 1N</td><td>5 Guests</td><td>HKG</td>
+            <td><span class="status-badge badge-pending">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Darlene</td><td>A8292</td><td>Standard</td><td>Sun, 28 Feb</td><td>4D 3N</td><td>2 Guests</td><td>IDN</td>
+            <td><span class="status-badge badge-arriving-light">Arriving today</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ ROOMS PAGE ══ -->
+  <div id="page-rooms" class="page">
+    <div class="topbar">
+      <h1 class="topbar-title">Room Status</h1>
+      <div class="topbar-right">
+        <div class="topbar-icon">🌙</div>
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-date">📅 Tue, 13 March</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:14px;margin-bottom:14px;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="padding:14px 16px;">
+          <div class="sc-label">Total rooms</div>
+          <div class="sc-value" style="font-size:24px;">126 <span style="font-size:12px;color:#6b7280;font-weight:400;">🚪</span></div>
+          <div style="font-size:11px;color:#22c55e;font-weight:600;">↑ 30% vs last month</div>
+        </div>
+        <div class="card" style="padding:14px 16px;">
+          <div class="sc-label">Available rooms</div>
+          <div class="sc-value" style="font-size:24px;">64 <span style="font-size:12px;color:#6b7280;font-weight:400;">🚪</span></div>
+          <div style="font-size:11px;color:#22c55e;font-weight:600;">↑ 62% vs last month</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card" style="padding:14px 16px;">
+          <div class="sc-label">Repeat guests</div>
+          <div class="sc-value" style="font-size:24px;">60 <span style="font-size:12px;color:#6b7280;font-weight:400;">👤</span></div>
+          <div style="font-size:11px;color:#ef4444;font-weight:600;">↓ 22% vs last month</div>
+        </div>
+        <div class="card" style="padding:14px 16px;">
+          <div class="sc-label">Occupied</div>
+          <div class="sc-value" style="font-size:24px;">23 <span style="font-size:12px;color:#6b7280;font-weight:400;">🏠</span></div>
+          <div style="font-size:11px;color:#ef4444;font-weight:600;">↓ 24% vs last month</div>
+        </div>
+      </div>
+      <!-- Radar chart -->
+      <div class="card radar-card">
+        <div class="radar-title">Room</div>
+        <div class="radar-container">
+          <svg viewBox="0 0 140 140" style="width:130px;height:130px;flex-shrink:0;">
+            <polygon points="70,10 110,38 110,102 70,130 30,102 30,38" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+            <polygon points="70,28 96,44 96,96 70,112 44,96 44,44" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+            <polygon points="70,46 82,54 82,86 70,94 58,86 58,54" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+            <polygon points="70,10 100,60 85,102 50,102 40,55" fill="rgba(37,99,235,0.2)" stroke="#2563eb" stroke-width="1.5"/>
+            <text x="70" y="8" text-anchor="middle" font-size="8" fill="#6b7280">STANDARD</text>
+            <text x="116" y="42" font-size="8" fill="#6b7280">FAMILY</text>
+            <text x="112" y="106" font-size="8" fill="#6b7280">DELUXE</text>
+            <text x="70" y="138" text-anchor="middle" font-size="8" fill="#6b7280">SUITE</text>
+            <text x="0" y="106" font-size="8" fill="#6b7280">PRESIDENTIAL</text>
+            <text x="0" y="42" font-size="8" fill="#6b7280">SUPERIOR</text>
+          </svg>
+          <div class="radar-legend-list">
+            <div class="radar-legend-item">Standard <strong>80%</strong></div>
+            <div class="radar-legend-item">Family <strong>40%</strong></div>
+            <div class="radar-legend-item">Deluxe <strong>65%</strong></div>
+            <div class="radar-legend-item">Suite <strong>90%</strong></div>
+            <div class="radar-legend-item">Presidential <strong>72%</strong></div>
+            <div class="radar-legend-item">Superior <strong>84%</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Room Grid -->
+    <div class="card" style="padding:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:18px;font-weight:700;">Room Status</div>
+        <div class="floor-select">4th floor ▾</div>
+      </div>
+      <div class="rooms-grid-full" id="roomsGrid">
+        <!-- Populated by JS -->
+      </div>
+      <div class="rooms-legend" style="margin-top:14px;">
+        <div class="legend-item"><div class="legend-dot" style="background:#1a2b4a;"></div> Do not disturb</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#93c5fd;"></div> Need cleaning</div>
+        <div style="font-size:11px;color:#374151;font-weight:500;">Booked</div>
+        <div style="font-size:11px;color:#9ca3af;">Available room</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GUESTS PAGE ══ -->
+  <div id="page-guests" class="page">
+    <div class="topbar">
+      <h1 class="topbar-title">Guests</h1>
+      <div class="topbar-right">
+        <div class="topbar-icon">🌙</div>
+        <div class="topbar-icon">🔔</div>
+        <div class="topbar-date">📅 Tue, 13 March</div>
+      </div>
+    </div>
+    <div class="card" style="padding:24px;text-align:center;color:#9ca3af;">
+      <div style="font-size:40px;margin-bottom:10px;">👤</div>
+      <div style="font-size:16px;font-weight:600;color:#374151;">Guests Management</div>
+      <div style="font-size:13px;margin-top:6px;">Guest profiles, history and preferences will appear here.</div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ════ MODAL: New Booking ════ -->
+<div class="modal-overlay" id="newBookingModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Booking</div>
+      <button class="modal-close" onclick="closeModal('newBookingModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" placeholder="Enter full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room</label>
+        <input class="form-input" type="text" placeholder="Room number">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Floor</label>
+        <select class="form-input form-select">
+          <option>1st floor</option><option>2nd floor</option><option>3rd floor</option><option selected>4th floor</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Check In</label>
+        <div class="time-row">
+          <div class="input-with-icon" style="flex:1;">
+            <input class="form-input" type="text" placeholder="Fri, 07 Mar 2025">
+            <span class="icon">📅</span>
+          </div>
+          <span class="time-label">At</span>
+          <input class="form-input" type="text" value="10:00" style="width:70px;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Check Out</label>
+        <div class="time-row">
+          <div class="input-with-icon" style="flex:1;">
+            <input class="form-input" type="text" placeholder="Sun, 09 Mar 2025">
+            <span class="icon">📅</span>
+          </div>
+          <span class="time-label">At</span>
+          <input class="form-input" type="text" value="12:00" style="width:70px;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <div class="phone-row">
+          <div class="phone-code">+62 ▾</div>
+          <input class="form-input" type="text" placeholder="8931738283" style="flex:1;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Origins</label>
+        <input class="form-input" type="text" placeholder="Country">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room Type</label>
+        <select class="form-input form-select">
+          <option>Standard</option><option>Deluxe</option><option>Suite</option><option>Family</option><option>Superior</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Guests</label>
+        <input class="form-input" type="number" placeholder="Number of guests" min="1">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="closeModal('newBookingModal')">Save Booking</button>
+  </div>
+</div>
+
+<!-- ════ MODAL: Room Details ════ -->
+<div class="modal-overlay" id="roomDetailsModal">
+  <div class="modal" style="width:620px;">
+    <div class="modal-header">
+      <div class="modal-title">Room Details</div>
+      <button class="modal-close" onclick="closeModal('roomDetailsModal')">✕</button>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="display:flex;gap:16px;">
+        <div style="flex:1;">
+          <div style="font-size:26px;font-weight:700;display:flex;align-items:center;gap:8px;">110 <span style="font-size:12px;font-weight:400;color:#9ca3af;">🚪 4th floor</span></div>
+          <div style="font-size:16px;font-weight:700;margin:6px 0 12px;">King Deluxe</div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">To do task:</div>
+          <div class="todo-list">
+            <div class="todo-item done" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check checked">✓</div> Empty trash bins and replace liners
+            </div>
+            <div class="todo-item" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check"></div> Vacuum or sweep and mop the floor
+            </div>
+            <div class="todo-item" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check"></div> Replenish tissue, soap, and other amenities
+            </div>
+            <div class="todo-item" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check"></div> Dust and wipe all surfaces (tables, lamps, shelves)
+            </div>
+            <div class="todo-item" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check"></div> Scrub and disinfect toilet, sink, and bathtub/shower
+            </div>
+            <div class="todo-item" onclick="this.classList.toggle('done');this.querySelector('.todo-check').classList.toggle('checked')">
+              <div class="todo-check"></div> Replace used towels with fresh ones
+            </div>
+          </div>
+        </div>
+        <div style="flex-shrink:0;">
+          <div style="width:190px;height:120px;border-radius:10px;background:linear-gradient(135deg,#f5e6c8,#e8d4a8);display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:8px;">🛏️</div>
+          <div style="display:flex;gap:6px;">
+            <div style="width:88px;height:56px;border-radius:8px;background:linear-gradient(135deg,#dbeafe,#c3d9f5);display:flex;align-items:center;justify-content:center;font-size:20px;">🛋️</div>
+            <div style="width:88px;height:56px;border-radius:8px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:20px;">🛁</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:700;margin-bottom:12px;">Staff</div>
+      <div style="display:flex;gap:10px;overflow-x:auto;">
+        <div class="staff-card-item" style="min-width:200px;">
+          <div class="sci-name">Jane Cooper</div>
+          <div class="sci-role">Housekeeping</div>
+          <div style="display:flex;gap:14px;font-size:10px;color:#9ca3af;">
+            <div>Avg time ⏱<br><strong style="font-size:15px;color:#111827;">32</strong> minutes</div>
+            <div>Work ▷<br><strong style="font-size:15px;color:#111827;">92%</strong> quality</div>
+          </div>
+          <div style="display:flex;gap:12px;font-size:10px;color:#9ca3af;margin-top:8px;">
+            <div><strong style="font-size:12px;color:#111827;">8:00 AM</strong><br>Start work</div>
+            <div><strong style="font-size:12px;color:#111827;">4:00 PM</strong><br>End work</div>
+            <div><strong style="font-size:12px;color:#111827;">28</strong><br>Total room</div>
+          </div>
+          <div style="width:44px;height:54px;border-radius:8px;background:#fce7f3;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:22px;">👩‍🦱</div>
+        </div>
+        <div class="staff-card-item" style="text-align:center;">
+          <div class="sci-name">Kathryn Law</div>
+          <div class="sci-role">Housekeeping</div>
+          <div style="width:54px;height:64px;border-radius:8px;background:#dbeafe;margin:8px auto 0;display:flex;align-items:center;justify-content:center;font-size:24px;">👩‍🔧</div>
+        </div>
+        <div class="staff-card-item" style="text-align:center;">
+          <div class="sci-name">Kristin Ran</div>
+          <div class="sci-role">Housekeeping</div>
+          <div style="width:54px;height:64px;border-radius:8px;background:#dcfce7;margin:8px auto 0;display:flex;align-items:center;justify-content:center;font-size:24px;">👱‍♀️</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-outline" onclick="closeModal('roomDetailsModal');openLostItemModal()">+ Lost item</button>
+    <button class="btn-primary" onclick="closeModal('roomDetailsModal')">All done</button>
+  </div>
+</div>
+
+<!-- ════ MODAL: Lost Item ════ -->
+<div class="modal-overlay" id="lostItemModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Lost item</div>
+      <button class="modal-close" onclick="closeModal('lostItemModal')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" value="Arlene">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" value="arlene@gmail.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Room</label>
+        <input class="form-input" type="text" value="110">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Floor</label>
+        <select class="form-input form-select"><option selected>4th floors</option></select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Check In</label>
+        <div class="time-row">
+          <div class="input-with-icon" style="flex:1;">
+            <input class="form-input" type="text" value="Fri, 07 Mar 2025">
+            <span class="icon">📅</span>
+          </div>
+          <span class="time-label">At</span>
+          <input class="form-input" type="text" value="10:00" style="width:70px;">
+        </div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Check Out</label>
+        <div class="time-row">
+          <div class="input-with-icon" style="flex:1;">
+            <input class="form-input" type="text" value="Sun, 09 Mar 2025">
+            <span class="icon">📅</span>
+          </div>
+          <span class="time-label">At</span>
+          <input class="form-input" type="text" value="12:00" style="width:70px;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <div class="phone-row">
+          <div class="phone-code">+82 ▾</div>
+          <input class="form-input" type="text" value="8931738283" style="flex:1;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Origins</label>
+        <input class="form-input" type="text" value="Indonesia">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Item</label>
+        <input class="form-input" type="text" value="Sandal, Key, and Watch">
+      </div>
+      <div class="form-group" style="position:relative;">
+        <label class="form-label">Who Found?</label>
+        <div class="form-input" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="toggleDropdown()">
+          <span id="whoFoundVal" style="color:#9ca3af;">Who found the items?</span>
+          <span id="dropdownArrow">▲</span>
+        </div>
+        <div class="dropdown-list" id="whoFoundDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:white;">
+          <div class="dropdown-item" onclick="selectFinder('Kristin Ran')">
+            <div class="dropdown-avatar" style="background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:14px;">👱‍♀️</div> Kristin Ran
+          </div>
+          <div class="dropdown-item" onclick="selectFinder('Jane Cooper')" style="background:#f0f9ff;">
+            <div class="dropdown-avatar" style="background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:14px;">👩‍🦱</div> Jane Cooper
+          </div>
+          <div class="dropdown-item" onclick="selectFinder('Kathryn Law')">
+            <div class="dropdown-avatar" style="background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:14px;">👩‍🔧</div> Kathryn Law
+          </div>
+          <div class="dropdown-item" onclick="selectFinder('Robert Fox')">
+            <div class="dropdown-avatar" style="background:#fed7aa;display:flex;align-items:center;justify-content:center;font-size:14px;">🧹</div> Robert Fox
+          </div>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Add images</label>
+        <div class="image-upload-row">
+          <div class="upload-thumb" style="background:#f5e6c8;display:flex;align-items:center;justify-content:center;font-size:20px;">🥿</div>
+          <div class="upload-thumb" style="background:#fce7f3;display:flex;align-items:center;justify-content:center;font-size:20px;">🗝️</div>
+          <div class="upload-thumb" style="background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:20px;">⌚</div>
+          <button class="upload-btn">+ Upload photo</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="closeModal('lostItemModal')">All done</button>
+  </div>
+</div>
+
+<script>
+// ── Navigation ──
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.sidebar-nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ── Login ──
+function doLogin() {
+  const pass = document.getElementById('loginPass').value;
+  if (pass.length >= 6) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+  } else {
+    document.getElementById('loginErr').style.display = 'flex';
+    document.getElementById('loginPass').classList.add('error');
+  }
+}
+function doLogout() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appShell').style.display = 'none';
+}
+function togglePw() {
+  const inp = document.getElementById('loginPass');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+// Allow enter key on login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') doLogin();
+});
+
+// ── Modals ──
+function openNewBookingModal() { document.getElementById('newBookingModal').classList.add('open'); }
+function openRoomDetailsModal() { document.getElementById('roomDetailsModal').classList.add('open'); }
+function openLostItemModal() { document.getElementById('lostItemModal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// ── Room Grid ──
+const rooms = [
+  { num: 110, status: 'occupied-dark', dates: '03/02 - 03/24', guest: 'Arlene', actions: true },
+  { num: 111, status: 'occupied-light', dates: '03/02 - 03/04', guest: 'Colleen', actions: true },
+  { num: 112, status: 'available-blue', guest: null },
+  { num: 113, status: 'occupied-light', dates: '02/28 - 3/4', guest: 'Philip', actions: true },
+  { num: 114, status: 'available-blue' },
+  { num: 115, status: 'sand', guestIcon: true },
+  { num: 116, status: 'occupied-light', dates: '03/04 - 03/05', guest: 'Victoria', actions: true },
+  { num: 117, status: 'available-blue' },
+  { num: 118, status: 'available-blue' },
+  { num: 119, status: 'occupied-dark', dates: '03/02 - 03/06', guest: 'Ronald', actions: true },
+  { num: 120, status: 'available-blue' },
+  { num: 121, status: 'occupied-mid', dates: '03/02 - 03/07', guest: 'Marjorie', actions: true },
+  { num: 122, status: 'sand', guestIcon: true },
+  { num: 123, status: 'occupied-light', dates: '03/05 - 03/07', guest: 'Mitchell', actions: true },
+  { num: 124, status: 'occupied-light', dates: '03/08 - 03/10', guest: 'Aubrey', actions: true },
+  { num: 125, status: 'available-blue', guestIcon: true },
+  { num: 126, status: 'occupied-mid', dates: '03/03 - 03/10', guest: 'Courtney', actions: true },
+  { num: 127, status: 'sand', guestIcon: true },
+  { num: 128, status: 'occupied-light', dates: '03/05 - 03/08', guest: 'Kyle', actions: true },
+  { num: 129, status: 'sand', guestIcon: true },
+  { num: 130, status: 'occupied-dark', dates: '02/27 - 03/06', guest: 'Esther', actions: true },
+  { num: 131, status: 'available-blue' },
+  { num: 132, status: 'available-blue' },
+  { num: 133, status: 'available-blue', guestIcon: true },
+];
+
+const grid = document.getElementById('roomsGrid');
+rooms.forEach(r => {
+  const dark = r.status === 'occupied-dark' || r.status === 'occupied-mid';
+  const hasGuest = r.guest && r.dates;
+  let html = `<div class="room-card ${r.status}" onclick="openRoomDetailsModal()" title="Room ${r.num}">`;
+  html += `<div class="room-num" style="${dark?'color:white;':''}">${r.num}</div>`;
+  if (r.dates) html += `<div class="room-dates" style="${dark?'color:rgba(255,255,255,0.7);':''}">${r.dates}</div>`;
+  if (r.guest) html += `<div class="room-guest" style="${dark?'color:white;':''}">${r.guest}</div>`;
+  if (hasGuest) {
+    html += `<div class="room-actions">
+      <button class="room-action-btn" style="${dark?'background:rgba(255,255,255,0.2);color:white;':''}">🔕</button>
+      <button class="room-action-btn" style="${dark?'background:rgba(255,255,255,0.2);color:white;':''}">▶</button>
+      <button class="room-action-btn" style="${dark?'background:rgba(255,255,255,0.2);color:white;':''}">👤</button>
+    </div>`;
+  }
+  if (r.guestIcon && !hasGuest) {
+    html += `<div class="room-guest-icon">👤</div>`;
+  }
+  html += `</div>`;
+  grid.innerHTML += html;
+});
+
+// ── Dropdown ──
+function toggleDropdown() {
+  const dd = document.getElementById('whoFoundDropdown');
+  const arrow = document.getElementById('dropdownArrow');
+  const show = dd.style.display === 'none';
+  dd.style.display = show ? 'block' : 'none';
+  arrow.textContent = show ? '▲' : '▾';
+}
+function selectFinder(name) {
+  document.getElementById('whoFoundVal').textContent = name;
+  document.getElementById('whoFoundVal').style.color = '#111827';
+  document.getElementById('whoFoundDropdown').style.display = 'none';
+  document.getElementById('dropdownArrow').textContent = '▾';
+}
+
+// Hide login error on input
+document.getElementById('loginPass').addEventListener('input', () => {
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginPass').classList.remove('error');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+import { PrismaClient, RoomStatus, RoomType } from '@prisma/client'
+import { ApiError } from '../utils/ApiError'
+
+const prisma = new PrismaClient()
+
+export class RoomsService {
+
+  // ─── Get all rooms ───────────────────────────────────
+  async getRooms(hotelId: string, filters?: {
+    status?: RoomStatus
+    floor?: number
+    type?: RoomType
+  }) {
+    return prisma.room.findMany({
+      where: {
+        hotelId,
+        isActive: true,
+        ...(filters?.status && { status: filters.status }),
+        ...(filters?.floor && { floor: filters.floor }),
+        ...(filters?.type && { type: filters.type }),
+      },
+      include: {
+        // Include current active booking (checked_in only)
+        bookings: {
+          where: {
+            status: { in: ['checked_in', 'confirmed'] },
+            checkIn: { lte: new Date() },
+            checkOut: { gte: new Date() }
+          },
+          include: {
+            guest: {
+              select: { id: true, fullName: true, phone: true, nationality: true }
+            }
+          },
+          take: 1,
+          orderBy: { checkIn: 'desc' }
+        },
+        // Include latest housekeeping log
+        housekeepingLogs: {
+          take: 1,
+          orderBy: { updatedAt: 'desc' }
+        }
+      },
+      orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }]
+    })
+  }
+
+  // ─── Get single room ─────────────────────────────────
+  async getRoom(id: string, hotelId: string) {
+    const room = await prisma.room.findFirst({
+      where: { id, hotelId, isActive: true },
+      include: {
+        bookings: {
+          where: { status: { in: ['pending', 'confirmed', 'checked_in'] } },
+          include: {
+            guest: { select: { id: true, fullName: true, phone: true, email: true } }
+          },
+          orderBy: { checkIn: 'asc' },
+          take: 5
+        },
+        housekeepingLogs: {
+          take: 5,
+          orderBy: { updatedAt: 'desc' },
+          include: {
+            updatedBy: { select: { id: true, fullName: true } }
+          }
+        }
+      }
+    })
+
+    if (!room) throw ApiError.notFound('Chumba hakikupatikana')
+    return room
+  }
+
+  // ─── Create room ─────────────────────────────────────
+  async createRoom(hotelId: string, data: {
+    roomNumber: string
+    name: string
+    floor?: number
+    type: RoomType
+    pricePerNight: number
+    pricePerHour?: number
+    capacity?: number
+    description?: string
+    amenities?: string[]
+  }) {
+    // Check room number uniqueness per hotel
+    const existing = await prisma.room.findUnique({
+      where: { hotelId_roomNumber: { hotelId, roomNumber: data.roomNumber } }
+    })
+    if (existing) throw ApiError.conflict(`Chumba namba ${data.roomNumber} tayari lipo`)
+
+    return prisma.room.create({
+      data: {
+        hotelId,
+        roomNumber: data.roomNumber,
+        name: data.name,
+        floor: data.floor || 1,
+        type: data.type,
+        pricePerNight: data.pricePerNight,
+        pricePerHour: data.pricePerHour,
+        capacity: data.capacity || 2,
+        description: data.description,
+        amenities: data.amenities || [],
+        status: 'available'
+      }
+    })
+  }
+
+  // ─── Update room ─────────────────────────────────────
+  async updateRoom(id: string, hotelId: string, data: Partial<{
+    name: string
+    floor: number
+    type: RoomType
+    pricePerNight: number
+    pricePerHour: number
+    capacity: number
+    description: string
+    amenities: string[]
+    isActive: boolean
+  }>) {
+    const room = await prisma.room.findFirst({ where: { id, hotelId } })
+    if (!room) throw ApiError.notFound('Chumba hakikupatikana')
+
+    return prisma.room.update({
+      where: { id },
+      data: { ...data, updatedAt: new Date() }
+    })
+  }
+
+  // ─── Update room status ───────────────────────────────
+  async updateRoomStatus(
+    id: string,
+    hotelId: string,
+    status: RoomStatus,
+    updatedById: string,
+    notes?: string
+  ) {
+    const room = await prisma.room.findFirst({ where: { id, hotelId } })
+    if (!room) throw ApiError.notFound('Chumba hakikupatikana')
+
+    // Use transaction — update room + create housekeeping log
+    return prisma.$transaction(async (tx) => {
+      const updated = await tx.room.update({
+        where: { id },
+        data: { status, updatedAt: new Date() }
+      })
+
+      // Log housekeeping status change
+      const hkStatus = {
+        available: 'clean',
+        dirty: 'dirty',
+        cleaning: 'cleaning',
+        occupied: 'inspected',
+        maintenance: 'dirty',
+        blocked: 'dirty'
+      }[status] as any
+
+      await tx.housekeepingLog.create({
+        data: {
+          roomId: id,
+          updatedById,
+          status: hkStatus || 'dirty',
+          notes: notes || `Status imebadilishwa kuwa ${status}`
+        }
+      })
+
+      return updated
+    })
+  }
+
+  // ─── Get room stats ───────────────────────────────────
+  async getRoomStats(hotelId: string) {
+    const rooms = await prisma.room.findMany({
+      where: { hotelId, isActive: true },
+      select: { status: true }
+    })
+
+    const total = rooms.length
+    const occupied = rooms.filter(r => r.status === 'occupied').length
+    const available = rooms.filter(r => r.status === 'available').length
+    const dirty = rooms.filter(r => r.status === 'dirty').length
+    const maintenance = rooms.filter(r => r.status === 'maintenance').length
+
+    return {
+      total,
+      occupied,
+      available,
+      dirty,
+      maintenance,
+      occupancyRate: total > 0 ? Math.round((occupied / total) * 100) : 0
+    }
+  }
+
+  // ─── Get floors list ──────────────────────────────────
+  async getFloors(hotelId: string): Promise<number[]> {
+    const rooms = await prisma.room.findMany({
+      where: { hotelId, isActive: true },
+      select: { floor: true },
+      distinct: ['floor'],
+      orderBy: { floor: 'asc' }
+    })
+    return rooms.map(r => r.floor)
+  }
+}
+
+export const roomsService = new RoomsService()

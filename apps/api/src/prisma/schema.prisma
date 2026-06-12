@@ -1,0 +1,428 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────
+
+enum UserRole {
+  admin
+  receptionist
+  housekeeping
+}
+
+enum RoomType {
+  standard
+  deluxe
+  family
+  suite
+  presidential
+  superior
+  conference
+}
+
+enum RoomStatus {
+  available
+  occupied
+  dirty
+  cleaning
+  maintenance
+  blocked
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  checked_out
+  cancelled
+  no_show
+  late_checkout
+}
+
+enum BookingSource {
+  online_self
+  staff_entry
+  walk_in
+}
+
+enum PaymentMethod {
+  mpesa
+  tigo_pesa
+  airtel_money
+  halo_pesa
+  cash
+  bank_transfer
+  visa
+  mastercard
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+  partial
+}
+
+enum NotificationType {
+  booking_confirmation
+  payment_receipt
+  check_in_reminder
+  checkout_reminder
+  review_request
+  cancellation
+}
+
+enum NotificationChannel {
+  email
+  sms
+  both
+}
+
+enum AddonCategory {
+  food
+  beverage
+  transport
+  laundry
+  other
+}
+
+enum HousekeepingStatus {
+  clean
+  dirty
+  cleaning
+  inspected
+}
+
+enum IdType {
+  national_id
+  passport
+  drivers_license
+  voter_id
+}
+
+enum ExpenseCategory {
+  salary
+  utilities
+  maintenance
+  supplies
+  marketing
+  other
+}
+
+// ─── MODELS ──────────────────────────────────────────
+
+model Hotel {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  address   String?
+  phone     String?
+  email     String?
+  logoUrl   String?
+  wifiName      String?
+  wifiPassword  String?
+  restaurantHours String?
+  emergencyPhone  String?
+  checkInTime   String  @default("14:00")
+  checkOutTime  String  @default("11:00")
+  defaultLanguage String @default("sw")
+  snippeApiKey    String?
+  snippeWebhookSecret String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users    User[]
+  rooms    Room[]
+  bookings Booking[]
+  expenses Expense[]
+
+  @@map("hotels")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  hotelId      String
+  fullName     String
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(receptionist)
+  phone        String?
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  hotel            Hotel            @relation(fields: [hotelId], references: [id])
+  bookingsCreated  Booking[]        @relation("CreatedBy")
+  paymentsReceived Payment[]        @relation("ReceivedBy")
+  housekeepingLogs HousekeepingLog[]
+  receiptsIssued   Receipt[]
+  auditLogs        AuditLog[]
+  expensesCreated  Expense[]
+
+  @@map("users")
+}
+
+model Guest {
+  id          String   @id @default(uuid())
+  fullName    String
+  email       String?
+  phone       String
+  idType      IdType?
+  idNumber    String?
+  nationality String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings Booking[]
+  reviews  Review[]
+
+  @@map("guests")
+}
+
+model Room {
+  id            String     @id @default(uuid())
+  hotelId       String
+  roomNumber    String
+  name          String
+  floor         Int        @default(1)
+  type          RoomType
+  status        RoomStatus @default(available)
+  pricePerNight Decimal    @db.Decimal(10, 2)
+  pricePerHour  Decimal?   @db.Decimal(10, 2)
+  capacity      Int        @default(2)
+  description   String?
+  amenities     Json       @default("[]")
+  images        Json       @default("[]")
+  lockId        String?
+  lockProvider  String?
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  hotel            Hotel             @relation(fields: [hotelId], references: [id])
+  bookings         Booking[]
+  housekeepingLogs HousekeepingLog[]
+
+  @@unique([hotelId, roomNumber])
+  @@map("rooms")
+}
+
+model Booking {
+  id          String        @id @default(uuid())
+  bookingRef  String        @unique
+  hotelId     String
+  guestId     String
+  roomId      String
+  createdById String
+  source      BookingSource @default(staff_entry)
+  status      BookingStatus @default(pending)
+
+  checkIn        DateTime
+  checkOut       DateTime
+  startTime      String?
+  endTime        String?
+  actualCheckIn  DateTime?
+  actualCheckOut DateTime?
+
+  adults   Int @default(1)
+  children Int @default(0)
+
+  roomTotal      Decimal  @db.Decimal(10, 2)
+  addonsTotal    Decimal  @db.Decimal(10, 2) @default(0)
+  discountAmount Decimal  @db.Decimal(10, 2) @default(0)
+  taxRate        Decimal  @db.Decimal(5, 2)  @default(0)
+  taxAmount      Decimal  @db.Decimal(10, 2) @default(0)
+  totalAmount    Decimal  @db.Decimal(10, 2)
+  paidAmount     Decimal  @db.Decimal(10, 2) @default(0)
+  balanceDue     Decimal  @db.Decimal(10, 2)
+
+  specialRequests String?
+  internalNotes   String?
+  cancelReason    String?
+
+  lockAccessCode  String?
+  lockGrantedAt   DateTime?
+  lockRevokedAt   DateTime?
+
+  efdSerial     String?
+  efdReceiptNo  String?
+  efdQrCode     String?
+  efdSyncedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel         Hotel          @relation(fields: [hotelId], references: [id])
+  guest         Guest          @relation(fields: [guestId], references: [id])
+  room          Room           @relation(fields: [roomId], references: [id])
+  createdBy     User           @relation("CreatedBy", fields: [createdById], references: [id])
+  payments      Payment[]
+  receipts      Receipt[]
+  addons        BookingAddon[]
+  notifications Notification[]
+  review        Review?
+
+  @@map("bookings")
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  bookingId    String
+  receivedById String?
+  amount       Decimal       @db.Decimal(10, 2)
+  method       PaymentMethod
+  status       PaymentStatus @default(pending)
+
+  snippeRef    String?
+  pesapalRef    String?
+  mpesaRef     String?
+  phoneNumber  String?
+  bankRef      String?
+
+  notes     String?
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  receivedBy User?    @relation("ReceivedBy", fields: [receivedById], references: [id])
+  receipt    Receipt?
+
+  @@map("payments")
+}
+
+model Receipt {
+  id            String   @id @default(uuid())
+  bookingId     String
+  paymentId     String   @unique
+  issuedById    String?
+  receiptNumber String   @unique
+  pdfUrl        String
+  issuedAt      DateTime @default(now())
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  payment  Payment @relation(fields: [paymentId], references: [id])
+  issuedBy User?   @relation(fields: [issuedById], references: [id])
+
+  @@map("receipts")
+}
+
+model AddonService {
+  id          String        @id @default(uuid())
+  name        String
+  nameEn      String
+  description String?
+  price       Decimal       @db.Decimal(10, 2)
+  category    AddonCategory
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+
+  bookingAddons BookingAddon[]
+
+  @@map("addon_services")
+}
+
+model BookingAddon {
+  id        String  @id @default(uuid())
+  bookingId String
+  addonId   String
+  quantity  Int     @default(1)
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  booking Booking      @relation(fields: [bookingId], references: [id])
+  addon   AddonService @relation(fields: [addonId], references: [id])
+
+  @@map("booking_addons")
+}
+
+model HousekeepingLog {
+  id          String             @id @default(uuid())
+  roomId      String
+  updatedById String?
+  status      HousekeepingStatus
+  notes       String?
+  checklist   Json               @default("[]")
+  updatedAt   DateTime           @default(now())
+
+  room      Room  @relation(fields: [roomId], references: [id])
+  updatedBy User? @relation(fields: [updatedById], references: [id])
+
+  @@map("housekeeping_logs")
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  bookingId String?
+  type      NotificationType
+  channel   NotificationChannel
+  recipient String
+  subject   String?
+  body      String
+  status    String              @default("pending")
+  sentAt    DateTime?
+  error     String?
+  createdAt DateTime            @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@map("notifications")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  bookingId   String   @unique
+  guestId     String
+  rating      Int
+  comment     String?
+  isApproved  Boolean  @default(false)
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  guest   Guest   @relation(fields: [guestId], references: [id])
+
+  @@map("reviews")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  hotelId     String
+  userId      String?
+  amount      Decimal         @db.Decimal(10, 2)
+  category    ExpenseCategory
+  description String
+  date        DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  user  User? @relation(fields: [userId], references: [id])
+
+  @@map("expenses")
+}

@@ -1,0 +1,31 @@
+{
+  "common": {
+    "loading": "Inapakia...",
+    "error": "Hitilafu imetokea",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "delete": "Futa",
+    "edit": "Hariri"
+  },
+  "nav": {
+    "dashboard": "Dhibiti",
+    "reservations": "Uwekaji Nafasi",
+    "rooms": "Vyumba",
+    "guests": "Wageni",
+    "housekeeping": "Usafi",
+    "accounting": "Uhasibu",
+    "settings": "Mipangilio"
+  },
+  "booking": {
+    "new": "Booking Mpya",
+    "checkIn": "Kuingia",
+    "checkOut": "Kuondoka",
+    "status": {
+      "pending": "Inasubiri",
+      "confirmed": "Imethibitishwa",
+      "checked_in": "Amewasili",
+      "checked_out": "Ameondoka",
+      "cancelled": "Imefutwa"
+    }
+  }
+}
