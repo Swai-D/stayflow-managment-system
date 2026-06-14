@@ -1,4 +1,4 @@
-import { PrismaClient, HousekeepingStatus } from '@prisma/client'
+import { PrismaClient, HousekeepingStatus, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 
 const prisma = new PrismaClient()
@@ -24,7 +24,7 @@ export class HousekeepingService {
     const room = await prisma.room.findFirst({ where: { id: roomId, hotelId } })
     if (!room) throw ApiError.notFound('Chumba hakikupatikana')
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Mapping HousekeepingStatus to RoomStatus
       const roomStatusMap: Record<HousekeepingStatus, any> = {
         clean: 'available',

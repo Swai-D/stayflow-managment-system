@@ -1,4 +1,4 @@
-import { PrismaClient, RoomStatus, RoomType } from '@prisma/client'
+import { PrismaClient, RoomStatus, RoomType, HousekeepingStatus, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 
 const prisma = new PrismaClient()
@@ -10,39 +10,67 @@ export class RoomsService {
     status?: RoomStatus
     floor?: number
     type?: RoomType
+    search?: string
+    page?: number
+    limit?: number
   }) {
-    return prisma.room.findMany({
-      where: {
-        hotelId,
-        isActive: true,
-        ...(filters?.status && { status: filters.status }),
-        ...(filters?.floor && { floor: filters.floor }),
-        ...(filters?.type && { type: filters.type }),
-      },
-      include: {
-        // Include current active booking (checked_in only)
-        bookings: {
-          where: {
-            status: { in: ['checked_in', 'confirmed'] },
-            checkIn: { lte: new Date() },
-            checkOut: { gte: new Date() }
+    const page = filters?.page || 1
+    const limit = filters?.limit || 50
+    const skip = (page - 1) * limit
+
+    const where = {
+      hotelId,
+      isActive: true,
+      ...(filters?.status && { status: filters.status }),
+      ...(filters?.floor && { floor: filters.floor }),
+      ...(filters?.type && { type: filters.type }),
+      ...(filters?.search && {
+        OR: [
+          { roomNumber: { contains: filters.search, mode: 'insensitive' as const } },
+          { name: { contains: filters.search, mode: 'insensitive' as const } },
+        ]
+      }),
+    }
+
+    const [rooms, total] = await Promise.all([
+      prisma.room.findMany({
+        where,
+        include: {
+          bookings: {
+            where: {
+              status: { in: ['checked_in', 'confirmed'] },
+              checkIn: { lte: new Date() },
+              checkOut: { gte: new Date() }
+            },
+            include: {
+              guest: {
+                select: { id: true, fullName: true, phone: true, nationality: true }
+              }
+            },
+            take: 1,
+            orderBy: { checkIn: 'desc' }
           },
-          include: {
-            guest: {
-              select: { id: true, fullName: true, phone: true, nationality: true }
-            }
-          },
-          take: 1,
-          orderBy: { checkIn: 'desc' }
+          housekeepingLogs: {
+            take: 1,
+            orderBy: { updatedAt: 'desc' }
+          }
         },
-        // Include latest housekeeping log
-        housekeepingLogs: {
-          take: 1,
-          orderBy: { updatedAt: 'desc' }
-        }
-      },
-      orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }]
-    })
+        orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }],
+        skip,
+        take: limit
+      }),
+      prisma.room.count({ where })
+    ])
+
+    return {
+      rooms,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    }
   }
 
   // ─── Get single room ─────────────────────────────────
@@ -147,14 +175,15 @@ export class RoomsService {
       })
 
       // Log housekeeping status change
-      const hkStatus = {
+      const hkStatusMap: Record<RoomStatus, HousekeepingStatus> = {
         available: 'clean',
         dirty: 'dirty',
         cleaning: 'cleaning',
         occupied: 'inspected',
         maintenance: 'dirty',
         blocked: 'dirty'
-      }[status] as any
+      }
+      const hkStatus = hkStatusMap[status]
 
       await tx.housekeepingLog.create({
         data: {
@@ -177,10 +206,10 @@ export class RoomsService {
     })
 
     const total = rooms.length
-    const occupied = rooms.filter(r => r.status === 'occupied').length
-    const available = rooms.filter(r => r.status === 'available').length
-    const dirty = rooms.filter(r => r.status === 'dirty').length
-    const maintenance = rooms.filter(r => r.status === 'maintenance').length
+    const occupied = rooms.filter((r: { status: RoomStatus }) => r.status === 'occupied').length
+    const available = rooms.filter((r: { status: RoomStatus }) => r.status === 'available').length
+    const dirty = rooms.filter((r: { status: RoomStatus }) => r.status === 'dirty').length
+    const maintenance = rooms.filter((r: { status: RoomStatus }) => r.status === 'maintenance').length
 
     return {
       total,

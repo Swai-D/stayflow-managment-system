@@ -4,14 +4,17 @@ import { useRooms } from '@/hooks/useRooms'
 import { Room } from '@/types/room'
 import { X, Calendar, User, Phone, Globe, Home, Users } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 interface Props {
   onClose: () => void
+  preselectedRoomId?: string
 }
 
-export default function NewBookingModal({ onClose }: Props) {
+export default function NewBookingModal({ onClose, preselectedRoomId }: Props) {
   const { mutate: createBooking, isPending } = useCreateBooking()
-  const { data: availableRooms } = useRooms({ status: 'available' })
+  const { data: roomsData } = useRooms({ status: 'available', limit: 100 })
+  const availableRooms = roomsData?.rooms || []
 
   const [formData, setFormData] = useState({
     guestData: {
@@ -20,7 +23,7 @@ export default function NewBookingModal({ onClose }: Props) {
       email: '',
       nationality: ''
     },
-    roomId: '',
+    roomId: preselectedRoomId || '',
     checkIn: format(new Date(), 'yyyy-MM-dd'),
     checkOut: format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'),
     adults: 1,
@@ -29,10 +32,23 @@ export default function NewBookingModal({ onClose }: Props) {
     source: 'staff_entry'
   })
 
+  // Update roomId if preselectedRoomId changes
+  useEffect(() => {
+    if (preselectedRoomId) {
+      setFormData(prev => ({ ...prev, roomId: preselectedRoomId }))
+    }
+  }, [preselectedRoomId])
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     createBooking(formData, {
-      onSuccess: () => onClose()
+      onSuccess: () => {
+        toast.success('Booking mpya imefanikiwa kuundwa')
+        onClose()
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kuunda booking. Jaribu tena.')
+      }
     })
   }
 

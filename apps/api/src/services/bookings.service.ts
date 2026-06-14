@@ -1,4 +1,4 @@
-import { PrismaClient, BookingStatus, BookingSource } from '@prisma/client'
+import { PrismaClient, BookingStatus, BookingSource, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { availabilityService } from './availability.service'
 import { generateBookingRef } from '../utils/generateRef'
@@ -101,7 +101,7 @@ export class BookingsService {
 
     if (addonIds.length > 0) {
       const addons = await prisma.addonService.findMany({
-        where: { id: { in: addonIds.map(a => a.addonId) }, isActive: true }
+        where: { id: { in: addonIds.map((a: { addonId: string }) => a.addonId) }, isActive: true }
       })
 
       for (const req of addonIds) {
@@ -118,7 +118,7 @@ export class BookingsService {
     const totalAmount = roomTotal + addonsTotal
     const bookingRef = await generateBookingRef()
 
-    const booking = await prisma.$transaction(async (tx) => {
+    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const newBooking = await tx.booking.create({
         data: {
           bookingRef,
@@ -197,6 +197,7 @@ export class BookingsService {
           room:  { select: { id: true, roomNumber: true, name: true, type: true } },
           createdBy: { select: { id: true, fullName: true } },
           payments: { select: { id: true, amount: true, status: true, method: true } },
+          receipts: { select: { id: true, pdfUrl: true, receiptNumber: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -278,7 +279,7 @@ export class BookingsService {
       throw ApiError.badRequest('Booking hii tayari imefutwa')
     }
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.booking.update({
         where: { id },
         data: { status: 'cancelled', cancelReason: reason, updatedAt: new Date() }
@@ -308,7 +309,7 @@ export class BookingsService {
       throw ApiError.badRequest(`Haiwezekani kufanya check-in — hali ya booking: ${booking.status}`)
     }
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -350,7 +351,7 @@ export class BookingsService {
       throw ApiError.badRequest('Haiwezekani kufanya check-out — mgeni hajaingia')
     }
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {

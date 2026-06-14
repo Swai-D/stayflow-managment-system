@@ -6,22 +6,22 @@ import { useAuthStore } from '@/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const router = useRouter()
   const { login, isLoading } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     try {
       await login(email, password)
+      toast.success('Karibu tena! Umefanikiwa kuingia.')
       router.push('/overview')
     } catch (err: any) {
-      setError(err.message)
+      toast.error(err.message || 'Imeshindwa kuingia. Angalia barua pepe na nywila.')
     }
   }
 
@@ -39,13 +39,6 @@ export default function LoginPage() {
       {/* Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-card p-8">
         <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
 
           {/* Email */}
           <div className="space-y-1.5">

@@ -69,13 +69,14 @@ export function useCheckIn() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.post(`/bookings/${id}/check-in`)
+    mutationFn: async (bookingId: string) => {
+      const res = await api.post(`/bookings/${bookingId}/check-in`)
       return res.data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
     }
   })
 }
@@ -84,13 +85,31 @@ export function useCheckOut() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await api.post(`/bookings/${id}/check-out`)
+    mutationFn: async (bookingId: string) => {
+      const res = await api.post(`/bookings/${bookingId}/check-out`)
       return res.data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['housekeeping'] })
+    }
+  })
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string, reason: string }) => {
+      const res = await api.post(`/bookings/${id}/cancel`, { reason })
+      return res.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
     }
   })
 }

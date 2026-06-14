@@ -30,7 +30,7 @@ export const updateUser = asyncHandler(async (req: AuthRequest, res: Response) =
 })
 
 export const deleteUser = asyncHandler(async (req: AuthRequest, res: Response) => {
-  await settingsService.deleteUser(req.params.id, req.user!.hotelId)
+  await settingsService.deleteUser(req.params.id, req.user!.hotelId, req.user!.id)
   res.json(new ApiResponse(null, 'Mtumiaji amezimwa'))
 })
 

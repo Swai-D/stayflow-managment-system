@@ -6,13 +6,16 @@ import { AuthRequest } from '../middleware/authenticate'
 
 // GET /rooms
 export const getRooms = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status, floor, type } = req.query
-  const rooms = await roomsService.getRooms(req.user!.hotelId, {
+  const { status, floor, type, search, page, limit } = req.query
+  const data = await roomsService.getRooms(req.user!.hotelId, {
     status: status as any,
     floor: floor ? Number(floor) : undefined,
-    type: type as any
+    type: type as any,
+    search: search as string,
+    page: page ? Number(page) : undefined,
+    limit: limit ? Number(limit) : undefined
   })
-  res.json(new ApiResponse(rooms))
+  res.json(new ApiResponse(data))
 })
 
 // GET /rooms/stats

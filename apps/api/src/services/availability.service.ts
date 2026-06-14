@@ -125,10 +125,10 @@ export class AvailabilityService {
         ]
       },
       select: { roomId: true }
-    }).then(bookings => bookings.map(b => b.roomId))
+    }).then((bookings: { roomId: string }[]) => bookings.map((b: { roomId: string }) => b.roomId))
 
     // Return only available rooms
-    return allRooms.filter(room => !bookedRoomIds.includes(room.id))
+    return allRooms.filter((room: { id: string }) => !bookedRoomIds.includes(room.id))
   }
 
   // ─── Calculate nights ─────────────────────────────────

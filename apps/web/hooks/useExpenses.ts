@@ -3,6 +3,7 @@ import api from '@/lib/api'
 
 export function useExpenses(filters?: {
   category?: string
+  search?: string
   dateFrom?: string
   dateTo?: string
   page?: number
@@ -10,6 +11,7 @@ export function useExpenses(filters?: {
 }) {
   const params = new URLSearchParams()
   if (filters?.category) params.append('category', filters.category)
+  if (filters?.search) params.append('search', filters.search)
   if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom)
   if (filters?.dateTo) params.append('dateTo', filters.dateTo)
   if (filters?.page) params.append('page', String(filters.page))

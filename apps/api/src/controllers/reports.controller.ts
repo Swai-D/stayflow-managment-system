@@ -20,3 +20,9 @@ export const getDashboardSummary = asyncHandler(async (req: AuthRequest, res: Re
   const data = await reportsService.getDashboardSummary(req.user!.hotelId)
   res.json(new ApiResponse(data))
 })
+
+export const getFinancialReport = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { days } = req.query
+  const data = await reportsService.getFinancialReport(req.user!.hotelId, days ? Number(days) : undefined)
+  res.json(new ApiResponse(data))
+})

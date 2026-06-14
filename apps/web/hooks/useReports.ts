@@ -31,3 +31,13 @@ export function useDashboardSummary() {
     refetchInterval: 60_000,
   })
 }
+
+export function useFinancialReport(days: number = 30) {
+  return useQuery({
+    queryKey: ['reports', 'financial', days],
+    queryFn: async () => {
+      const res = await api.get(`/reports/financial?days=${days}`)
+      return res.data.data
+    }
+  })
+}

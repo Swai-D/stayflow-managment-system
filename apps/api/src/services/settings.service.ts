@@ -84,9 +84,19 @@ export class SettingsService {
     })
   }
 
-  async deleteUser(userId: string, hotelId: string) {
+  async deleteUser(userId: string, hotelId: string, requestUserId: string) {
     const user = await prisma.user.findFirst({ where: { id: userId, hotelId } })
     if (!user) throw ApiError.notFound('Mtumiaji hakupatikana')
+
+    // RULE 1: Huwezi kujifuta mwenyewe
+    if (userId === requestUserId) {
+      throw ApiError.badRequest('Huwezi kuizima akaunti yako mwenyewe ukiwa ndani ya mfumo')
+    }
+
+    // RULE 2: Huwezi kufuta Admin (Only Super Admin/Developer via DB can do this)
+    if (user.role === 'admin') {
+      throw ApiError.forbidden('Akaunti ya Admin haiwezi kufutwa na Admin mwingine. Wasiliana na Developer.')
+    }
 
     // Soft delete
     return prisma.user.update({

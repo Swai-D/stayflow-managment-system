@@ -15,9 +15,10 @@ export const createExpense = asyncHandler(async (req: AuthRequest, res: Response
 })
 
 export const getExpenses = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { category, dateFrom, dateTo, page, limit } = req.query
+  const { category, search, dateFrom, dateTo, page, limit } = req.query
   const result = await expensesService.getExpenses(req.user!.hotelId, {
     category: category as any,
+    search: search as string,
     dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
     dateTo: dateTo ? new Date(dateTo as string) : undefined,
     page: page ? Number(page) : 1,

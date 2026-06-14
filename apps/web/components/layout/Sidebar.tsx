@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
+import { toast } from 'sonner'
 
 const navGroups = [
   {
@@ -144,7 +145,10 @@ export default function Sidebar() {
             <span>Settings</span>
           </Link>
           <button
-            onClick={() => logout()}
+            onClick={() => {
+              logout()
+              toast.success('Umetoka kwenye mfumo salama')
+            }}
             className="w-full flex items-center gap-2.5 px-3 py-[9px] rounded-lg text-[13.5px] font-medium text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] transition-all"
           >
             <LogOut size={16} className="opacity-70 flex-shrink-0" />

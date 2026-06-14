@@ -1,4 +1,4 @@
-import { PrismaClient, PaymentMethod, PaymentStatus } from '@prisma/client'
+import { PrismaClient, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { auditService } from './audit.service'
 
@@ -22,7 +22,7 @@ export class PaymentsService {
     })
     if (!booking) throw ApiError.notFound('Booking haikupatikana')
 
-    return prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Create payment record
       const payment = await tx.payment.create({
         data: {

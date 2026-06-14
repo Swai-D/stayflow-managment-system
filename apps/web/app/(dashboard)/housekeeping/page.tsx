@@ -1,187 +1,270 @@
 'use client'
 
 import { useState } from 'react'
-import { useHousekeepingStatus, useUpdateHousekeeping } from '@/hooks/useHousekeeping'
+import { useRooms, useUpdateRoomStatus } from '@/hooks/useRooms'
+import { Room, RoomStatus, ROOM_STATUS_CONFIG } from '@/types/room'
+import { cn } from '@/lib/utils'
+import { 
+  Brush, CheckCircle2, Clock, AlertTriangle, 
+  ChevronRight, Search, LayoutGrid, Filter,
+  CheckSquare, ShieldAlert, Sparkles, Loader2, X,
+  ChevronLeft, MapPin
+} from 'lucide-react'
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 
-type HKStatus = 'clean' | 'dirty' | 'cleaning' | 'inspected'
-
-const HK_STATUS_CONFIG: Record<HKStatus, { label: string; bg: string; border: string; text: string; dot: string }> = {
-  clean:     { label:'Clean',       bg:'bg-[#DCFCE7]', border:'border-[#86EFAC]', text:'text-[#166534]', dot:'bg-[#22C55E]' },
-  dirty:     { label:'Dirty',       bg:'bg-[#FEF3C7]', border:'border-[#FDE68A]', text:'text-[#92400E]', dot:'bg-[#F59E0B]' },
-  cleaning:  { label:'Cleaning',    bg:'bg-[#E0E7FF]', border:'border-[#C7D2FE]', text:'text-[#3730A3]', dot:'bg-[#6366F1]' },
-  inspected: { label:'Inspected',   bg:'bg-[#DBEAFE]', border:'border-[#93C5FD]', text:'text-[#1D4ED8]', dot:'bg-[#2563EB]' },
+// ─── Housekeeping Display Config ────────────────────
+const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any; color: string; action: string; btn: string; image: string }> = {
+  available:   { 
+    label: 'Clean & Ready', 
+    bg: 'bg-[#f0fdf4]', text: 'text-[#166534]', icon: CheckCircle2, color: '#10B981', 
+    action: 'Maintenance', btn: 'bg-white border-gray-200 text-gray-700',
+    image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80' 
+  },
+  dirty:       { 
+    label: 'Need Cleaning', 
+    bg: 'bg-[#fffbeb]', text: 'text-[#92400e]', icon: AlertTriangle, color: '#F59E0B', 
+    action: 'Start Cleaning', btn: 'bg-[#2563eb] text-white shadow-blue-100',
+    image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80'
+  },
+  cleaning:    { 
+    label: 'In Progress',   
+    bg: 'bg-[#f5f3ff]', text: 'text-[#5b21b6]', icon: Brush, color: '#6366F1', 
+    action: 'Mark as Clean', btn: 'bg-[#10B981] text-white shadow-emerald-100',
+    image: 'https://images.unsplash.com/photo-1584622781564-1d9876a13300?auto=format&fit=crop&w=800&q=80'
+  },
+  occupied:    { 
+    label: 'Occupied',      
+    bg: 'bg-[#f8fafc]', text: 'text-[#1a2b4a]', icon: Clock, color: '#1A2B4A', 
+    action: 'View Guest', btn: 'bg-gray-100 text-gray-500',
+    image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'
+  },
+  maintenance: { 
+    label: 'Maintenance',   
+    bg: 'bg-[#fef2f2]', text: 'text-[#991b1b]', icon: ShieldAlert, color: '#EF4444', 
+    action: 'Fix Completed', btn: 'bg-[#2563eb] text-white',
+    image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ec4?auto=format&fit=crop&w=800&q=80'
+  },
 }
 
 export default function HousekeepingPage() {
-  const [activeFilter, setFilter] = useState<HKStatus | 'all'>('all')
-  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [filter, setFilter] = useState<RoomStatus | 'all'>('all')
+  const [selected, setSelected] = useState<Room | null>(null)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
 
-  const { data: housekeepingData, isLoading } = useHousekeepingStatus()
-  const { mutate: updateStatus, isPending: updating } = useUpdateHousekeeping()
-
-  const rooms = housekeepingData || []
+  const { data: roomsData, isLoading } = useRooms({ 
+    status: filter === 'all' ? undefined : filter,
+    search,
+    page,
+    limit: 8 
+  })
   
-  const filteredRooms = rooms.filter((r: any) => 
-    activeFilter === 'all' || r.status === activeFilter
-  )
+  const rooms = roomsData?.rooms || []
+  const meta = roomsData?.meta || { total: 0, totalPages: 1 }
+  const { mutate: updateStatus, isPending } = useUpdateRoomStatus()
 
-  const counts = {
-    all:      rooms.length,
-    dirty:    rooms.filter((r:any)=>r.status==='dirty').length,
-    cleaning: rooms.filter((r:any)=>r.status==='cleaning').length,
-    clean:    rooms.filter((r:any)=>r.status==='clean').length,
-    inspected:rooms.filter((r:any)=>r.status==='inspected').length,
-  }
+  const handleStatusChange = (room: Room) => {
+    let nextStatus: RoomStatus | null = null
+    if (room.status === 'dirty') nextStatus = 'cleaning'
+    else if (room.status === 'cleaning') nextStatus = 'available'
+    else if (room.status === 'maintenance') nextStatus = 'available'
+    else if (room.status === 'available') nextStatus = 'maintenance'
 
-  const handleUpdate = (roomId: string, status: HKStatus) => {
-    updateStatus({ roomId, status }, {
-      onSuccess: () => setSelectedRoom(null)
-    })
+    if (nextStatus) {
+      updateStatus({ id: room.id, status: nextStatus }, {
+        onSuccess: () => toast.success('Hali ya chumba imesasishwa'),
+        onError: () => toast.error('Imeshindwa kusasisha hali')
+      })
+    }
   }
 
   return (
-    <div className="space-y-6 pt-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Housekeeping</h1>
-        <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold text-gray-600 flex items-center gap-2">
-            📅 {format(new Date(), 'EEE, dd MMMM')}
+    <div className="space-y-6 font-sans text-left pb-10">
+      
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+        <div>
+          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">Housekeeping Panel</h1>
+          <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Manage room hygiene and service status</p>
+        </div>
+        
+        {/* Search Input */}
+        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 min-w-[280px] shadow-sm focus-within:border-[#2563eb]/30 transition-all">
+          <Search size={16} className="text-[#9ca3af]" />
+          <input 
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            placeholder="Search room number..."
+            className="bg-transparent text-[13px] font-medium text-[#111827] outline-none w-full"
+          />
         </div>
       </div>
 
-      {/* ── Stats ───────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <HKStatCard label="Need Cleaning" value={counts.dirty} color="bg-[#F59E0B]" />
-        <HKStatCard label="In Progress" value={counts.cleaning} color="bg-[#6366F1]" />
-        <HKStatCard label="Clean & Ready" value={counts.clean} color="bg-[#22C55E]" />
-        <HKStatCard label="Inspected" value={counts.inspected} color="bg-[#2563EB]" />
+      {/* ── Status Pills (Horizontal) ─────────────────────── */}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
+        {[
+          { key: 'all', label: 'All Units', icon: LayoutGrid },
+          { key: 'dirty', label: 'Need Cleaning', icon: AlertTriangle },
+          { key: 'cleaning', label: 'In Progress', icon: Brush },
+          { key: 'available', label: 'Clean & Ready', icon: CheckCircle2 },
+          { key: 'occupied', label: 'Occupied', icon: Clock },
+        ].map(s => (
+          <button 
+            key={s.key}
+            onClick={() => { setFilter(s.key as any); setPage(1) }}
+            className={cn(
+              "flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap border shadow-sm",
+              filter === s.key 
+                ? "bg-[#1a2b4a] text-white border-[#1a2b4a] shadow-lg shadow-blue-900/20" 
+                : "bg-white text-[#6b7280] border-gray-100 hover:border-blue-200"
+            )}
+          >
+            <s.icon size={14} />
+            {s.label}
+          </button>
+        ))}
       </div>
 
-      {/* ── Main content ────────────────────────── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Filter Tabs */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <div className="flex gap-1">
-            {([['all','All'], ['dirty','Dirty'], ['cleaning','Cleaning'], ['clean','Clean'], ['inspected','Inspected']] as const).map(([val, label]) => (
-              <button 
-                key={val} 
-                onClick={() => setFilter(val)}
-                className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
-                  activeFilter === val 
-                    ? 'bg-blue-50 text-blue-600 border border-blue-100' 
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                {label} <span className="ml-1 text-[10px] opacity-60">({counts[val as keyof typeof counts]})</span>
-              </button>
-            ))}
-          </div>
+      {/* ── Room Cards Grid (Modern Layout) ────────────────── */}
+      {isLoading ? (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[380px] bg-gray-50 animate-pulse rounded-[32px] border border-gray-100" />
+          ))}
         </div>
+      ) : rooms.length === 0 ? (
+        <div className="py-24 text-center bg-white rounded-[32px] border border-dashed border-gray-200">
+           <div className="w-20 h-20 bg-blue-50 text-[#2563eb] rounded-full flex items-center justify-center mx-auto mb-6">
+              <Sparkles size={40} />
+           </div>
+           <h3 className="text-xl font-bold text-[#111827]">Usimamizi Umekamilika</h3>
+           <p className="text-[#9ca3af] font-medium mt-2">Hakuna vyumba vinavyohitaji usafishaji kwa sasa.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {rooms.map(room => {
+            const cfg = HK_CONFIG[room.status] || HK_CONFIG.available
+            const currentBooking = room.bookings?.[0]
 
-        {/* Room Grid */}
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {isLoading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-28 bg-gray-50 rounded-xl animate-pulse" />
-            ))
-          ) : filteredRooms.map((room: any) => {
-            // Map RoomStatus to HKStatus visually if needed
-            const status = room.status as HKStatus
-            const cfg = HK_STATUS_CONFIG[status] || HK_STATUS_CONFIG['dirty']
-            
             return (
               <div 
                 key={room.id}
-                onClick={() => setSelectedRoom(room)}
-                className={`rounded-xl p-4 border cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] ${cfg.bg} ${cfg.border}`}
+                className="bg-white rounded-[32px] shadow-card overflow-hidden flex flex-col group hover:shadow-xl transition-all border border-gray-50 h-full"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <span className={`text-xl font-bold ${cfg.text}`}>{room.roomNumber}</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold bg-white/70 ${cfg.text}`}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    {cfg.label}
-                  </div>
+                {/* 1. Header Image Section — Dynamic based on status */}
+                <div className="h-44 relative overflow-hidden">
+                   <img 
+                     src={cfg.image} 
+                     alt={room.roomNumber}
+                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                   />
+                   <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/80 via-[#111827]/20 to-transparent" />
+                   
+                   <div className="absolute top-4 left-4">
+                      <div className={cn("px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg border-0 backdrop-blur-md", cfg.bg, cfg.text)}>
+                        <cfg.icon size={12} />
+                        {cfg.label}
+                      </div>
+                   </div>
+                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                      <h4 className="text-[28px] font-bold text-white tracking-tighter leading-none drop-shadow-md">#{room.roomNumber}</h4>
+                      <div className="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-lg flex items-center gap-1 text-[11px] font-bold text-white shadow-sm border border-white/20">
+                         <MapPin size={10} /> L{room.floor}
+                      </div>
+                   </div>
                 </div>
-                
-                {/* Last update info if exists */}
-                {room.housekeepingLogs?.[0] && (
-                  <div className="mt-auto">
-                    <p className={`text-[10px] opacity-70 ${cfg.text}`}>
-                      Updated: {format(new Date(room.housekeepingLogs[0].updatedAt), 'HH:mm')}
-                    </p>
-                  </div>
-                )}
+
+                {/* 2. Body Section */}
+                <div className="p-6 flex-1 flex flex-col space-y-4">
+                   <div>
+                      <p className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.1em] mb-1">Room Profile</p>
+                      <h5 className="text-[15px] font-bold text-[#111827] leading-snug">{room.name}</h5>
+                      <p className="text-[12px] text-[#6b7280] font-medium">{ROOM_STATUS_CONFIG[room.status].labelSw} · {room.type}</p>
+                   </div>
+
+                   <div className="pt-4 border-t border-gray-50 flex-1">
+                      <p className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.1em] mb-2">Occupant Context</p>
+                      {currentBooking ? (
+                        <div className="flex items-center gap-3">
+                           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold text-sm">
+                              {currentBooking.guest.fullName.charAt(0)}
+                           </div>
+                           <div className="overflow-hidden">
+                              <p className="text-[13px] font-bold text-[#111827] truncate">{currentBooking.guest.fullName}</p>
+                              <p className="text-[10px] text-[#9ca3af] font-semibold">Ends {format(new Date(currentBooking.checkOut), 'dd MMM')}</p>
+                           </div>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-xl p-3 flex items-center gap-2">
+                           <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm">
+                              <CheckCircle2 size={12} className="text-emerald-500" />
+                           </div>
+                           <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tighter">Chumba Kipo Wazi</p>
+                        </div>
+                      )}
+                   </div>
+                </div>
+
+                {/* 3. Action Section */}
+                <div className="p-6 pt-0 mt-auto">
+                   <button 
+                     onClick={() => handleStatusChange(room)}
+                     disabled={isPending || room.status === 'occupied'}
+                     className={cn(
+                       "w-full h-12 rounded-2xl font-bold text-[13px] transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95",
+                       cfg.btn,
+                       isPending && "opacity-50"
+                     )}
+                   >
+                     {isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                     {cfg.action}
+                   </button>
+                </div>
               </div>
             )
           })}
         </div>
-      </div>
+      )}
 
-      {/* Action Modal */}
-      {selectedRoom && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedRoom(null)} />
-          <div className="relative bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Room {selectedRoom.roomNumber}</h3>
+      {/* ── Pagination Section ────────────────────────────── */}
+      {meta.totalPages > 1 && (
+        <div className="flex items-center justify-between px-2 pt-8 border-t border-gray-100">
+           <div className="text-[11px] text-[#9ca3af] font-bold uppercase tracking-wider">
+              Showing <span className="text-[#111827]">{rooms.length}</span> units on page <span className="text-[#111827]">{page}</span> of {meta.totalPages}
+           </div>
+           <div className="flex items-center gap-3">
               <button 
-                onClick={() => setSelectedRoom(null)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400"
-              >✕</button>
-            </div>
-
-            <div className="space-y-3">
-              {selectedRoom.status === 'dirty' && (
-                <button 
-                  disabled={updating}
-                  onClick={() => handleUpdate(selectedRoom.id, 'cleaning')}
-                  className="w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
-                >
-                  Start Cleaning
-                </button>
-              )}
-              {selectedRoom.status === 'cleaning' && (
-                <button 
-                  disabled={updating}
-                  onClick={() => handleUpdate(selectedRoom.id, 'clean')}
-                  className="w-full py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-100 disabled:opacity-50"
-                >
-                  ✓ Mark as Clean
-                </button>
-              )}
-              {selectedRoom.status === 'clean' && (
-                <button 
-                  disabled={updating}
-                  onClick={() => handleUpdate(selectedRoom.id, 'inspected')}
-                  className="w-full py-3 bg-blue-50 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-100 transition-all disabled:opacity-50"
-                >
-                  Mark as Inspected
-                </button>
-              )}
-              <button 
-                onClick={() => setSelectedRoom(null)}
-                className="w-full py-3 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
               >
-                Close
+                 <ChevronLeft size={20} />
               </button>
-            </div>
-          </div>
+              <div className="flex items-center gap-1.5">
+                 {Array.from({ length: meta.totalPages }).map((_, i) => (
+                    <button 
+                       key={i}
+                       onClick={() => setPage(i + 1)}
+                       className={cn(
+                          "w-8 h-8 rounded-lg text-[12px] font-bold transition-all",
+                          page === i + 1 ? "bg-[#2563eb] text-white shadow-md shadow-blue-100" : "text-[#9ca3af] hover:bg-gray-50"
+                       )}
+                    >
+                       {i + 1}
+                    </button>
+                 ))}
+              </div>
+              <button 
+                disabled={page >= meta.totalPages}
+                onClick={() => setPage(p => p + 1)}
+                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
+              >
+                 <ChevronRight size={20} />
+              </button>
+           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function HKStatCard({ label, value, color }: any) {
-  return (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-      <div className="flex items-center gap-2 mb-3">
-        <div className={`w-2 h-2 rounded-full ${color}`} />
-        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{label}</p>
-      </div>
-      <p className="text-3xl font-bold text-gray-900">{value}</p>
     </div>
   )
 }

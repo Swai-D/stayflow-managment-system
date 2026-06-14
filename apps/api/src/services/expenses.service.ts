@@ -24,15 +24,19 @@ export class ExpensesService {
     category?: ExpenseCategory
     dateFrom?: Date
     dateTo?: Date
+    search?: string
     page?: number
     limit?: number
   }) {
-    const { category, dateFrom, dateTo, page = 1, limit = 20 } = filters || {}
+    const { category, dateFrom, dateTo, search, page = 1, limit = 20 } = filters || {}
     const skip = (page - 1) * limit
 
     const where = {
       hotelId,
       ...(category && { category }),
+      ...(search && {
+        description: { contains: search, mode: 'insensitive' as const }
+      }),
       ...(dateFrom && dateTo && {
         date: { gte: dateFrom, lte: dateTo }
       })

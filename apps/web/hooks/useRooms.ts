@@ -2,12 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Room, RoomStats, RoomStatus } from '@/types/room'
 
-export function useRooms(filters?: { status?: RoomStatus; floor?: number }) {
+export function useRooms(filters?: { 
+  status?: RoomStatus; 
+  floor?: number;
+  search?: string;
+  page?: number;
+  limit?: number;
+}) {
   const params = new URLSearchParams()
   if (filters?.status) params.append('status', filters.status)
   if (filters?.floor) params.append('floor', String(filters.floor))
+  if (filters?.search) params.append('search', filters.search)
+  if (filters?.page) params.append('page', String(filters.page))
+  if (filters?.limit) params.append('limit', String(filters.limit))
 
-  return useQuery<Room[]>({
+  return useQuery<{ rooms: Room[]; meta: { total: number; totalPages: number; page: number; limit: number } }>({
     queryKey: ['rooms', filters],
     queryFn: async () => {
       const res = await api.get(`/rooms?${params}`)
@@ -93,6 +102,21 @@ export function useUpdateRoom() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['rooms', data.id] })
+    }
+  })
+}
+
+export function useDeleteRoom() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/rooms/${id}`)
+      return res.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
     }
   })
 }
