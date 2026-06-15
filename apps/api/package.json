@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "prisma": {
-    "schema": "src/prisma/schema.prisma"
+    "schema": "src/prisma/schema.prisma",
+    "seed": "ts-node src/prisma/seed.ts"
   },
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
