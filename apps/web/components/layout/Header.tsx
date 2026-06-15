@@ -22,7 +22,7 @@ export default function Header() {
   const pathname = usePathname()
   const { toggleSidebar } = useUIStore()
 
-  const pageTitle = titleMap[pathname] || 'StayFlow'
+  const pageTitle = titleMap[pathname] || 'Buffalo Reservation'
   const dateStr = format(new Date(), "EEE, dd MMMM")
 
   return (

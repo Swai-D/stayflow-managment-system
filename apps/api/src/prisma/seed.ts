@@ -12,13 +12,13 @@ async function main() {
     update: {},
     create: {
       id: 'default-hotel-id',
-      name: 'G4 Homez',
+      name: 'Buffalo Hotel',
       slug: 'default',
-      address: 'Kilakala, Morogoro, Tanzania',
+      address: 'Morogoro, Tanzania',
       phone: '+255 XXX XXX XXX',
-      email: 'booking@g4homez.com',
-      wifiName: 'G4Homez_WiFi',
-      wifiPassword: 'welcome2024',
+      email: 'booking@buffalo-hotel.co.tz',
+      wifiName: 'BuffaloHotel_WiFi',
+      wifiPassword: 'welcome2026',
       checkInTime: '14:00',
       checkOutTime: '11:00',
       defaultLanguage: 'sw',
@@ -30,12 +30,12 @@ async function main() {
   // 2. Create admin user
   const adminPassword = await bcrypt.hash('Admin@2026!', 12)
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@g4homez.com' },
+    where: { email: 'admin@buffalo-hotel.co.tz' },
     update: {},
     create: {
       hotelId: hotel.id,
       fullName: 'Administrator',
-      email: 'admin@g4homez.com',
+      email: 'admin@buffalo-hotel.co.tz',
       passwordHash: adminPassword,
       role: 'admin',
       isActive: true,
@@ -46,12 +46,12 @@ async function main() {
   // 3. Create receptionist
   const recepPassword = await bcrypt.hash('Recep@2026!', 12)
   await prisma.user.upsert({
-    where: { email: 'reception@g4homez.com' },
+    where: { email: 'reception@buffalo-hotel.co.tz' },
     update: {},
     create: {
       hotelId: hotel.id,
       fullName: 'Receptionist',
-      email: 'reception@g4homez.com',
+      email: 'reception@buffalo-hotel.co.tz',
       passwordHash: recepPassword,
       role: 'receptionist',
       isActive: true,
@@ -134,8 +134,8 @@ async function main() {
 
   console.log('\n🎉 Seeding completed!')
   console.log('\n📋 Login credentials:')
-  console.log('   Admin:       admin@g4homez.com / Admin@2026!')
-  console.log('   Receptionist: reception@g4homez.com / Recep@2026!')
+  console.log('   Admin:       admin@buffalo-hotel.co.tz / Admin@2026!')
+  console.log('   Receptionist: reception@buffalo-hotel.co.tz / Recep@2026!')
 }
 
 main()

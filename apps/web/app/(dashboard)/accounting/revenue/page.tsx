@@ -166,7 +166,7 @@ export default function RevenuePage() {
                <Zap size={20} />
             </div>
             <div>
-               <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">StayFlow Business Advisor</h3>
+               <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Buffalo Business Advisor</h3>
                <p className="text-[12px] text-[#9ca3af] font-medium">Uchambuzi wa ki-intelijensia wa mwenendo wa biashara yako</p>
             </div>
          </div>

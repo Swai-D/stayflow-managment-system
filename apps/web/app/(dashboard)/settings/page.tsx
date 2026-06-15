@@ -39,7 +39,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="px-1">
         <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">System Settings</h1>
-        <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Control center for StayFlow application powerhouse</p>
+        <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Control center for Buffalo Hotel application powerhouse</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -79,7 +79,7 @@ export default function SettingsPage() {
                  <Shield size={60} />
               </div>
               <p className="text-[11px] font-bold uppercase tracking-widest opacity-60 mb-2">Admin Power</p>
-              <p className="text-[13px] font-medium leading-relaxed mb-4">You have full administrative privileges for G4 Homez.</p>
+              <p className="text-[13px] font-medium leading-relaxed mb-4">You have full administrative privileges for Buffalo Hotel.</p>
               <button className="text-[11px] font-bold flex items-center gap-1 hover:underline">
                  Security Center <ChevronRight size={12} />
               </button>
