@@ -261,7 +261,7 @@ export default function ReservationsPage() {
 
   const bookings = bookingsData?.data || []
   const meta = bookingsData?.meta || { total: 0, totalPages: 1 }
-  const trendData = occupancyTrend.map(d => ({ val: d.count }))
+  const trendData = occupancyTrend.map((d: any) => ({ val: d.count }))
 
   return (
     <div className="space-y-4 font-sans text-left">
@@ -311,7 +311,7 @@ export default function ReservationsPage() {
           { label: 'Total Checkout', val: bookingStats?.checkOutsToday, icon: '🔄', color: '#ef4444', bg: 'bg-red-50' },
           { label: 'Total Guest', val: bookingStats?.totalActive, icon: '👤', color: '#2563eb', bg: 'bg-blue-50' },
           { label: 'Occupancy Rate', val: bookingStats ? `${Math.round((bookingStats.totalActive / 50) * 100)}%` : null, icon: '🏠', color: '#f59e0b', bg: 'bg-amber-50' },
-        ].map(s => (
+        ].map((s: any) => (
           <div key={s.label} className="bg-white rounded-xl shadow-card p-5 flex flex-col justify-between min-h-[140px]">
             <p className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-wider mb-2">{s.label}</p>
             {statsLoading ? (

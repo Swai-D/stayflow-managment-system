@@ -21,9 +21,9 @@ import { toast } from 'sonner'
 
 // ─── Status Styles ───────────────────────────────────
 const STATUS_STYLES: Record<string, { bg: string; text: string; border: string; iconBg: string; sub: string; badge: string }> = {
-  available:   { bg: 'bg-[#f0fdf4]', text: 'text-[#166534]', border: 'border-[#bcf0da]', iconBg: 'bg-[#dcfce7]', sub: 'text-[#166534]/60', badge: 'bg-[#dcfce7] text-[#166534] border-[#bcf0da]' },
-  dirty:       { bg: 'bg-[#fffbeb]', text: 'text-[#92400e]', border: 'border-[#fde68a]', iconBg: 'bg-[#fef3c7]', sub: 'text-[#92400e]/60', badge: 'bg-[#fef3c7] text-[#92400e] border-[#fde68a]' },
-  maintenance: { bg: 'bg-[#fef2f2]', text: 'text-[#991b1b]', border: 'border-[#fecaca]', iconBg: 'bg-[#fee2e2]', sub: 'text-[#991b1b]/60', badge: 'bg-[#fee2e2] text-[#991b1b] border-[#fecaca]' },
+  available:   { bg: 'bg-[#ecfdf5]', text: 'text-[#10b981]', border: 'border-[#d1fae5]', iconBg: 'bg-[#dcfce7]', sub: 'text-[#10b981]/60', badge: 'bg-[#ecfdf5] text-[#10b981] border-[#d1fae5]' },
+  dirty:       { bg: 'bg-[#fffbeb]', text: 'text-[#d97706]', border: 'border-[#fef3c7]', iconBg: 'bg-[#fef3c7]', sub: 'text-[#d97706]/60', badge: 'bg-[#fffbeb] text-[#d97706] border-[#fef3c7]' },
+  maintenance: { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', iconBg: 'bg-[#fee2e2]', sub: 'text-[#dc2626]/60', badge: 'bg-[#fef2f2] text-[#dc2626] border-[#fee2e2]' },
   occupied:    { bg: 'bg-[#1a2b4a]', text: 'text-white', border: 'border-[#1a2b4a]', iconBg: 'bg-white/10', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
   cleaning:    { bg: 'bg-[#f5f3ff]', text: 'text-[#5b21b6]', border: 'border-[#ddd6fe]', iconBg: 'bg-[#ede9fe]', sub: 'text-[#5b21b6]/60', badge: 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]' },
 }
@@ -110,7 +110,7 @@ export default function RoomsPage() {
           { label: 'Available', value: stats?.available ?? 0, icon: '✅', bg: 'bg-[#ecfdf5]' },
           { label: 'Occupied', value: stats?.occupied ?? 0, icon: '🏠', bg: 'bg-[#eff6ff]' },
           { label: 'Need cleaning', value: stats?.dirty ?? 0, icon: '🧹', bg: 'bg-[#fff7ed]' },
-        ].map(s => (
+        ].map((s: any) => (
           <div key={s.label} className="bg-white rounded-xl p-[16px_18px] shadow-[0_1px_3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col justify-between h-[110px]">
             <div className="flex justify-between items-start">
                <p className="text-[11px] font-medium text-[#9ca3af] uppercase tracking-widest">{s.label}</p>
@@ -162,7 +162,7 @@ export default function RoomsPage() {
               className="text-[12px] font-bold border border-gray-100 rounded-lg px-4 py-2.5 bg-white focus:outline-none shadow-sm transition-all cursor-pointer text-[#6b7280]"
             >
               <option value="">All Floors</option>
-              {floors.map(f => <option key={f} value={f}>Floor {f}</option>)}
+              {floors.map((f: any) => <option key={f} value={f}>Floor {f}</option>)}
             </select>
           </div>
         </div>

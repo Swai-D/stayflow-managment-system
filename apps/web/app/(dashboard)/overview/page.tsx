@@ -62,10 +62,11 @@ function RoomCardMini({ room, index }: { room: Room; index: number }) {
   ]
   const occ = occupiedColors[index % 3]
 
-  const styles = status === 'available' ? { bg: 'bg-[#eff6ff]', text: 'text-[#2563eb]', border: 'border-[#dbeafe]', sub: 'text-blue-400' } :
+  const styles = status === 'available' ? { bg: 'bg-[#ecfdf5]', text: 'text-[#10b981]', border: 'border-[#d1fae5]', sub: 'text-[#10b981]/60' } :
                  status === 'occupied'  ? occ :
-                 status === 'dirty'     ? { bg: 'bg-[#fef3c7]', text: 'text-[#92400e]', border: 'border-[#fde68a]', sub: 'text-[#92400e]/60' } :
+                 status === 'dirty'     ? { bg: 'bg-[#fffbeb]', text: 'text-[#d97706]', border: 'border-[#fef3c7]', sub: 'text-[#d97706]/60' } :
                  status === 'cleaning'  ? { bg: 'bg-[#e0e7ff]', text: 'text-[#3730a3]', border: 'border-[#c7d2fe]', sub: 'text-[#3730a3]/60' } :
+                 status === 'maintenance' ? { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', sub: 'text-[#dc2626]/60' } :
                  { bg: 'bg-[#f3f4f6]', text: 'text-[#6b7280]', border: 'border-[#e5e7eb]', sub: 'text-[#9ca3af]' }
 
   return (
@@ -139,7 +140,7 @@ export default function OverviewPage() {
   const roomsList = roomsData?.rooms || []
   const miniRooms = roomsList.slice(0, 12)
 
-  const barChartData = occupancyData.map(d => ({
+  const barChartData = occupancyData.map((d: any) => ({
     date: format(new Date(d.date), 'EEE'),
     total: d.count
   }))
@@ -170,7 +171,7 @@ export default function OverviewPage() {
             label="Available room" 
             value={summary?.roomStats?.available ?? 0} 
             icon="🚪" 
-            iconBg="bg-[#eff6ff]" 
+            iconBg="bg-[#ecfdf5]" 
             isLoading={summaryLoading}
           />
           <StatMini 
@@ -216,7 +217,7 @@ export default function OverviewPage() {
           </div>
           
           <div className="flex justify-between mt-2 px-1">
-             {barChartData.map((d, i) => (
+             {barChartData.map((d: any, i: number) => (
                <span key={i} className="text-[9px] text-[#9ca3af] font-medium uppercase">{d.date}</span>
              ))}
           </div>
@@ -271,10 +272,11 @@ export default function OverviewPage() {
 
           <div className="flex flex-wrap gap-x-[20px] gap-y-2 mt-[24px] pt-5 border-t border-[#f3f4f6]">
             {[
-              { label: 'Available', color: 'bg-[#eff6ff] border-[#dbeafe]' },
+              { label: 'Available', color: 'bg-[#ecfdf5] border-[#d1fae5]' },
               { label: 'Occupied', color: 'bg-[#1a2b4a]' },
-              { label: 'Dirty', color: 'bg-[#fef3c7] border-[#fde68a]' },
+              { label: 'Dirty', color: 'bg-[#fffbeb] border-[#fef3c7]' },
               { label: 'Cleaning', color: 'bg-[#e0e7ff] border-[#c7d2fe]' },
+              { label: 'Maintenance', color: 'bg-[#fef2f2] border-[#fee2e2]' },
             ].map(l => (
               <div key={l.label} className="flex items-center gap-[6px] text-[10px] text-[#6b7280] font-semibold">
                 <div className={cn('w-[8px] h-[8px] rounded-full border shadow-sm', l.color)} />

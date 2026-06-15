@@ -11,7 +11,7 @@ import {
 } from '@/hooks/useSettings'
 import { format } from 'date-fns'
 import { 
-  Building, Users, Activity, Save, Plus, Trash2, 
+  Building, Users, Activity, Save, Plus, Trash2, X,
   Shield, CreditCard, Bell, Globe, Clock, 
   Lock, Camera, Mail, Phone, MapPin, 
   ChevronRight, Search, Filter, Loader2,

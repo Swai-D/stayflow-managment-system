@@ -109,7 +109,7 @@ export default function HousekeepingPage() {
           { key: 'cleaning', label: 'In Progress', icon: Brush },
           { key: 'available', label: 'Clean & Ready', icon: CheckCircle2 },
           { key: 'occupied', label: 'Occupied', icon: Clock },
-        ].map(s => (
+        ].map((s: any) => (
           <button 
             key={s.key}
             onClick={() => { setFilter(s.key as any); setPage(1) }}

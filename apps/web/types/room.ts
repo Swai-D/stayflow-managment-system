@@ -62,9 +62,9 @@ export const ROOM_STATUS_CONFIG: Record<RoomStatus, {
   available:   { 
     label: 'Available',    
     labelSw: 'Inapatikana',    
-    bgClass: 'bg-[#eff6ff]',       
-    textClass: 'text-[#2563eb]',   
-    borderClass: 'border-blue-100' 
+    bgClass: 'bg-[#ecfdf5]',       
+    textClass: 'text-[#10b981]',   
+    borderClass: 'border-[#d1fae5]' 
   },
   occupied:    { 
     label: 'Occupied',     
@@ -76,9 +76,9 @@ export const ROOM_STATUS_CONFIG: Record<RoomStatus, {
   dirty:       { 
     label: 'Dirty',        
     labelSw: 'Chafu',          
-    bgClass: 'bg-[#fef3c7]',    
-    textClass: 'text-[#92400e]',  
-    borderClass: 'border-amber-200' 
+    bgClass: 'bg-[#fffbeb]',    
+    textClass: 'text-[#d97706]',  
+    borderClass: 'border-[#fef3c7]' 
   },
   cleaning:    { 
     label: 'Cleaning',     
@@ -90,9 +90,9 @@ export const ROOM_STATUS_CONFIG: Record<RoomStatus, {
   maintenance: { 
     label: 'Maintenance',  
     labelSw: 'Matengenezo',    
-    bgClass: 'bg-red-50',      
-    textClass: 'text-red-700',    
-    borderClass: 'border-red-200' 
+    bgClass: 'bg-[#fef2f2]',      
+    textClass: 'text-[#dc2626]',    
+    borderClass: 'border-[#fee2e2]' 
   },
   blocked:     { 
     label: 'Blocked',      

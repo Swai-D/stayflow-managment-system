@@ -792,11 +792,11 @@ AND checkOut > :requestedCheckIn
 --color-status-confirmed-bg: #EFF6FF; /* Blue light bg */
 
 /* ─── ROOM STATUS COLORS (Grid view) ─── */
---color-room-available:    #FFFFFF;   /* White — empty, clean */
+--color-room-available:    #ECFDF5;   /* Light green — empty, clean */
 --color-room-occupied:     #DBEAFE;   /* Light blue — guest inside */
---color-room-dirty:        #FEF3C7;   /* Light amber — needs cleaning */
+--color-room-dirty:        #FFFBEB;   /* Light amber — needs cleaning */
 --color-room-cleaning:     #E0E7FF;   /* Light indigo — being cleaned */
---color-room-maintenance:  #FEE2E2;   /* Light red — out of order */
+--color-room-maintenance:  #FEF2F2;   /* Light red — out of order */
 --color-room-dnd:          #374151;   /* Dark gray text — Do Not Disturb */
 --color-room-booked:       #EFF6FF;   /* Light blue — upcoming booking */
 

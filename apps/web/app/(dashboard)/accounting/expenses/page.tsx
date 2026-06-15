@@ -27,6 +27,12 @@ const CATEGORIES = [
   { id: 'other',       label: 'Other Costs',      icon: Briefcase,    color: '#6b7280', bg: 'bg-gray-50' },
 ]
 
+interface ChartDataItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export default function ExpensesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -46,7 +52,7 @@ export default function ExpensesPage() {
   const meta = expensesData?.meta || { total: 0, totalPages: 1 }
 
   // Pie Chart Data
-  const chartData = stats?.byCategory?.map((cat: any) => ({
+  const chartData: ChartDataItem[] = stats?.byCategory?.map((cat: any) => ({
     name: cat.category.charAt(0).toUpperCase() + cat.category.slice(1),
     value: Number(cat._sum.amount),
     color: CATEGORIES.find(c => c.id === cat.category)?.color || '#9ca3af'
@@ -130,19 +136,19 @@ export default function ExpensesPage() {
                         paddingAngle={5}
                         dataKey="value"
                      >
-                        {chartData.map((entry, index) => (
+                        {chartData.map((entry: ChartDataItem, index: number) => (
                            <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                      </Pie>
                      <Tooltip 
                         contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-                        formatter={(val: number) => formatTZS(val)}
+                        formatter={(val: any) => formatTZS(val)}
                      />
                   </RePieChart>
                </ResponsiveContainer>
             </div>
             <div className="flex-1 grid grid-cols-2 gap-x-8 gap-y-4">
-               {CATEGORIES.slice(0, 4).map(cat => {
+               {CATEGORIES.slice(0, 4).map((cat: any) => {
                  const stat = stats?.byCategory?.find((s: any) => s.category === cat.id)
                  return (
                    <div key={cat.id} className="space-y-1">
