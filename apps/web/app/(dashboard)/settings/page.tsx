@@ -227,7 +227,7 @@ function StaffManagementView() {
         <div className="p-8 bg-blue-50/50 border-b border-blue-100 animate-in slide-in-from-top duration-300">
           <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div className="md:col-span-1"><FormInput label="Full Name" name="fullName" required placeholder="mf. Bakari Salum" /></div>
-            <div className="md:col-span-1"><FormInput label="Email Address" name="email" type="email" required placeholder="name@g4homez.com" /></div>
+            <div className="md:col-span-1"><FormInput label="Email Address" name="email" type="email" required placeholder="name@buffalo.co.tz" /></div>
             <div className="md:col-span-1">
                <FormSelect label="Assigned Role" name="role">
                   <option value="receptionist">Receptionist</option>

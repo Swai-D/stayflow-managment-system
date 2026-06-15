@@ -30,9 +30,9 @@ export default function LoginPage() {
       {/* Logo */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-12 h-12 bg-primary rounded-xl mb-4">
-          <span className="text-white font-bold text-xl">S</span>
+          <span className="text-white font-bold text-xl">B</span>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">StayFlow</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Buffalo Hotel</h1>
         <p className="text-sm text-gray-500 mt-1">Ingia kwenye mfumo</p>
       </div>
 
@@ -48,7 +48,7 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="admin@g4homez.com"
+              placeholder="admin@buffalo.co.tz"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -92,7 +92,7 @@ export default function LoginPage() {
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-400 mt-6">
-        StayFlow Reservation Management System
+        Buffalo Hotel Reservation Management System
       </p>
     </div>
   )
