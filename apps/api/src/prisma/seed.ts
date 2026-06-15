@@ -9,7 +9,10 @@ async function main() {
   // 1. Create default hotel
   const hotel = await prisma.hotel.upsert({
     where: { slug: 'default' },
-    update: {},
+    update: {
+      name: 'Buffalo Hotel',
+      email: 'booking@buffalo-hotel.co.tz',
+    },
     create: {
       id: 'default-hotel-id',
       name: 'Buffalo Hotel',
