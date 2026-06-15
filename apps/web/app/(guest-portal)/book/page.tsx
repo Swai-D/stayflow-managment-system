@@ -52,8 +52,8 @@ export default function PublicBookingPage() {
       <nav className="bg-white border-b border-gray-100 py-4 px-6 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">S</div>
-             <span className="text-lg font-bold text-gray-900 tracking-tight">{hotel?.name || 'StayFlow'}</span>
+             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">B</div>
+             <span className="text-lg font-bold text-gray-900 tracking-tight">{hotel?.name || 'Buffalo Hotel'}</span>
           </div>
           <div className="flex items-center gap-6">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Self Service Portal</span>
