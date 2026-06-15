@@ -130,7 +130,7 @@ export default function ExpensesPage() {
                         paddingAngle={5}
                         dataKey="value"
                      >
-                        {chartData.map((entry, index) => (
+                        {chartData.map((entry: { name: string; value: number; color: string }, index: number) => (
                            <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                      </Pie>
