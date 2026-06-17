@@ -6,7 +6,8 @@ import { useAuthStore } from '@/store/authStore'
 import {
   LayoutDashboard, Calendar, Users, DoorOpen,
   Sparkles, Receipt, TrendingUp, Settings, LogOut,
-  ChevronDown, ShieldCheck
+  ChevronDown, ShieldCheck, LayoutGrid, Package,
+  ArrowLeftRight, ShoppingCart, Truck, CreditCard
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/store/uiStore'
@@ -27,6 +28,17 @@ const navGroups = [
     items: [
       { label: 'Expense Tracking', href: '/accounting/expenses', icon: Receipt },
       { label: 'Revenue Management', href: '/accounting/revenue', icon: TrendingUp },
+    ]
+  },
+  {
+    section: 'STORE & INVENTORY',
+    items: [
+      { label: 'Store Dashboard',   href: '/store',                    icon: LayoutGrid },
+      { label: 'Items & Stock',     href: '/store/items',              icon: Package },
+      { label: 'Transactions',      href: '/store/transactions',       icon: ArrowLeftRight },
+      { label: 'Purchase Orders',   href: '/store/purchase-orders',    icon: ShoppingCart },
+      { label: 'Suppliers',         href: '/store/suppliers',          icon: Truck },
+      { label: 'POS — Post to Room',href: '/store/pos',                icon: CreditCard },
     ]
   }
 ]

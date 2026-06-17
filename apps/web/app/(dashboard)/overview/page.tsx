@@ -163,19 +163,33 @@ export default function OverviewPage() {
       </div>
 
       {/* ── Row 1: Grid (1 : 1.6 : 1.4) ────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr_1.4fr] gap-[14px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1.6fr_1.2fr] gap-[14px]">
         
-        {/* Col 1: Two mini stat cards */}
-        <div className="flex flex-col gap-[14px]">
+        {/* Col 1: Mini stat cards */}
+        <div className="grid grid-cols-2 gap-[14px]">
           <StatMini 
-            label="Available room" 
+            label="Online Res." 
+            value={summary?.onlineReservations ?? 0} 
+            icon="💻" 
+            iconBg="bg-[#eff6ff]" 
+            isLoading={summaryLoading}
+          />
+          <StatMini 
+            label="Direct Res." 
+            value={summary?.directReservations ?? 0} 
+            icon="📅" 
+            iconBg="bg-[#faf5ff]" 
+            isLoading={summaryLoading}
+          />
+          <StatMini 
+            label="Available Room" 
             value={summary?.roomStats?.available ?? 0} 
             icon="🚪" 
             iconBg="bg-[#ecfdf5]" 
             isLoading={summaryLoading}
           />
           <StatMini 
-            label="Check out" 
+            label="Check Out" 
             value={summary?.checkOutsToday ?? 0} 
             icon="↩️" 
             iconBg="bg-[#fff7ed]" 

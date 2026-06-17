@@ -53,6 +53,9 @@ export interface BookingStats {
   checkOutsToday: number
   totalActive: number
   pendingCount: number
+  allCount: number
+  onlineCount: number
+  directCount: number
 }
 
 export const BOOKING_STATUS_CONFIG: Record<BookingStatus, {

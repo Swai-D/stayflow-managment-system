@@ -13,7 +13,7 @@ export async function generateBookingRef(): Promise<string> {
     }
   })
   const num = String(count + 1).padStart(3, '0')
-  return `SF-${year}-${num}`
+  return `BUF-${year}-${num}`
 }
 
 export async function generateReceiptNumber(): Promise<string> {

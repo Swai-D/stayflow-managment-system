@@ -8,10 +8,13 @@ import { errorHandler } from './middleware/errorHandler'
 // Routes
 import authRoutes from './routes/auth.routes'
 import publicRoutes from './routes/public.routes'
+import websiteRoutes from './routes/website.routes'
 import bookingRoutes from './routes/bookings.routes'
 import roomRoutes from './routes/rooms.routes'
 import guestRoutes from './routes/guests.routes'
 import housekeepingRoutes from './routes/housekeeping.routes'
+import storeRoutes from './routes/store.routes'
+import posRoutes from './routes/pos.routes'
 import paymentRoutes from './routes/payments.routes'
 import expenseRoutes from './routes/expenses.routes'
 import reportRoutes from './routes/reports.routes'
@@ -20,8 +23,23 @@ import settingsRoutes from './routes/settings.routes'
 const app = express()
 
 // Middleware
-app.use(helmet())
-app.use(cors({ origin: process.env.APP_URL || 'http://localhost:3000', credentials: true }))
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}))
+app.use(cors({ 
+  origin: [
+    process.env.APP_URL || 'http://localhost:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://localhost:8080',
+    'http://localhost:63747',       // Website (Local)
+    'http://127.0.0.1:63747',       // Website (Local IP)
+    'http://192.168.1.156:63747',   // Website (Network)
+    'http://192.168.1.156:3000',    // Next.js (Network)
+    'http://localhost:5173',
+  ], 
+  credentials: true 
+}))
 app.use(morgan('dev'))
 
 // Special raw body for Snippe webhooks (must be before express.json)
@@ -37,12 +55,15 @@ app.get('/health', (req, res) => {
 })
 
 // API Routes
+app.use('/api', websiteRoutes)
 app.use('/api/v1/public', publicRoutes)
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/bookings', bookingRoutes)
 app.use('/api/v1/rooms', roomRoutes)
 app.use('/api/v1/guests', guestRoutes)
 app.use('/api/v1/housekeeping', housekeepingRoutes)
+app.use('/api/v1/store', storeRoutes)
+app.use('/api/v1/pos', posRoutes)
 app.use('/api/v1/payments', paymentRoutes)
 app.use('/api/v1/expenses', expenseRoutes)
 app.use('/api/v1/reports', reportRoutes)

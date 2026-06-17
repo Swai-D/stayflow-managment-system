@@ -165,18 +165,22 @@ export class BookingsService {
   // ─── Get all bookings ─────────────────────────────────
   async getBookings(hotelId: string, filters?: {
     status?: BookingStatus
+    source?: BookingSource | 'direct'
     search?: string
     dateFrom?: Date
     dateTo?: Date
     page?: number
     limit?: number
   }) {
-    const { status, search, dateFrom, dateTo, page = 1, limit = 20 } = filters || {}
+    const { status, source, search, dateFrom, dateTo, page = 1, limit = 20 } = filters || {}
     const skip = (page - 1) * limit
 
     const where: any = {
       hotelId,
       ...(status && { status }),
+      ...(source && { 
+        source: source === 'direct' ? { in: ['staff_entry', 'walk_in'] } : source 
+      }),
       ...(dateFrom && dateTo && {
         checkIn: { gte: dateFrom, lte: dateTo }
       }),
@@ -390,7 +394,15 @@ export class BookingsService {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
 
-    const [checkInsToday, checkOutsToday, totalActive, pendingCount] = await Promise.all([
+    const [
+      checkInsToday, 
+      checkOutsToday, 
+      totalActive, 
+      pendingCount,
+      allCount,
+      onlineCount,
+      directCount
+    ] = await Promise.all([
       prisma.booking.count({
         where: { hotelId, checkIn: { gte: today, lt: tomorrow } }
       }),
@@ -403,9 +415,26 @@ export class BookingsService {
       prisma.booking.count({
         where: { hotelId, status: 'pending' }
       }),
+      prisma.booking.count({
+        where: { hotelId, status: { not: 'cancelled' } }
+      }),
+      prisma.booking.count({
+        where: { hotelId, source: 'online_self', status: { not: 'cancelled' } }
+      }),
+      prisma.booking.count({
+        where: { hotelId, source: { in: ['staff_entry', 'walk_in'] }, status: { not: 'cancelled' } }
+      }),
     ])
 
-    return { checkInsToday, checkOutsToday, totalActive, pendingCount }
+    return { 
+      checkInsToday, 
+      checkOutsToday, 
+      totalActive, 
+      pendingCount,
+      allCount,
+      onlineCount,
+      directCount
+    }
   }
 }
 

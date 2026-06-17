@@ -141,7 +141,10 @@ export class ReportsService {
       checkIns,
       checkOuts,
       roomStats,
-      revenueToday
+      revenueToday,
+      onlineReservations,
+      directReservations,
+      totalActive
     ] = await Promise.all([
       prisma.booking.count({ where: { hotelId, checkIn: { gte: today, lte: tomorrow } } }),
       prisma.booking.count({ where: { hotelId, checkOut: { gte: today, lte: tomorrow } } }),
@@ -157,6 +160,23 @@ export class ReportsService {
           paidAt: { gte: today, lte: tomorrow }
         },
         _sum: { amount: true }
+      }),
+      prisma.booking.count({ 
+        where: { 
+          hotelId, 
+          source: 'online_self',
+          status: { not: 'cancelled' }
+        } 
+      }),
+      prisma.booking.count({ 
+        where: { 
+          hotelId, 
+          source: { in: ['staff_entry', 'walk_in'] },
+          status: { not: 'cancelled' }
+        } 
+      }),
+      prisma.booking.count({
+        where: { hotelId, status: { in: ['confirmed', 'checked_in'] } }
       })
     ])
 
@@ -167,7 +187,10 @@ export class ReportsService {
         acc[curr.status] = curr._count
         return acc
       }, {}),
-      revenueToday: revenueToday._sum.amount || 0
+      revenueToday: Number(revenueToday._sum.amount || 0),
+      onlineReservations,
+      directReservations,
+      totalActive
     }
   }
 }

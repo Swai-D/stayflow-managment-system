@@ -4,6 +4,7 @@ import { Booking, BookingStats, BookingStatus } from '@/types/booking'
 
 export function useBookings(filters?: {
   status?: BookingStatus
+  source?: string
   search?: string
   dateFrom?: string
   dateTo?: string
@@ -12,6 +13,7 @@ export function useBookings(filters?: {
 }) {
   const params = new URLSearchParams()
   if (filters?.status) params.append('status', filters.status)
+  if (filters?.source) params.append('source', filters.source)
   if (filters?.search) params.append('search', filters.search)
   if (filters?.dateFrom) params.append('dateFrom', filters.dateFrom)
   if (filters?.dateTo) params.append('dateTo', filters.dateTo)

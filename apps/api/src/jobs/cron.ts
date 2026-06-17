@@ -2,6 +2,7 @@ import cron from 'node-cron'
 import { PrismaClient } from '@prisma/client'
 import { startOfDay, subDays, endOfDay } from 'date-fns'
 import { notificationService } from '../services/notification.service'
+import { checkLowStockAlerts } from '../services/alerts.service'
 
 const prisma = new PrismaClient()
 
@@ -33,6 +34,12 @@ export const initJobs = () => {
         data: { bookingRef: b.bookingRef, hotelName: b.hotel.name }
       })
     }
+  })
+
+  // Low stock alerts
+  cron.schedule('0 8 * * *', async () => {
+    console.log('[Job] Checking low stock alerts...')
+    await checkLowStockAlerts()
   })
 
   // 2. Auto-checkout overdue bookings

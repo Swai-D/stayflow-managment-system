@@ -6,9 +6,10 @@ import { availabilityService } from '../services/availability.service'
 import { AuthRequest } from '../middleware/authenticate'
 
 export const getBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status, search, dateFrom, dateTo, page, limit } = req.query
+  const { status, source, search, dateFrom, dateTo, page, limit } = req.query
   const result = await bookingsService.getBookings(req.user!.hotelId, {
     status: status as any,
+    source: source as any,
     search: search as string,
     dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
     dateTo: dateTo ? new Date(dateTo as string) : undefined,

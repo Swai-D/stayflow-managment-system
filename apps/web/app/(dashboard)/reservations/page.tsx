@@ -252,7 +252,7 @@ export default function ReservationsPage() {
 
   const { data: bookingStats, isLoading: statsLoading } = useBookingStats()
   const { data: bookingsData, isLoading: bookingsLoading } = useBookings({
-    status: activeTab === 'all' ? undefined : (activeTab === 'online' ? 'pending' : 'confirmed') as any,
+    source: activeTab === 'all' ? undefined : (activeTab === 'online' ? 'online_self' : 'direct'),
     search,
     page,
     limit: 10
@@ -284,9 +284,9 @@ export default function ReservationsPage() {
       {/* ── Tabs ────────────────────────────────────────── */}
       <div className="flex items-center gap-1 mb-4">
         {[
-          { id: 'all', label: 'All Reservation', icon: '📋' },
-          { id: 'online', label: 'Online Reservation', icon: '💻' },
-          { id: 'direct', label: 'Direct Reservation', icon: '📅' },
+          { id: 'all', label: 'All Reservation', icon: '📋', count: bookingStats?.allCount },
+          { id: 'online', label: 'Online Reservation', icon: '💻', count: bookingStats?.onlineCount },
+          { id: 'direct', label: 'Direct Reservation', icon: '📅', count: bookingStats?.directCount },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -300,6 +300,14 @@ export default function ReservationsPage() {
           >
             <span className="text-[14px]">{tab.icon}</span>
             <span>{tab.label}</span>
+            {tab.count !== undefined && (
+              <span className={cn(
+                "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
+                activeTab === tab.id ? "bg-[#2563eb] text-white" : "bg-subtle text-[#9ca3af]"
+              )}>
+                {tab.count}
+              </span>
+            )}
           </button>
         ))}
       </div>

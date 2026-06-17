@@ -13,6 +13,7 @@ enum UserRole {
   admin
   receptionist
   housekeeping
+  waiter
 }
 
 enum RoomType {
@@ -23,6 +24,8 @@ enum RoomType {
   presidential
   superior
   conference
+  twin
+  triple
 }
 
 enum RoomStatus {
@@ -115,6 +118,43 @@ enum ExpenseCategory {
   other
 }
 
+enum StoreCategory {
+  FB
+  HOTEL
+}
+
+enum StockUnit {
+  KG
+  LTR
+  PCS
+  BOX
+  DOZEN
+  BOTTLE
+  PACK
+  ROLL
+}
+
+enum TransactionType {
+  STOCK_IN
+  STOCK_OUT
+  ADJUSTMENT
+  WASTAGE
+}
+
+enum POStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  SENT_TO_SUPPLIER
+  RECEIVED
+  CLOSED
+}
+
+enum ChargeStatus {
+  OPEN
+  SETTLED
+}
+
 // ─── MODELS ──────────────────────────────────────────
 
 model Hotel {
@@ -141,6 +181,9 @@ model Hotel {
   rooms    Room[]
   bookings Booking[]
   expenses Expense[]
+  suppliers Supplier[]
+  storeItems StoreItem[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("hotels")
 }
@@ -166,6 +209,9 @@ model User {
   receiptsIssued   Receipt[]
   auditLogs        AuditLog[]
   expensesCreated  Expense[]
+  storeTransactions StoreTransaction[]
+  purchaseOrders    PurchaseOrder[]
+  roomChargesPosted RoomCharge[]
 
   @@map("users")
 }
@@ -270,6 +316,7 @@ model Booking {
   addons        BookingAddon[]
   notifications Notification[]
   review        Review?
+  roomCharges   RoomCharge[]
 
   @@map("bookings")
 }
@@ -425,4 +472,140 @@ model Expense {
   user  User? @relation(fields: [userId], references: [id])
 
   @@map("expenses")
+}
+
+// ─── STORE ────────────────────────────────────────────────
+
+model Supplier {
+  id            String    @id @default(cuid())
+  hotelId       String
+  name          String
+  phone         String
+  email         String?
+  address       String?
+  paymentTerms  String?   
+  notes         String?
+  isActive      Boolean   @default(true)
+  hotel         Hotel     @relation(fields: [hotelId], references: [id])
+  items         StoreItem[]
+  purchaseOrders PurchaseOrder[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("suppliers")
+}
+
+model StoreItem {
+  id            String        @id @default(cuid())
+  hotelId       String
+  name          String
+  sku           String?       
+  category      StoreCategory 
+  subCategory   String        
+  unit          StockUnit     
+  currentStock  Float         @default(0)
+  minimumStock  Float         
+  maximumStock  Float
+  unitCost      Float         
+  sellingPrice  Float?        
+  supplierId    String?
+  supplier      Supplier?     @relation(fields: [supplierId], references: [id])
+  location      String?       
+  isActive      Boolean       @default(true)
+  isSellable    Boolean       @default(false) 
+  hotel         Hotel         @relation(fields: [hotelId], references: [id])
+  transactions  StoreTransaction[]
+  orderItems    PurchaseOrderItem[]
+  roomChargeItems RoomChargeItem[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([hotelId, sku])
+  @@map("store_items")
+}
+
+model StoreTransaction {
+  id            String            @id @default(cuid())
+  itemId        String
+  item          StoreItem         @relation(fields: [itemId], references: [id])
+  type          TransactionType   
+  quantity      Float
+  unitCost      Float?            
+  balanceBefore Float             
+  balanceAfter  Float             
+  reference     String?           
+  notes         String?
+  performedById String
+  performedBy   User              @relation(fields: [performedById], references: [id])
+  createdAt     DateTime          @default(now())
+
+  @@map("store_transactions")
+}
+
+model PurchaseOrder {
+  id              String          @id @default(cuid())
+  hotelId         String
+  poNumber        String          
+  status          POStatus        @default(DRAFT)
+  supplierId      String
+  supplier        Supplier        @relation(fields: [supplierId], references: [id])
+  items           PurchaseOrderItem[]
+  totalAmount     Float
+  notes           String?
+  expectedDelivery DateTime?
+  receivedAt      DateTime?
+  createdById     String
+  createdBy       User            @relation(fields: [createdById], references: [id])
+  hotel           Hotel           @relation(fields: [hotelId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([hotelId, poNumber])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  itemId          String
+  item            StoreItem     @relation(fields: [itemId], references: [id])
+  quantityOrdered Float
+  quantityReceived Float        @default(0)
+  unitCost        Float
+  totalCost       Float
+
+  @@map("purchase_order_items")
+}
+
+// ─── POS / ROOM CHARGES ──────────────────────────────────
+
+model RoomCharge {
+  id          String            @id @default(cuid())
+  bookingId   String
+  booking     Booking           @relation(fields: [bookingId], references: [id])
+  items       RoomChargeItem[]
+  totalAmount Float
+  status      ChargeStatus      @default(OPEN)  
+  notes       String?
+  postedById  String
+  postedBy    User              @relation(fields: [postedById], references: [id])
+  settledAt   DateTime?
+  createdAt   DateTime          @default(now())
+
+  @@map("room_charges")
+}
+
+model RoomChargeItem {
+  id            String      @id @default(cuid())
+  roomChargeId  String
+  roomCharge    RoomCharge  @relation(fields: [roomChargeId], references: [id])
+  itemId        String
+  item          StoreItem   @relation(fields: [itemId], references: [id])
+  itemName      String      
+  quantity      Float
+  unitPrice     Float       
+  totalPrice    Float
+
+  @@map("room_charge_items")
 }
