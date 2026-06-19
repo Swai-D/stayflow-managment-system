@@ -83,7 +83,7 @@ async function main() {
 
   // 5. Seed real rooms from BUFFALO HOTEL.xlsx (exported to rooms_info.json)
   const roomsData = JSON.parse(
-    fs.readFileSync(path.join(__dirname, '..', '..', '..', 'instructions', 'rooms_info.json'), 'utf8')
+    fs.readFileSync(path.join(__dirname, '..', '..', 'instructions', 'rooms_info.json'), 'utf8')
   )
   const rows: any[] = roomsData.sheets['HOTEL STOCK'].rows
 

@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import * as fs from 'fs'
 import * as path from 'path'
 
-const roomsData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', '..', 'instructions', 'rooms_info.json'), 'utf8'))
+const roomsData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'instructions', 'rooms_info.json'), 'utf8'))
 
 const prisma = new PrismaClient()
 
