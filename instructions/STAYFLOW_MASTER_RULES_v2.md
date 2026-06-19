@@ -85,7 +85,7 @@ ORM           : Prisma
 Validation    : Zod
 Auth          : JWT (access token 15min + refresh token 7days)
 File Upload   : Multer + Cloudinary
-PDF Generator : Puppeteer (server-side PDF generation)
+PDF Generator : PDFKit (server-side PDF generation, no Chromium)
 Email         : Nodemailer + SendGrid
 SMS           : AfricasTalking API
 ```
@@ -1445,7 +1445,7 @@ Footer        : "Asante kwa kuchagua {hotelName}"
 
 ### 11.2 PDF Generation Process
 1. Data fetched from DB (booking + payment + guest + room)
-2. HTML template rendered with data (Puppeteer)
+2. PDF document built with PDFKit using booking / payment data
 3. PDF generated server-side
 4. Uploaded to Cloudinary → get permanent URL
 5. URL saved to `receipts.pdfUrl`
@@ -1579,7 +1579,7 @@ CRON_SECRET=                # Secret for triggering cron jobs securely
 - [ ] POST /payments/snippe/webhook — handle Snippe webhook
 - [ ] Webhook signature verification (HMAC)
 - [ ] Idempotency-Key on every Snippe request
-- [ ] Puppeteer setup for PDF generation
+- [x] PDFKit setup for PDF generation
 - [ ] Receipt HTML template (all fields from Section 11.1)
 - [ ] PDF upload to Cloudinary
 - [ ] Receipt record in DB

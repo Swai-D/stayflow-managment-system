@@ -17,6 +17,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "ts-node src/prisma/seed.ts",
+    "db:fresh": "prisma db push --force-reset --accept-data-loss && ts-node src/prisma/seed.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -38,7 +39,7 @@
     "multer": "^1.x",
     "node-cron": "^3.x",
     "prisma": "5.22.0",
-    "puppeteer": "^25.1.0",
+    "pdfkit": "^0.16.0",
     "redis": "^4.x",
     "zod": "^3.x"
   },
@@ -53,6 +54,7 @@
     "@types/multer": "^1.x",
     "@types/node": "^20.x",
     "@types/node-cron": "^3.0.11",
+    "@types/pdfkit": "^0.13.5",
     "@types/supertest": "^6.x",
     "nodemon": "^3.x",
     "supertest": "^6.x",
