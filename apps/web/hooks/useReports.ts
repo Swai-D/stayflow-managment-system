@@ -65,6 +65,9 @@ export interface CalendarBooking {
   children: number
   guestName: string
   guestPhone: string
+  nationality?: string
+  idType?: string
+  idNumber?: string
 }
 
 export interface CalendarReport {

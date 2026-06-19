@@ -239,7 +239,7 @@ export class ReportsService {
           status: true,
           adults: true,
           children: true,
-          guest: { select: { fullName: true, phone: true } },
+          guest: { select: { fullName: true, phone: true, nationality: true, idType: true, idNumber: true } },
           room: { select: { roomNumber: true } }
         }
       })
@@ -261,7 +261,10 @@ export class ReportsService {
         adults: b.adults,
         children: b.children,
         guestName: b.guest.fullName,
-        guestPhone: b.guest.phone
+        guestPhone: b.guest.phone,
+        nationality: b.guest.nationality,
+        idType: b.guest.idType,
+        idNumber: b.guest.idNumber
       }))
     }
   }

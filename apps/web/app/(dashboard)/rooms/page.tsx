@@ -12,7 +12,8 @@ import {
   MapPin, Tag, CheckCircle2, QrCode,
   ChevronRight, Wifi, Tv, Coffee, Wind,
   Calendar, MoreHorizontal, Search,
-  ChevronLeft, Plus, Edit, Trash2, ExternalLink, X
+  ChevronLeft, Plus, Edit, Trash2, ExternalLink, X,
+  Wrench, Ban, Sparkles
 } from 'lucide-react'
 import NewBookingModal from '@/components/reservations/NewBookingModal'
 import RoomFormModal from '@/components/rooms/RoomFormModal'
@@ -26,6 +27,51 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; border: string; 
   maintenance: { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', iconBg: 'bg-[#fee2e2]', sub: 'text-[#dc2626]/60', badge: 'bg-[#fef2f2] text-[#dc2626] border-[#fee2e2]' },
   occupied:    { bg: 'bg-[#1a2b4a]', text: 'text-white', border: 'border-[#1a2b4a]', iconBg: 'bg-white/10', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
   cleaning:    { bg: 'bg-[#f5f3ff]', text: 'text-[#5b21b6]', border: 'border-[#ddd6fe]', iconBg: 'bg-[#ede9fe]', sub: 'text-[#5b21b6]/60', badge: 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]' },
+}
+
+// ─── Status Message Helper ─────────────────────────
+function RoomStatusBlock({ status, currentBooking, compact = false }: { status: RoomStatus; currentBooking?: any; compact?: boolean }) {
+  if (currentBooking) {
+    return (
+      <div className={cn(
+        "rounded-2xl p-4 border flex items-center gap-3",
+        compact ? "bg-[#eff6ff] border-blue-50" : "bg-[#eff6ff] border-blue-100"
+      )}>
+        <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-100 shrink-0">
+          {currentBooking.guest.fullName.charAt(0)}
+        </div>
+        <div className="overflow-hidden">
+          <p className={cn("font-bold text-[#1A2B4A] truncate", compact ? "text-[13px]" : "text-[15px]")}>{currentBooking.guest.fullName}</p>
+          <p className="text-[10px] text-[#2563EB] font-bold">{format(new Date(currentBooking.checkIn), 'dd MMM')} – {format(new Date(currentBooking.checkOut), 'dd MMM')}</p>
+          {!compact && <p className="text-[9px] text-[#6b7280] mt-0.5">REF: {currentBooking.bookingRef}</p>}
+        </div>
+      </div>
+    )
+  }
+
+  const config: Record<RoomStatus, { title: string; subtitle: string; icon: any; bg: string; text: string; border: string; iconBg: string }> = {
+    available:   { title: 'Ready for Booking', subtitle: 'Chumba kipo wazi kwa sasa', icon: CheckCircle2, bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-100', iconBg: 'bg-emerald-500' },
+    occupied:    { title: 'Occupied', subtitle: 'Chumba kimejazwa na mgeni', icon: Users, bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-100', iconBg: 'bg-[#2563eb]' },
+    dirty:       { title: 'Needs Cleaning', subtitle: 'Chumba kinahitaji usafi', icon: Sparkles, bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-100', iconBg: 'bg-amber-500' },
+    cleaning:    { title: 'Cleaning in Progress', subtitle: 'Chumba kinasafishwa', icon: Wind, bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-100', iconBg: 'bg-indigo-500' },
+    maintenance: { title: 'Under Maintenance', subtitle: 'Chumba kina matengenezo', icon: Wrench, bg: 'bg-red-50', text: 'text-red-800', border: 'border-red-100', iconBg: 'bg-red-500' },
+    blocked:     { title: 'Blocked', subtitle: 'Chumba kimezuiwa', icon: Ban, bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200', iconBg: 'bg-gray-500' },
+  }
+
+  const cfg = config[status] || config.available
+  const Icon = cfg.icon
+
+  return (
+    <div className={cn("rounded-2xl p-4 border flex items-center gap-3", cfg.bg, cfg.border)}>
+      <div className={cn("w-10 h-10 rounded-xl text-white flex items-center justify-center shadow-md shrink-0", cfg.iconBg)}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <p className={cn("font-bold uppercase tracking-tight", cfg.text, compact ? "text-[12px]" : "text-[14px]")}>{cfg.title}</p>
+        <p className={cn("font-medium text-[11px]", cfg.text.replace('800', '600'))}>{cfg.subtitle}</p>
+      </div>
+    </div>
+  )
 }
 
 // ─── Room Type Images ──────────────────────────────
@@ -387,37 +433,14 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
          {/* Occupant Info */}
          <div className="pt-4 border-t border-gray-50">
             <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-[0.15em] mb-3">Live Occupancy</p>
-            {currentBooking ? (
-               <div className="bg-[#eff6ff] rounded-2xl p-4 border border-blue-50 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                     <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-100">
-                        {currentBooking.guest.fullName.charAt(0)}
-                     </div>
-                     <div className="overflow-hidden">
-                        <p className="text-[13px] font-bold text-[#1A2B4A] truncate">{currentBooking.guest.fullName}</p>
-                        <p className="text-[10px] text-[#2563EB] font-bold">{format(new Date(currentBooking.checkIn), 'dd MMM')} – {format(new Date(currentBooking.checkOut), 'dd MMM')}</p>
-                     </div>
-                  </div>
-                  <ChevronRight size={16} className="text-[#2563EB] opacity-40" />
-               </div>
-            ) : (
-               <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100/50 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-100">
-                     <CheckCircle2 size={20} />
-                  </div>
-                  <div>
-                     <p className="text-[12px] font-bold text-emerald-800 uppercase tracking-tight">Ready for Booking</p>
-                     <p className="text-[10px] text-emerald-600 font-medium">Chumba kipo wazi kwa sasa</p>
-                  </div>
-               </div>
-            )}
+            <RoomStatusBlock status={status} currentBooking={currentBooking} compact />
          </div>
       </div>
     </div>
   )
 }
 
-// ─── Detailed Modal Component ────────────────────────
+// ─── Detailed Room Side Panel ────────────────────────
 function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { room: Room; onClose: () => void; onBook: () => void; onEdit: () => void; onDelete: () => void }) {
   const [qrCode, setQrCode] = useState('')
   const currentBooking = room.bookings?.[0]
@@ -430,30 +453,31 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
   }, [room.id])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-[#111827]/40" onClick={onClose} />
-      <div className="relative bg-white rounded-[32px] w-full max-w-[540px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col">
-        
-        {/* Header Image */}
-        <div className="h-64 relative bg-gray-100">
+      <div className="relative bg-white w-full max-w-[420px] h-full shadow-2xl animate-in slide-in-from-right duration-200 flex flex-col overflow-hidden font-sans">
+
+        {/* Compact Header */}
+        <div className="h-44 relative shrink-0">
            <img src={roomImage} className="w-full h-full object-cover" />
-           <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/80 via-transparent to-transparent" />
-           <div className="absolute bottom-6 left-8 right-8 text-left">
-              <span className="px-3 py-1 bg-[#2563eb] rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3 inline-block text-white shadow-lg shadow-blue-500/20">Room Profile</span>
-              <h2 className="text-[32px] font-bold tracking-tighter text-white leading-none">#{room.roomNumber} — {room.name}</h2>
-              <div className="flex items-center gap-3 mt-2 text-white/70 text-[12px] font-medium uppercase tracking-widest">
+           <div className="absolute inset-0 bg-gradient-to-t from-[#111827]/80 via-[#111827]/30 to-transparent" />
+           <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20">
+              <X size={18} />
+           </button>
+           <div className="absolute bottom-4 left-5 right-5">
+              <span className="px-2.5 py-1 bg-[#2563eb] rounded-lg text-[10px] font-bold uppercase tracking-widest mb-2 inline-block text-white shadow-lg">Room Profile</span>
+              <h2 className="text-[24px] font-bold tracking-tighter text-white leading-none">#{room.roomNumber} — {room.name}</h2>
+              <div className="flex items-center gap-2 mt-1.5 text-white/70 text-[11px] font-medium uppercase tracking-wider">
                  <span>{room.type}</span>
                  <span className="w-1 h-1 bg-white/30 rounded-full" />
                  <span>Floor {room.floor}</span>
               </div>
            </div>
-           <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/20 transition-all border border-white/20">
-              <X size={20} />
-           </button>
         </div>
 
-        <div className="p-8 flex flex-col text-left font-sans h-full overflow-y-auto thin-scrollbar">
-          <div className="flex justify-between items-center mb-8">
+        <div className="p-5 overflow-y-auto thin-scrollbar flex-1">
+          {/* Status & Actions */}
+          <div className="flex justify-between items-center mb-5">
              <div>
                 <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-[0.2em] mb-1">Status</p>
                 <span className={cn(
@@ -464,97 +488,71 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
                 </span>
              </div>
              <div className="flex items-center gap-2">
-                <button onClick={onEdit} className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-all border border-blue-100 shadow-sm" title="Edit Room">
-                   <Edit size={18} />
+                <button onClick={onEdit} className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-all border border-blue-100 shadow-sm" title="Edit Room">
+                   <Edit size={16} />
                 </button>
-                <button onClick={onDelete} className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm" title="Delete Room">
-                   <Trash2 size={18} />
+                <button onClick={onDelete} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm" title="Delete Room">
+                   <Trash2 size={16} />
                 </button>
              </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
-             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+             <div className="bg-[#f9fafb] p-3 rounded-xl border border-[#f3f4f6]">
                 <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-[0.15em] mb-1">Nightly Cost</p>
-                <p className="text-[20px] font-bold text-[#111827] tracking-tight">{formatTZS(room.pricePerNight)}</p>
+                <p className="text-[18px] font-bold text-[#111827] tracking-tight">{formatTZS(room.pricePerNight)}</p>
              </div>
-             <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+             <div className="bg-[#f9fafb] p-3 rounded-xl border border-[#f3f4f6]">
                 <p className="text-[10px] text-[#9ca3af] font-bold uppercase tracking-[0.15em] mb-1">Capacity</p>
-                <p className="text-[20px] font-bold text-[#111827] tracking-tight">{room.capacity} Persons</p>
+                <p className="text-[18px] font-bold text-[#111827] tracking-tight">{room.capacity} Pax</p>
              </div>
           </div>
 
-          <div className="space-y-8 flex-1">
-             {currentBooking ? (
-                <div>
-                   <h4 className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] mb-3">Occupancy Context</h4>
-                   <div className="bg-[#eff6ff] rounded-2xl p-5 border border-blue-100 flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-4">
-                         <div className="w-14 h-14 rounded-2xl bg-[#2563EB] text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-200">
-                            {currentBooking.guest.fullName.charAt(0)}
-                         </div>
-                         <div>
-                            <p className="text-[16px] font-bold text-[#1A2B4A]">{currentBooking.guest.fullName}</p>
-                            <p className="text-[11px] font-semibold text-[#2563EB] tracking-wide">
-                               REF: {currentBooking.bookingRef}
-                            </p>
-                         </div>
-                      </div>
-                      <div className="text-right">
-                         <p className="text-[14px] font-bold text-[#1A2B4A]">{format(new Date(currentBooking.checkIn), 'dd MMM')}</p>
-                         <p className="text-[10px] text-[#2563EB] font-bold uppercase tracking-widest">Arrival</p>
-                      </div>
-                   </div>
-                </div>
-             ) : (
-                <div className="bg-emerald-50 rounded-2xl p-6 border border-emerald-100 flex items-center gap-4 shadow-sm">
-                   <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-100">
-                      <CheckCircle2 size={24} />
-                   </div>
-                   <div>
-                      <p className="text-[15px] font-bold text-emerald-800">Operational Ready</p>
-                      <p className="text-[12px] text-emerald-600 font-medium">Chumba kipo wazi kwa ajili ya usajili mpya.</p>
-                   </div>
+          {/* Live Status */}
+          <div className="mb-5">
+             <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] mb-2">Live Status</p>
+             <RoomStatusBlock status={status} currentBooking={currentBooking} />
+          </div>
+
+          {/* QR Pass */}
+          <div className="bg-[#111827] rounded-2xl p-4 flex items-center gap-4 text-white relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+             {qrCode && (
+                <div className="bg-white p-1.5 rounded-xl shrink-0 shadow-lg relative z-10">
+                   <img src={qrCode} alt="Room QR" className="w-16 h-16" />
                 </div>
              )}
-
-             <div className="bg-[#111827] rounded-[28px] p-6 flex items-center gap-6 text-white shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
-                {qrCode && (
-                  <div className="bg-white p-2 rounded-xl shrink-0 shadow-lg relative z-10 transition-transform group-hover:scale-105">
-                    <img src={qrCode} alt="Room QR" className="w-20 h-20" />
-                  </div>
-                )}
-                {!qrCode && <div className="w-20 h-20 bg-white/10 rounded-xl animate-pulse shrink-0" />}
-                <div className="relative z-10 text-left">
-                   <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-[0.15em] text-blue-400 mb-1">
-                      <QrCode size={14} /> Guest Digital Pass
-                   </div>
-                   <p className="text-[12px] text-white font-medium leading-snug">
-                      Mgeni anaweza ku-scan hapa kupata maelezo na kufanya booking ya haraka.
-                   </p>
-                   <a 
-                    href={`/book?room=${room.id}`} 
-                    target="_blank" 
-                    className="mt-2 text-[10px] text-blue-400 font-bold uppercase flex items-center gap-1 hover:text-blue-300 transition-colors"
-                   >
-                     Preview Portal <ExternalLink size={12} />
-                   </a>
+             {!qrCode && <div className="w-16 h-16 bg-white/10 rounded-xl animate-pulse shrink-0" />}
+             <div className="relative z-10 text-left">
+                <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-[0.15em] text-blue-400 mb-1">
+                   <QrCode size={12} /> Guest Pass
                 </div>
+                <p className="text-[11px] text-white/80 font-medium leading-snug">
+                   Scan to view room details or book quickly.
+                </p>
+                <a 
+                 href={`/book?room=${room.id}`} 
+                 target="_blank" 
+                 className="mt-1.5 text-[10px] text-blue-400 font-bold uppercase flex items-center gap-1 hover:text-blue-300 transition-colors"
+                >
+                  Preview <ExternalLink size={10} />
+                </a>
              </div>
           </div>
+        </div>
 
-          <div className="flex gap-4 mt-8">
-             <button 
-                onClick={onBook}
-                className="flex-1 h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-2xl font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2"
-             >
-                Reserve Now
-             </button>
-             <button onClick={onClose} className="px-8 h-14 border border-gray-100 text-[#6b7280] rounded-2xl font-bold text-[14px] hover:bg-gray-50 transition-all">
-                Close
-             </button>
-          </div>
+        {/* Footer Actions */}
+        <div className="p-5 border-t border-[#f3f4f6] bg-white shrink-0 flex gap-3">
+           <button 
+              onClick={onBook}
+              className="flex-1 h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-[13px] transition-all shadow-lg shadow-blue-200/50 flex items-center justify-center gap-2"
+           >
+              Reserve Now
+           </button>
+           <button onClick={onClose} className="px-6 h-11 border border-[#e5e7eb] text-[#6b7280] rounded-xl font-bold text-[13px] hover:bg-[#f9fafb] transition-all">
+              Close
+           </button>
         </div>
       </div>
     </div>

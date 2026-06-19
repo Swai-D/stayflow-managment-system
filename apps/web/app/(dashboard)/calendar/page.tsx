@@ -291,6 +291,14 @@ function BookingDetailModal({ booking, onClose }: { booking: CalendarBooking; on
               <p className="text-[14px] font-bold text-[#111827]">{booking.guestPhone || '—'}</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Nationality</p>
+              <p className="text-[14px] font-bold text-[#111827]">{booking.nationality || '—'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">ID Document</p>
+              <p className="text-[14px] font-bold text-[#111827]">{booking.idType ? `${booking.idType.replace(/_/g, ' ')} · ${booking.idNumber || '—'}` : '—'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3">
               <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Check In</p>
               <p className="text-[14px] font-bold text-[#111827]">{format(parseISO(booking.checkIn), 'dd MMM yyyy')}</p>
             </div>

@@ -115,3 +115,19 @@ export function useCancelBooking() {
     }
   })
 }
+
+export function useConfirmPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, method, notes }: { id: string, method?: string, notes?: string }) => {
+      const res = await api.post(`/bookings/${id}/confirm-payment`, { method, notes })
+      return res.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+      queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
+    }
+  })
+}

@@ -3,55 +3,28 @@
 import { useState } from 'react'
 import {
   useBookings, useBookingStats,
-  useCheckIn, useCheckOut, useCancelBooking
+  useCancelBooking, useConfirmPayment
 } from '@/hooks/useBookings'
 import { useOccupancyReport } from '@/hooks/useReports'
 import { BOOKING_STATUS_CONFIG, Booking } from '@/types/booking'
 import { format } from 'date-fns'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import NewBookingModal from '@/components/reservations/NewBookingModal'
-import RecordPaymentModal from '@/components/payments/RecordPaymentModal'
 import { cn } from '@/lib/utils'
-import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, Printer } from 'lucide-react'
+import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 
 // ─── Booking Detail Modal ──────────────────────────────
 function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  const { mutate: checkIn,  isPending: checkingIn }  = useCheckIn()
-  const { mutate: checkOut, isPending: checkingOut } = useCheckOut()
   const { mutate: cancel,   isPending: cancelling }  = useCancelBooking()
+  const { mutate: confirmPayment, isPending: confirmingPayment } = useConfirmPayment()
 
   const [confirmCancel, setConfirmCancel] = useState(false)
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false)
 
   const nights = Math.round(
     (new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / 86400000
   )
-
-  const handleCheckIn = () => {
-    checkIn(booking.id, {
-      onSuccess: () => {
-        toast.success('Check-in imekamilika')
-        onClose()
-      },
-      onError: (err: any) => {
-        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kufanya check-in')
-      }
-    })
-  }
-
-  const handleCheckOut = () => {
-    checkOut(booking.id, {
-      onSuccess: () => {
-        toast.success('Check-out imekamilika')
-        onClose()
-      },
-      onError: (err: any) => {
-        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kufanya check-out')
-      }
-    })
-  }
 
   const handleCancel = () => {
     cancel({ id: booking.id, reason: 'Imefutwa na staff' }, {
@@ -62,13 +35,16 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
     })
   }
 
-  const handlePrintReceipt = () => {
-    const latestReceipt = booking.receipts?.[booking.receipts.length - 1]
-    if (latestReceipt?.pdfUrl) {
-      window.open(latestReceipt.pdfUrl, '_blank')
-    } else {
-      toast.error('Hakuna risiti iliyopatikana. Tafadhali rekodi malipo kwanza.')
-    }
+  const handleConfirmPayment = () => {
+    confirmPayment({ id: booking.id, method: 'cash' }, {
+      onSuccess: (data) => {
+        toast.success(data?.message || 'Malipo yamethibitishwa na invoice imetumwa')
+        onClose()
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kuthibitisha malipo')
+      }
+    })
   }
 
   return (
@@ -108,6 +84,8 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                 { label:'Check Out',  value: formatDate(booking.checkOut) },
                 { label:'Nights Stay', value: `${nights} nights` },
                 { label:'Guests Count', value: `${booking.adults} adults${booking.children ? `, ${booking.children} children` : ''}` },
+                { label:'Nationality', value: booking.guest.nationality || '—' },
+                { label:'ID Document', value: booking.guest.idType ? `${booking.guest.idType.replace(/_/g, ' ')} · ${booking.guest.idNumber || '—'}` : '—' },
                 { label:'Room Total', value: formatTZS(booking.roomTotal) },
                 { label:'Balance Due',value: formatTZS(booking.balanceDue) },
               ].map(item => (
@@ -164,31 +142,11 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
             {!confirmCancel && (
               <div className="space-y-2 pt-1">
                 <div className="flex gap-2">
-                  {(booking.status === 'pending' || booking.status === 'confirmed') && (
-                    <button onClick={handleCheckIn} disabled={checkingIn}
-                      className="flex-1 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50">
-                      {checkingIn ? 'Checking-in...' : '✓ Check In'}
-                    </button>
-                  )}
-
-                  {booking.status === 'checked_in' && (
-                    <button onClick={handleCheckOut} disabled={checkingOut}
-                      className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-green-100/50">
-                      {checkingOut ? 'Checking-out...' : 'Check Out'}
-                    </button>
-                  )}
-                  
-                  {booking.balanceDue > 0 && (
-                    <button onClick={() => setIsPaymentOpen(true)}
-                      className="flex-1 py-3 border border-[#2563EB] text-[#2563EB] rounded-xl text-[13px] font-bold hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
-                      <CreditCard size={15} /> Lipia
-                    </button>
-                  )}
-
-                  {booking.paidAmount > 0 && (
-                    <button onClick={handlePrintReceipt}
-                      className="px-5 py-3 border border-border text-[#6b7280] rounded-xl text-[13px] font-bold hover:bg-subtle transition-all flex items-center justify-center gap-2">
-                      <Printer size={15} /> Risiti
+                  {booking.status === 'pending' && Number(booking.balanceDue) > 0 && (
+                    <button onClick={handleConfirmPayment} disabled={confirmingPayment}
+                      className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-green-100/50 flex items-center justify-center gap-2">
+                      <CreditCard size={15} />
+                      {confirmingPayment ? 'Processing...' : 'Confirm Payment & Invoice'}
                     </button>
                   )}
                 </div>
@@ -212,12 +170,6 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
         </div>
       </div>
 
-      {isPaymentOpen && (
-        <RecordPaymentModal
-          booking={booking}
-          onClose={() => setIsPaymentOpen(false)}
-        />
-      )}
     </>
   )
 }

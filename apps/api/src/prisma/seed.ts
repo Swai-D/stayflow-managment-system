@@ -28,6 +28,11 @@ async function main() {
       checkOutTime: '11:00',
       defaultLanguage: 'sw',
       isActive: true,
+      paymentNumbers: [
+        { name: 'Vodacom M-Pesa', number: '0745 123 456', network: 'Vodacom' },
+        { name: 'Airtel Money', number: '0689 123 456', network: 'Airtel' },
+        { name: 'Mixx by Yas (Tigo Pesa)', number: '0655 123 456', network: 'Tigo' },
+      ] as any,
     }
   })
   console.log('✅ Hotel created:', hotel.name)

@@ -142,7 +142,7 @@ export class BookingsService {
           paidAmount: 0,
         },
         include: {
-          guest: { select: { id: true, fullName: true, phone: true, email: true } },
+          guest: { select: { id: true, fullName: true, phone: true, email: true, idType: true, idNumber: true, nationality: true } },
           room: { select: { id: true, roomNumber: true, name: true, type: true } },
           createdBy: { select: { id: true, fullName: true } },
         }
@@ -197,7 +197,7 @@ export class BookingsService {
       prisma.booking.findMany({
         where,
         include: {
-          guest: { select: { id: true, fullName: true, phone: true, nationality: true } },
+          guest: { select: { id: true, fullName: true, phone: true, nationality: true, idType: true, idNumber: true } },
           room:  { select: { id: true, roomNumber: true, name: true, type: true } },
           createdBy: { select: { id: true, fullName: true } },
           payments: { select: { id: true, amount: true, status: true, method: true } },

@@ -35,6 +35,8 @@ export interface Booking {
     phone: string
     email?: string
     nationality?: string
+    idType?: string
+    idNumber?: string
   }
   room: {
     id: string

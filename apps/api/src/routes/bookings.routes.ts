@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import {
   getBookings, getBooking, createBooking, updateBooking,
-  cancelBooking, checkIn, checkOut, checkAvailability, getBookingStats
+  cancelBooking, checkIn, checkOut, checkAvailability, getBookingStats,
+  confirmPayment
 } from '../controllers/bookings.controller'
 import { authenticate } from '../middleware/authenticate'
 import { authorize } from '../middleware/authorize'
@@ -52,5 +53,6 @@ router.patch('/:id',       updateBooking)
 router.delete('/:id',      authorize('admin', 'receptionist'), validate(cancelSchema), cancelBooking)
 router.post('/:id/check-in',  checkIn)
 router.post('/:id/check-out', checkOut)
+router.post('/:id/confirm-payment', confirmPayment)
 
 export default router
