@@ -10,29 +10,22 @@ const prisma = new PrismaClient()
 
 export const createWebsiteBooking = asyncHandler(async (req: Request, res: Response) => {
   const {
-    firstName, lastName, email, phone, checkIn, checkOut,
-    guests, roomType, additionalServices, message, source
+    firstName, lastName, email, phone, nationality, idType, idNumber,
+    checkIn, checkOut, adults, children, roomType, additionalServices, message, source
   } = req.body
 
   // 1. Get default hotel
   const hotelId = process.env.DEFAULT_HOTEL_ID || 'default-hotel-id'
-  
+
   // 2. Find an available room of the requested type
-  // Map roomType from website to RoomType enum if necessary
-  // Website roomType examples: "Kilimanjaro View Suite", "Buffalo Executive Room", etc.
-  // We'll search by room name or type.
-  
-  // For now, let's look for a room that matches the 'name' or 'type'
   const availableRooms = await availabilityService.getAvailableRooms(
     hotelId,
     new Date(checkIn),
     new Date(checkOut)
   )
 
-  // Find a room that matches the roomType name
-  // Note: roomType from website might be the name of the room category
-  const room = availableRooms.find(r => 
-    r.name.toLowerCase().includes(roomType.toLowerCase()) || 
+  const room = availableRooms.find(r =>
+    r.name.toLowerCase().includes(roomType.toLowerCase()) ||
     r.type.toLowerCase() === roomType.toLowerCase()
   )
 
@@ -40,7 +33,7 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     throw ApiError.conflict('Samahani, chumba cha aina hii hakipatikani kwa tarehe ulizochagua.')
   }
 
-  // 3. Find a system user to be the creator (e.g. the admin)
+  // 3. Find a system user to be the creator
   const admin = await prisma.user.findFirst({
     where: { email: 'admin@buffalo-hotel.co.tz' }
   })
@@ -52,12 +45,17 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     roomId: room.id,
     checkIn: new Date(checkIn),
     checkOut: new Date(checkOut),
+    adults: Number(adults) || 1,
+    children: Number(children) || 0,
     guestData: {
       fullName: `${firstName} ${lastName}`,
       email,
       phone,
+      nationality,
+      idType,
+      idNumber,
     },
-    source: 'online_self', // or 'website' if we add it to enum, but online_self fits
+    source: 'online_self',
     createdById: admin.id,
     specialRequests: `${additionalServices ? 'Services: ' + additionalServices + '. ' : ''}${message || ''}`,
   })
@@ -68,7 +66,7 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     success: true,
     bookingId: booking.bookingRef,
     totalAmount: Number(booking.totalAmount),
-    currency: 'USD', // Buffalo website uses USD
+    currency: 'TZS',
     nights,
     roomType: room.name
   })
@@ -92,35 +90,40 @@ export const initiatePayment = asyncHandler(async (req: Request, res: Response) 
 
 export const getAvailability = asyncHandler(async (req: Request, res: Response) => {
   const { checkIn, checkOut } = req.query
-  
+
   if (!checkIn || !checkOut) {
     throw ApiError.badRequest('checkIn and checkOut dates are required')
   }
 
   const hotelId = process.env.DEFAULT_HOTEL_ID || 'default-hotel-id'
-  
+
   const availableRooms = await availabilityService.getAvailableRooms(
     hotelId,
     new Date(checkIn as string),
     new Date(checkOut as string)
   )
 
-  // Group by room type/name for the website
-  const roomTypes = [
-    { type: 'Standard', price: 30 },
-    { type: 'Twin', price: 40 },
-    { type: 'Deluxe', price: 80 },
-    { type: 'Triple', price: 70 },
-  ]
+  // Group by room type, keeping the lowest price per type
+  const typeMap = new Map<string, { type: string; price: number; name: string; available: boolean }>()
 
-  const roomsStatus = roomTypes.map(rt => {
-    const isAvailable = availableRooms.some(r => r.type.toLowerCase() === rt.type.toLowerCase())
-    return {
-      type: rt.type,
-      price: rt.price,
-      available: isAvailable
+  availableRooms.forEach(r => {
+    const price = Number(r.pricePerNight)
+    const existing = typeMap.get(r.type)
+    if (!existing || price < existing.price) {
+      typeMap.set(r.type, {
+        type: r.type,
+        price,
+        name: r.name,
+        available: true
+      })
     }
   })
+
+  const roomsStatus = Array.from(typeMap.values()).map(rt => ({
+    type: rt.type,
+    price: rt.price,
+    available: rt.available
+  }))
 
   res.json({
     success: true,
