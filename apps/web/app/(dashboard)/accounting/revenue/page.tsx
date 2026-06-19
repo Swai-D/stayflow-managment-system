@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRevenueReport, useFinancialReport, useDashboardSummary } from '@/hooks/useReports'
-import { format } from 'date-fns'
+import { useRevenueReport, useFinancialReport, useBusinessAdvice, useRefreshBusinessAdvice, AdvicePeriod } from '@/hooks/useReports'
+import { format, parseISO } from 'date-fns'
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, AreaChart, Area, Cell, PieChart, Pie, Legend,
@@ -13,59 +13,34 @@ import {
   Activity, PieChart as PieIcon, Briefcase, Zap,
   Download, Filter, ChevronRight, Info, Lightbulb,
   ArrowUpRight, ArrowDownRight, Wallet, Banknote,
-  Star, ShieldCheck, Gem
+  Star, ShieldCheck, Gem, RefreshCw, Sparkles, Bot, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatTZS } from '@/lib/formatters'
 
+const PERIOD_OPTIONS: { value: AdvicePeriod; label: string }[] = [
+  { value: 'DAILY', label: 'Daily Advice' },
+  { value: 'WEEKLY', label: 'Weekly Advice' },
+  { value: 'MONTHLY', label: 'Monthly Advice' },
+]
+
 export default function RevenuePage() {
   const [days, setDays] = useState(30)
+  const [period, setPeriod] = useState<AdvicePeriod>('MONTHLY')
   const { data: revenueData, isLoading: revenueLoading } = useRevenueReport(days)
   const { data: fin, isLoading: finLoading } = useFinancialReport(days)
   
-  // ─── Advisor Logic (Business Intelligence) ──────────
-  const getAdvisorInsights = () => {
-    if (!fin) return []
-    const insights = []
-    
-    if (fin.netProfit > 0) {
-      insights.push({
-        type: 'success',
-        title: 'Faida Inaridhisha',
-        message: `Biashara imeingiza faida ya ${formatTZS(fin.netProfit)} katika siku ${days} zilizopita. Huu ni mwelekeo mzuri sana.`,
-        icon: Gem
-      })
-    } else {
-      insights.push({
-        type: 'danger',
-        title: 'Hasara Inajitokeza',
-        message: 'Gharama za uendeshaji zimezidi mapato. Unashauriwa kupunguza matumizi yasiyo ya lazima mara moja.',
-        icon: ShieldCheck
-      })
-    }
+  // ─── AI Business Advisor ────────────────────────────
+  const { data: adviceResponse, isLoading: adviceLoading, isError: adviceError, error: adviceQueryError } = useBusinessAdvice(period)
+  const { mutate: refreshAdvice, isPending: isRefreshing } = useRefreshBusinessAdvice()
 
-    if (fin.expenseRatio > 40) {
-      insights.push({
-        type: 'warning',
-        title: 'Matumizi Yapo Juu',
-        message: `Gharama ni ${fin.expenseRatio.toFixed(1)}% ya mapato yote. Target ya hoteli bora ni kuwa chini ya 30%. Kagua bili za LUKU na mishahara.`,
-        icon: Zap
-      })
-    }
+  const advice = adviceResponse?.advice ?? []
+  const generatedAt = adviceResponse?.generatedAt
+  const remainingRefreshes = adviceResponse?.remainingRefreshes ?? 0
 
-    if (fin.revpar < 30000) {
-      insights.push({
-        type: 'info',
-        title: 'RevPAR ya Chini',
-        message: `RevPAR yako ni ${formatTZS(fin.revpar)}. Jaribu kufanya promo au kupunguza bei kidogo (ADR) ili kuongeza occupancy.`,
-        icon: Lightbulb
-      })
-    }
-
-    return insights
+  const handleRefresh = () => {
+    refreshAdvice(period)
   }
-
-  const insights = getAdvisorInsights()
 
   return (
     <div className="space-y-6 font-sans text-left pb-10">
@@ -156,52 +131,136 @@ export default function RevenuePage() {
          </div>
       </div>
 
-      {/* ── Business Advisor Section (WOW Factor) ───────── */}
+      {/* ── AI Business Advisor Section ─────────────────── */}
       <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-xl relative overflow-hidden">
          <div className="absolute top-0 right-0 p-8 opacity-10">
             <Lightbulb size={120} />
          </div>
-         <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
-               <Zap size={20} />
+         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                  <Bot size={20} />
+               </div>
+               <div>
+                  <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Buffalo Business Advisor</h3>
+                  <p className="text-[12px] text-[#9ca3af] font-medium">Uchambuzi wa ki-intelijensia wa mwenendo wa biashara yako</p>
+               </div>
             </div>
-            <div>
-               <h3 className="text-[18px] font-bold text-[#111827] tracking-tight">Buffalo Business Advisor</h3>
-               <p className="text-[12px] text-[#9ca3af] font-medium">Uchambuzi wa ki-intelijensia wa mwenendo wa biashara yako</p>
+            <div className="flex items-center gap-3">
+               <select
+                  value={period}
+                  onChange={e => setPeriod(e.target.value as AdvicePeriod)}
+                  className="h-10 px-4 border border-gray-100 bg-white rounded-xl text-[12px] font-bold text-[#6b7280] outline-none cursor-pointer shadow-sm"
+               >
+                  {PERIOD_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+               </select>
+               <button
+                  onClick={handleRefresh}
+                  disabled={isRefreshing || adviceLoading}
+                  className="h-10 px-4 bg-[#2563eb] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+               >
+                  {isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  {isRefreshing ? 'Inachambua...' : 'Pata Ushauri Mpya'}
+               </button>
             </div>
          </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {insights.map((ins, i) => (
-               <div key={i} className={cn(
-                 "p-6 rounded-2xl border flex flex-col gap-4",
-                 ins.type === 'success' ? "bg-emerald-50/30 border-emerald-100" : 
-                 ins.type === 'danger' ? "bg-red-50/30 border-red-100" : 
-                 ins.type === 'warning' ? "bg-amber-50/30 border-amber-100" : "bg-blue-50/30 border-blue-100"
+         {generatedAt && (
+            <div className="flex items-center justify-between mb-6">
+               <p className="text-[11px] font-medium text-[#9ca3af]">
+                  Ushauri wa {PERIOD_OPTIONS.find(p => p.value === period)?.label.toLowerCase()} umeandaliwa:{' '}
+                  <span className="text-[#6b7280] font-semibold">{format(parseISO(generatedAt), 'dd MMM yyyy, HH:mm')}</span>
+               </p>
+               <p className={cn(
+                 "text-[11px] font-bold px-2 py-0.5 rounded-full",
+                 remainingRefreshes > 0 ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-500"
                )}>
-                  <div className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center",
-                    ins.type === 'success' ? "bg-emerald-100 text-emerald-600" : 
-                    ins.type === 'danger' ? "bg-red-100 text-red-600" : 
-                    ins.type === 'warning' ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
-                  )}>
-                     <ins.icon size={20} />
+                  {remainingRefreshes} refreshes zilizobaki leo
+               </p>
+            </div>
+         )}
+
+         {adviceLoading && advice.length === 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {[1, 2, 3].map(i => (
+                  <div key={i} className="p-6 rounded-2xl border border-gray-100 bg-gray-50/50 animate-pulse flex flex-col gap-4">
+                     <div className="w-10 h-10 rounded-xl bg-gray-200" />
+                     <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-2/3" />
+                        <div className="h-3 bg-gray-200 rounded w-full" />
+                        <div className="h-3 bg-gray-200 rounded w-5/6" />
+                     </div>
                   </div>
-                  <div>
-                     <h4 className={cn(
-                       "text-[14px] font-bold mb-1",
-                       ins.type === 'success' ? "text-emerald-800" : 
-                       ins.type === 'danger' ? "text-red-800" : 
-                       ins.type === 'warning' ? "text-amber-800" : "text-blue-800"
-                     )}>{ins.title}</h4>
-                     <p className="text-[12px] font-medium text-[#6b7280] leading-relaxed">{ins.message}</p>
-                  </div>
+               ))}
+            </div>
+         ) : adviceError ? (
+            <div className="p-6 rounded-2xl border border-red-100 bg-red-50/30 flex items-start gap-4">
+               <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <Info size={20} />
                </div>
-            ))}
-            {insights.length === 0 && (
-               <p className="col-span-3 text-center py-10 text-gray-400 italic">Advisor bado anakusanya data za kutosha...</p>
-            )}
-         </div>
+               <div>
+                  <h4 className="text-[14px] font-bold text-red-800 mb-1">Advisor haikupatikana</h4>
+                  <p className="text-[12px] font-medium text-[#6b7280] leading-relaxed mb-3">
+                     {(adviceQueryError as any)?.response?.data?.error?.message || 
+                       'Mfumo wa ushauri ulishindwa kupata majibu. Hii inaweza kutokana na API key kutosha au kikomo cha siku kimefikia.'}
+                  </p>
+                  <button
+                     onClick={handleRefresh}
+                     disabled={remainingRefreshes <= 0 || isRefreshing}
+                     className="h-9 px-4 bg-white border border-red-200 text-red-600 rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-red-50 transition-all disabled:opacity-50"
+                  >
+                     <RefreshCw size={14} /> Jaribu tena
+                  </button>
+               </div>
+            </div>
+         ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+               {advice.map((ins, i) => (
+                  <div key={i} className={cn(
+                    "p-6 rounded-2xl border flex flex-col gap-4",
+                    ins.type === 'success' ? "bg-emerald-50/30 border-emerald-100" : 
+                    ins.type === 'danger' ? "bg-red-50/30 border-red-100" : 
+                    ins.type === 'warning' ? "bg-amber-50/30 border-amber-100" : "bg-blue-50/30 border-blue-100"
+                  )}>
+                     <div className="flex items-start justify-between gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                          ins.type === 'success' ? "bg-emerald-100 text-emerald-600" : 
+                          ins.type === 'danger' ? "bg-red-100 text-red-600" : 
+                          ins.type === 'warning' ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
+                        )}>
+                           {ins.type === 'success' && <Gem size={20} />}
+                           {ins.type === 'danger' && <ShieldCheck size={20} />}
+                           {ins.type === 'warning' && <Zap size={20} />}
+                           {ins.type === 'info' && <Lightbulb size={20} />}
+                        </div>
+                        <span className={cn(
+                          "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                          ins.priority === 'high' ? "bg-red-50 text-red-600 border-red-100" :
+                          ins.priority === 'medium' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                          "bg-blue-50 text-blue-600 border-blue-100"
+                        )}>
+                           {ins.priority}
+                        </span>
+                     </div>
+                     <div>
+                        <h4 className={cn(
+                          "text-[14px] font-bold mb-1.5",
+                          ins.type === 'success' ? "text-emerald-800" : 
+                          ins.type === 'danger' ? "text-red-800" : 
+                          ins.type === 'warning' ? "text-amber-800" : "text-blue-800"
+                        )}>{ins.title}</h4>
+                        <p className="text-[12px] font-medium text-[#6b7280] leading-relaxed">{ins.message}</p>
+                     </div>
+                  </div>
+               ))}
+               {advice.length === 0 && (
+                  <p className="col-span-3 text-center py-10 text-gray-400 italic">Advisor bado anakusanya data za kutosha...</p>
+               )}
+            </div>
+         )}
       </div>
 
       {/* ── Revenue Performance Chart ──────────────────── */}

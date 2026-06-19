@@ -18,6 +18,8 @@ import posRoutes from './routes/pos.routes'
 import paymentRoutes from './routes/payments.routes'
 import expenseRoutes from './routes/expenses.routes'
 import reportRoutes from './routes/reports.routes'
+import searchRoutes from './routes/search.routes'
+import advisorRoutes from './routes/advisor.routes'
 import settingsRoutes from './routes/settings.routes'
 
 const app = express()
@@ -26,9 +28,11 @@ const app = express()
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }))
-app.use(cors({ 
+app.use(cors({
   origin: [
     process.env.APP_URL || 'http://localhost:3000',
+    'https://buffalo-hotel-website-production.up.railway.app',
+    'https://buffalo-hotel-managment-system.up.railway.app',
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'http://localhost:8080',
@@ -37,8 +41,8 @@ app.use(cors({
     'http://192.168.1.156:63747',   // Website (Network)
     'http://192.168.1.156:3000',    // Next.js (Network)
     'http://localhost:5173',
-  ], 
-  credentials: true 
+  ],
+  credentials: true
 }))
 app.use(morgan('dev'))
 
@@ -67,6 +71,8 @@ app.use('/api/v1/pos', posRoutes)
 app.use('/api/v1/payments', paymentRoutes)
 app.use('/api/v1/expenses', expenseRoutes)
 app.use('/api/v1/reports', reportRoutes)
+app.use('/api/v1/search', searchRoutes)
+app.use('/api/v1/advisor', advisorRoutes)
 app.use('/api/v1/settings', settingsRoutes)
 
 // Error handler (must be last)

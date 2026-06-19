@@ -252,17 +252,59 @@ export class StoreService {
     return createdPOs
   }
 
+  async updatePOStatus(id: string, hotelId: string, status: POStatus) {
+    const po = await prisma.purchaseOrder.findFirst({ where: { id, hotelId } })
+    if (!po) throw ApiError.notFound('PO haikupatikana')
+    return prisma.purchaseOrder.update({
+      where: { id },
+      data: { status }
+    })
+  }
+
   // ─── Suppliers ─────────────────────────────────────────
   async getSuppliers(hotelId: string) {
-    return prisma.supplier.findMany({
+    const suppliers = await prisma.supplier.findMany({
       where: { hotelId, isActive: true },
-      orderBy: { name: 'asc' }
+      orderBy: { name: 'asc' },
+      include: {
+        items: { where: { isActive: true }, select: { id: true } },
+        purchaseOrders: {
+          where: { status: { not: 'CLOSED' } },
+          select: { id: true, totalAmount: true, createdAt: true }
+        }
+      }
+    })
+
+    return suppliers.map(s => {
+      const lastOrder = s.purchaseOrders.length > 0
+        ? s.purchaseOrders.reduce((latest, po) =>
+            po.createdAt > latest ? po.createdAt : latest,
+            s.purchaseOrders[0].createdAt
+          )
+        : null
+
+      return {
+        ...s,
+        itemCount: s.items.length,
+        totalOrders: s.purchaseOrders.length,
+        totalValue: s.purchaseOrders.reduce((sum, po) => sum + po.totalAmount, 0),
+        lastOrder
+      }
     })
   }
 
   async createSupplier(hotelId: string, data: any) {
     return prisma.supplier.create({
       data: { ...data, hotelId }
+    })
+  }
+
+  async updateSupplier(id: string, hotelId: string, data: any) {
+    const supplier = await prisma.supplier.findFirst({ where: { id, hotelId } })
+    if (!supplier) throw ApiError.notFound('Supplier haikupatikana')
+    return prisma.supplier.update({
+      where: { id },
+      data
     })
   }
 
@@ -308,17 +350,93 @@ export class StoreService {
         item: { hotelId }, 
         type: 'STOCK_IN',
         createdAt: { gte: startOfMonth }
-      }
+      },
+      include: { item: { select: { category: true } } }
     })
     const realMonthlySpend = stockInTransactions.reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+
+    // Monthly spend trend (last 6 months) — real data
+    const monthlyTrend: Array<{ month: string; fb: number; hotel: number }> = []
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(startOfMonth)
+      d.setMonth(d.getMonth() - i)
+      const monthStart = new Date(d.getFullYear(), d.getMonth(), 1)
+      const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 1)
+      const label = monthStart.toLocaleString('default', { month: 'short' })
+
+      const monthTx = await prisma.storeTransaction.findMany({
+        where: {
+          item: { hotelId },
+          type: 'STOCK_IN',
+          createdAt: { gte: monthStart, lt: monthEnd }
+        },
+        include: { item: { select: { category: true } } }
+      })
+
+      const fb = monthTx
+        .filter(t => t.item?.category === 'FB')
+        .reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+      const hotel = monthTx
+        .filter(t => t.item?.category === 'HOTEL')
+        .reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+
+      monthlyTrend.push({ month: label, fb, hotel })
+    }
+
+    // Low stock items for dashboard
+    const lowStockItemsRaw = await prisma.$queryRaw<any[]>(Prisma.sql`
+      SELECT * FROM "store_items" 
+      WHERE "hotelId" = ${hotelId} 
+      AND "isActive" = true 
+      AND "currentStock" < "minimumStock"
+      LIMIT 5
+    `)
+    const lowStockItems = lowStockItemsRaw.map(item => ({
+      ...item,
+      stockStatus: 'low_stock'
+    }))
+
+    // Top used items (STOCK_OUT / WASTAGE) this month
+    const topUsedItemsRaw = await prisma.storeTransaction.groupBy({
+      by: ['itemId'],
+      where: {
+        item: { hotelId },
+        type: { in: ['STOCK_OUT', 'WASTAGE'] },
+        createdAt: { gte: startOfMonth }
+      },
+      _sum: {
+        quantity: true
+      },
+      orderBy: {
+        _sum: {
+          quantity: 'desc'
+        }
+      },
+      take: 5
+    })
+
+    const topUsedItems = await Promise.all(
+      topUsedItemsRaw.map(async (t) => {
+        const item = await prisma.storeItem.findUnique({
+          where: { id: t.itemId }
+        })
+        return {
+          item,
+          totalUsed: t._sum.quantity || 0
+        }
+      })
+    )
 
     return {
       totalItems,
       lowStockCount,
       outOfStockCount,
       monthlySpend: realMonthlySpend,
+      monthlySpendTrend: monthlyTrend,
       pendingPOs,
-      recentTransactions
+      recentTransactions,
+      lowStockItems,
+      topUsedItems
     }
   }
 

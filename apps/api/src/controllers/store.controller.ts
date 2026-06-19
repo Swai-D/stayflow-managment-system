@@ -82,3 +82,13 @@ export const getDashboardStats = asyncHandler(async (req: AuthRequest, res: Resp
   const stats = await storeService.getDashboardStats(req.user!.hotelId)
   res.json(new ApiResponse(stats))
 })
+
+export const updatePOStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const po = await storeService.updatePOStatus(req.params.id, req.user!.hotelId, req.body.status)
+  res.json(new ApiResponse(po))
+})
+
+export const updateSupplier = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const supplier = await storeService.updateSupplier(req.params.id, req.user!.hotelId, req.body)
+  res.json(new ApiResponse(supplier))
+})

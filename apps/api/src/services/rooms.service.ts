@@ -108,6 +108,10 @@ export class RoomsService {
     type: RoomType
     pricePerNight: number
     pricePerHour?: number
+    specialRate?: number
+    fullBoardRate?: number
+    nonResidentRate?: string
+    beds?: number
     capacity?: number
     description?: string
     amenities?: string[]
@@ -127,7 +131,11 @@ export class RoomsService {
         type: data.type,
         pricePerNight: data.pricePerNight,
         pricePerHour: data.pricePerHour,
-        capacity: data.capacity || 2,
+        specialRate: data.specialRate,
+        fullBoardRate: data.fullBoardRate,
+        nonResidentRate: data.nonResidentRate,
+        beds: data.beds ?? data.capacity ?? 1,
+        capacity: data.capacity ?? data.beds ?? 2,
         description: data.description,
         amenities: data.amenities || [],
         status: 'available'
@@ -137,11 +145,16 @@ export class RoomsService {
 
   // ─── Update room ─────────────────────────────────────
   async updateRoom(id: string, hotelId: string, data: Partial<{
+    roomNumber: string
     name: string
     floor: number
     type: RoomType
     pricePerNight: number
     pricePerHour: number
+    specialRate: number
+    fullBoardRate: number
+    nonResidentRate: string
+    beds: number
     capacity: number
     description: string
     amenities: string[]

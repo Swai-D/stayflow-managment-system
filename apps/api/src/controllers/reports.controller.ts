@@ -4,6 +4,12 @@ import { ApiResponse } from '../utils/ApiResponse'
 import { reportsService } from '../services/reports.service'
 import { AuthRequest } from '../middleware/authenticate'
 
+export const getCalendarReport = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const year = req.query.year ? Number(req.query.year) : undefined
+  const data = await reportsService.getCalendarReport(req.user!.hotelId, year)
+  res.json(new ApiResponse(data))
+})
+
 export const getRevenueReport = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { days } = req.query
   const data = await reportsService.getRevenueReport(req.user!.hotelId, days ? Number(days) : undefined)

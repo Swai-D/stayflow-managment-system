@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { startOfDay, endOfDay, subDays, format, eachDayOfInterval } from 'date-fns'
+import { startOfDay, endOfDay, subDays, format, eachDayOfInterval, startOfYear, endOfYear } from 'date-fns'
 
 const prisma = new PrismaClient()
 
@@ -191,6 +191,78 @@ export class ReportsService {
       onlineReservations,
       directReservations,
       totalActive
+    }
+  }
+
+  /**
+   * Calendar view data: all active rooms plus every non-cancelled booking
+   * overlapping the requested year. The frontend computes daily occupancy
+   * from these two arrays, keeping the payload small (max ~365 days × 30 rooms
+   * would be huge; this way we only send rooms + bookings).
+   */
+  async getCalendarReport(hotelId: string, year?: number) {
+    const targetYear = year || new Date().getFullYear()
+    const startDate = startOfYear(new Date(targetYear, 0, 1))
+    const endDate = endOfYear(new Date(targetYear, 0, 1))
+
+    const [rooms, bookings] = await Promise.all([
+      prisma.room.findMany({
+        where: { hotelId, isActive: true },
+        orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }],
+        select: {
+          id: true,
+          roomNumber: true,
+          name: true,
+          type: true,
+          floor: true,
+          pricePerNight: true,
+          capacity: true,
+          beds: true
+        }
+      }),
+      prisma.booking.findMany({
+        where: {
+          hotelId,
+          status: { not: 'cancelled' },
+          OR: [
+            { checkIn: { gte: startDate, lte: endDate } },
+            { checkOut: { gte: startDate, lte: endDate } },
+            { AND: [{ checkIn: { lte: startDate } }, { checkOut: { gte: endDate } }] }
+          ]
+        },
+        select: {
+          id: true,
+          bookingRef: true,
+          roomId: true,
+          checkIn: true,
+          checkOut: true,
+          status: true,
+          adults: true,
+          children: true,
+          guest: { select: { fullName: true, phone: true } },
+          room: { select: { roomNumber: true } }
+        }
+      })
+    ])
+
+    return {
+      year: targetYear,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      rooms,
+      bookings: bookings.map(b => ({
+        id: b.id,
+        bookingRef: b.bookingRef,
+        roomId: b.roomId,
+        roomNumber: b.room?.roomNumber,
+        checkIn: b.checkIn.toISOString(),
+        checkOut: b.checkOut.toISOString(),
+        status: b.status,
+        adults: b.adults,
+        children: b.children,
+        guestName: b.guest.fullName,
+        guestPhone: b.guest.phone
+      }))
     }
   }
 }

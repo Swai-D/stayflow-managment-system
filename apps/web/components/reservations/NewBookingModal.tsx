@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react'
 import { useCreateBooking } from '@/hooks/useBookings'
 import { useRooms } from '@/hooks/useRooms'
 import { Room } from '@/types/room'
-import { X, Calendar, User, Phone, Globe, Home, Users } from 'lucide-react'
+import { CountrySelect } from '@/components/ui/CountrySelect'
+import { X, Calendar, User, Phone, Home, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 interface Props {
   onClose: () => void
   preselectedRoomId?: string
+  preselectedCheckIn?: string
+  preselectedCheckOut?: string
 }
 
-export default function NewBookingModal({ onClose, preselectedRoomId }: Props) {
+export default function NewBookingModal({ onClose, preselectedRoomId, preselectedCheckIn, preselectedCheckOut }: Props) {
   const { mutate: createBooking, isPending } = useCreateBooking()
   const { data: roomsData } = useRooms({ status: 'available', limit: 100 })
   const availableRooms = roomsData?.rooms || []
@@ -24,20 +27,23 @@ export default function NewBookingModal({ onClose, preselectedRoomId }: Props) {
       nationality: ''
     },
     roomId: preselectedRoomId || '',
-    checkIn: format(new Date(), 'yyyy-MM-dd'),
-    checkOut: format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'),
+    checkIn: preselectedCheckIn || format(new Date(), 'yyyy-MM-dd'),
+    checkOut: preselectedCheckOut || format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'),
     adults: 1,
     children: 0,
     specialRequests: '',
     source: 'staff_entry'
   })
 
-  // Update roomId if preselectedRoomId changes
+  // Update roomId / dates if preselected props change
   useEffect(() => {
-    if (preselectedRoomId) {
-      setFormData(prev => ({ ...prev, roomId: preselectedRoomId }))
-    }
-  }, [preselectedRoomId])
+    setFormData(prev => ({
+      ...prev,
+      ...(preselectedRoomId && { roomId: preselectedRoomId }),
+      ...(preselectedCheckIn && { checkIn: preselectedCheckIn }),
+      ...(preselectedCheckOut && { checkOut: preselectedCheckOut }),
+    }))
+  }, [preselectedRoomId, preselectedCheckIn, preselectedCheckOut])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -95,11 +101,10 @@ export default function NewBookingModal({ onClose, preselectedRoomId }: Props) {
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-500">Nationality</label>
-                    <input 
+                    <CountrySelect
                       value={formData.guestData.nationality}
-                      onChange={e => setFormData({...formData, guestData: {...formData.guestData, nationality: e.target.value}})}
-                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm" 
-                      placeholder="Tanzanian"
+                      onChange={value => setFormData({...formData, guestData: {...formData.guestData, nationality: value}})}
+                      placeholder="Chagua nchi"
                     />
                   </div>
                 </div>

@@ -110,6 +110,76 @@ export class AuthService {
     }
   }
 
+  // ─── Update Current User Profile ─────────────────────
+  // Self-service: user can update own basic info, NOT role
+  async updateProfile(userId: string, data: {
+    fullName?: string
+    email?: string
+    phone?: string
+    avatarUrl?: string
+    currentPassword?: string
+    newPassword?: string
+  }) {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) throw ApiError.notFound('Mtumiaji hakupatikana')
+
+    // If changing password, verify current password
+    if (data.newPassword) {
+      if (!data.currentPassword) {
+        throw ApiError.badRequest('Nywila ya sasa inahitajika kubadili nywila')
+      }
+      const isValid = await bcrypt.compare(data.currentPassword, user.passwordHash)
+      if (!isValid) throw ApiError.badRequest('Nywila ya sasa sio sahihi')
+    }
+
+    // Check email uniqueness if changed
+    if (data.email && data.email !== user.email) {
+      const existing = await prisma.user.findUnique({ where: { email: data.email.toLowerCase().trim() } })
+      if (existing) throw ApiError.conflict('Email hii tayari inatumika')
+    }
+
+    const updateData: any = {
+      fullName: data.fullName,
+      email: data.email ? data.email.toLowerCase().trim() : undefined,
+      phone: data.phone,
+      avatarUrl: data.avatarUrl,
+      updatedAt: new Date()
+    }
+
+    if (data.newPassword) {
+      updateData.passwordHash = await bcrypt.hash(data.newPassword, 12)
+    }
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) delete updateData[key]
+    })
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        phone: true,
+        avatarUrl: true,
+        lastLoginAt: true,
+        hotel: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+            checkInTime: true,
+            checkOutTime: true,
+            defaultLanguage: true
+          }
+        }
+      }
+    })
+  }
+
   // ─── Get Current User ────────────────────────────────
 
   async getMe(userId: string) {

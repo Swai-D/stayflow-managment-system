@@ -184,6 +184,7 @@ model Hotel {
   suppliers Supplier[]
   storeItems StoreItem[]
   purchaseOrders PurchaseOrder[]
+  businessAdvice BusinessAdvice[]
 
   @@map("hotels")
 }
@@ -235,24 +236,28 @@ model Guest {
 }
 
 model Room {
-  id            String     @id @default(uuid())
-  hotelId       String
-  roomNumber    String
-  name          String
-  floor         Int        @default(1)
-  type          RoomType
-  status        RoomStatus @default(available)
-  pricePerNight Decimal    @db.Decimal(10, 2)
-  pricePerHour  Decimal?   @db.Decimal(10, 2)
-  capacity      Int        @default(2)
-  description   String?
-  amenities     Json       @default("[]")
-  images        Json       @default("[]")
-  lockId        String?
-  lockProvider  String?
-  isActive      Boolean    @default(true)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id              String     @id @default(uuid())
+  hotelId         String
+  roomNumber      String
+  name            String
+  floor           Int        @default(1)
+  type            RoomType
+  status          RoomStatus @default(available)
+  pricePerNight   Decimal    @db.Decimal(10, 2)
+  pricePerHour    Decimal?   @db.Decimal(10, 2)
+  specialRate     Decimal?   @db.Decimal(10, 2)
+  fullBoardRate   Decimal?   @db.Decimal(10, 2)
+  nonResidentRate String?
+  beds            Int        @default(1)
+  capacity        Int        @default(2)
+  description     String?
+  amenities       Json       @default("[]")
+  images          Json       @default("[]")
+  lockId          String?
+  lockProvider    String?
+  isActive        Boolean    @default(true)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   hotel            Hotel             @relation(fields: [hotelId], references: [id])
   bookings         Booking[]
@@ -608,4 +613,27 @@ model RoomChargeItem {
   totalPrice    Float
 
   @@map("room_charge_items")
+}
+
+model BusinessAdvice {
+  id          String   @id @default(cuid())
+  hotelId     String
+  hotel       Hotel    @relation(fields: [hotelId], references: [id])
+  period      String   // DAILY | WEEKLY | MONTHLY
+  advice      Json
+  generatedAt DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([hotelId, period, generatedAt])
+  @@map("business_advice")
+}
+
+model AdvisorRefreshLog {
+  id        String   @id @default(cuid())
+  hotelId   String
+  period    String   // DAILY | WEEKLY | MONTHLY
+  createdAt DateTime @default(now())
+
+  @@index([hotelId, period, createdAt])
+  @@map("advisor_refresh_logs")
 }

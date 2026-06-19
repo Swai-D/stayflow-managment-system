@@ -4,8 +4,8 @@ import { authorize } from '../middleware/authorize'
 import {
   getItems, getItem, createItem, updateItem, getLowStockItems,
   getTransactions, createTransaction,
-  getPurchaseOrders, createPurchaseOrder, autoGeneratePO, receivePurchaseOrder,
-  getSuppliers, createSupplier,
+  getPurchaseOrders, createPurchaseOrder, autoGeneratePO, receivePurchaseOrder, updatePOStatus,
+  getSuppliers, createSupplier, updateSupplier,
   getDashboardStats
 } from '../controllers/store.controller'
 
@@ -31,9 +31,11 @@ router.get('/purchase-orders',               authorize('admin', 'receptionist'),
 router.post('/purchase-orders',              authorize('admin', 'receptionist'), createPurchaseOrder)
 router.post('/purchase-orders/auto-generate',authorize('admin'), autoGeneratePO)
 router.post('/purchase-orders/:id/receive',  authorize('admin', 'receptionist'), receivePurchaseOrder)
+router.patch('/purchase-orders/:id/status',   authorize('admin', 'receptionist'), updatePOStatus)
 
 // Suppliers: admin, receptionist
 router.get('/suppliers',       authorize('admin', 'receptionist'), getSuppliers)
 router.post('/suppliers',      authorize('admin', 'receptionist'), createSupplier)
+router.patch('/suppliers/:id',   authorize('admin', 'receptionist'), updateSupplier)
 
 export default router

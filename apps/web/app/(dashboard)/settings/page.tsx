@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { 
   useHotelSettings, 
   useUpdateHotelSettings, 
@@ -15,17 +16,30 @@ import {
   Shield, CreditCard, Bell, Globe, Clock, 
   Lock, Camera, Mail, Phone, MapPin, 
   ChevronRight, Search, Filter, Loader2,
-  AlertCircle, CheckCircle2, Zap, Info
+  AlertCircle, CheckCircle2, Zap, Info,
+  UserCircle, Eye, EyeOff
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/authStore'
+import { useUpdateProfile } from '@/hooks/useAuth'
 
-type SettingsTab = 'hotel' | 'staff' | 'finance' | 'booking' | 'audit'
+type SettingsTab = 'profile' | 'hotel' | 'staff' | 'finance' | 'booking' | 'audit'
 
-export default function SettingsPage() {
+function SettingsPageContent() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<SettingsTab>('hotel')
 
+  useEffect(() => {
+    const tab = searchParams.get('tab') as SettingsTab | null
+    const validTabs: SettingsTab[] = ['profile', 'hotel', 'staff', 'finance', 'booking', 'audit']
+    if (tab && validTabs.includes(tab)) {
+      setActiveTab(tab)
+    }
+  }, [searchParams])
+
   const tabs: { id: SettingsTab; label: string; icon: any; desc: string }[] = [
+    { id: 'profile', label: 'My Profile',      icon: UserCircle,  desc: 'Your account & password' },
     { id: 'hotel',   label: 'Hotel Profile',   icon: Building,   desc: 'Identity, contacts & branding' },
     { id: 'staff',   label: 'Staff & Roles',    icon: Users,      desc: 'Manage team access levels' },
     { id: 'finance', label: 'Financial Setup',  icon: CreditCard,  desc: 'Taxes, currency & EFD rules' },
@@ -89,6 +103,7 @@ export default function SettingsPage() {
         {/* ── Main Content Area ───────────────────────────── */}
         <div className="flex-1 min-w-0">
            <div className="bg-white rounded-[32px] shadow-card border border-gray-50 min-h-[600px] overflow-hidden">
+              {activeTab === 'profile' && <ProfileSettingsView />}
               {activeTab === 'hotel'   && <HotelSettingsView />}
               {activeTab === 'staff'   && <StaffManagementView />}
               {activeTab === 'finance' && <FinancialSettingsView />}
@@ -102,7 +117,206 @@ export default function SettingsPage() {
   )
 }
 
-// ─── 1. Hotel Settings ──────────────────────────────
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<LoadingPlaceholder />}>
+      <SettingsPageContent />
+    </Suspense>
+  )
+}
+
+// ─── 1. My Profile Settings ─────────────────────────
+function ProfileSettingsView() {
+  const { user } = useAuthStore()
+  const { mutate: updateProfile, isPending } = useUpdateProfile()
+  const [form, setForm] = useState({
+    fullName: user?.fullName ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
+    avatarUrl: user?.avatarUrl ?? '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        fullName: user.fullName ?? '',
+        email: user.email ?? '',
+        phone: user.phone ?? '',
+        avatarUrl: user.avatarUrl ?? ''
+      }))
+    }
+  }, [user])
+
+  const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm(prev => ({ ...prev, [key]: e.target.value }))
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (form.newPassword && form.newPassword !== form.confirmPassword) {
+      toast.error('New password and confirmation do not match')
+      return
+    }
+
+    const payload: any = {
+      fullName: form.fullName,
+      email: form.email,
+      phone: form.phone || null,
+      avatarUrl: form.avatarUrl || null
+    }
+
+    if (form.newPassword) {
+      if (!form.currentPassword) {
+        toast.error('Current password is required to change password')
+        return
+      }
+      payload.currentPassword = form.currentPassword
+      payload.newPassword = form.newPassword
+    }
+
+    updateProfile(payload, {
+      onSuccess: () => {
+        toast.success('Profile updated successfully')
+        setForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }))
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.error?.message || 'Failed to update profile')
+      }
+    })
+  }
+
+  const roleLabels: Record<string, string> = {
+    admin: 'System Admin',
+    receptionist: 'Receptionist',
+    housekeeping: 'Housekeeping',
+    waiter: 'Waiter'
+  }
+
+  return (
+    <div className="p-8 md:p-12 animate-in fade-in duration-500">
+      <div className="mb-10">
+        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">My Profile</h2>
+        <p className="text-[13px] text-[#9ca3af] font-medium">Manage your personal account information</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-10 max-w-2xl">
+        {/* Avatar + Basic info */}
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          <div className="w-28 h-28 rounded-3xl bg-gray-50 border border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 group cursor-pointer hover:bg-gray-100 transition-colors shrink-0 overflow-hidden">
+            {form.avatarUrl ? (
+              <img src={form.avatarUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <>
+                <Camera size={24} className="text-[#9ca3af]" />
+                <span className="text-[10px] font-bold text-[#9ca3af] uppercase">Avatar URL</span>
+              </>
+            )}
+          </div>
+          <div className="flex-1 space-y-6 w-full">
+            <FormInput label="Full Name" value={form.fullName} onChange={set('fullName')} icon={Users} required />
+            <FormInput label="Email Address" type="email" value={form.email} onChange={set('email')} icon={Mail} required />
+            <FormInput label="Phone Number" type="tel" value={form.phone} onChange={set('phone')} icon={Phone} />
+            <FormInput label="Avatar URL" value={form.avatarUrl} onChange={set('avatarUrl')} icon={Camera} placeholder="https://..." />
+          </div>
+        </div>
+
+        {/* Role (read-only) */}
+        <div className="space-y-6 pt-6 border-t border-gray-50">
+          <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+            <Shield size={14} /> Role & Access
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">System Role</label>
+              <div className="w-full h-12 bg-gray-100 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-gray-500 flex items-center gap-2">
+                <Shield size={16} className="text-[#9ca3af]" />
+                {user?.role ? roleLabels[user.role] : '—'}
+              </div>
+              <p className="text-[10px] text-gray-400 ml-1">Role can only be changed by an administrator</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Last Login</label>
+              <div className="w-full h-12 bg-gray-100 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-gray-500 flex items-center gap-2">
+                <Clock size={16} className="text-[#9ca3af]" />
+                {user?.lastLoginAt ? format(new Date(user.lastLoginAt), 'dd MMM yyyy, HH:mm') : 'Never'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Password change */}
+        <div className="space-y-6 pt-6 border-t border-gray-50">
+          <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+            <Lock size={14} /> Change Password
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative">
+              <FormInput
+                label="Current Password"
+                type={showCurrent ? 'text' : 'password'}
+                value={form.currentPassword}
+                onChange={set('currentPassword')}
+                icon={Lock}
+                placeholder="Required only if changing password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(v => !v)}
+                className="absolute right-4 bottom-3 text-[#9ca3af] hover:text-gray-600"
+              >
+                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <div className="relative">
+              <FormInput
+                label="New Password"
+                type={showNew ? 'text' : 'password'}
+                value={form.newPassword}
+                onChange={set('newPassword')}
+                icon={Lock}
+                placeholder="Leave blank to keep current"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(v => !v)}
+                className="absolute right-4 bottom-3 text-[#9ca3af] hover:text-gray-600"
+              >
+                {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+          <FormInput
+            label="Confirm New Password"
+            type="password"
+            value={form.confirmPassword}
+            onChange={set('confirmPassword')}
+            icon={Lock}
+            placeholder="Leave blank to keep current"
+          />
+        </div>
+
+        <div className="pt-6">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="h-14 px-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-[20px] font-bold text-[14px] flex items-center gap-2 transition-all shadow-xl shadow-blue-100 disabled:opacity-50"
+          >
+            {isPending ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+            Hifadhi Mabadiliko
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// ─── 2. Hotel Settings ──────────────────────────────
 function HotelSettingsView() {
   const { data: hotel, isLoading } = useHotelSettings()
   const { mutate: updateHotel, isPending } = useUpdateHotelSettings()
@@ -232,6 +446,7 @@ function StaffManagementView() {
                <FormSelect label="Assigned Role" name="role">
                   <option value="receptionist">Receptionist</option>
                   <option value="housekeeping">Housekeeping</option>
+                  <option value="waiter">Waiter</option>
                   <option value="admin">System Admin</option>
                </FormSelect>
             </div>

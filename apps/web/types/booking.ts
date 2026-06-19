@@ -1,6 +1,8 @@
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show' | 'late_checkout'
 export type BookingSource = 'online_self' | 'staff_entry' | 'walk_in'
 
+import { RoomCharge } from './store'
+
 export interface Booking {
   id: string
   bookingRef: string
@@ -46,6 +48,7 @@ export interface Booking {
   }
   payments?: any[]
   receipts?: any[]
+  roomCharges?: RoomCharge[]
 }
 
 export interface BookingStats {

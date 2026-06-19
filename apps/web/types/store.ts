@@ -72,6 +72,10 @@ export interface Supplier {
   paymentTerms?: string
   notes?: string
   isActive: boolean
+  itemCount?: number
+  totalOrders?: number
+  totalValue?: number
+  lastOrder?: string
 }
 
 export interface RoomCharge {
@@ -100,6 +104,7 @@ export interface StoreDashboardStats {
   lowStockCount: number
   outOfStockCount: number
   monthlySpend: number
+  monthlySpendTrend: Array<{ month: string; fb: number; hotel: number }>
   topUsedItems: Array<{ item: StoreItem; totalUsed: number }>
   recentTransactions: StoreTransaction[]
   lowStockItems: StoreItem[]

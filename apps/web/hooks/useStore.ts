@@ -129,6 +129,19 @@ export function useReceivePO() {
   })
 }
 
+export function useUpdatePOStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: any }) => {
+      const res = await api.patch(`/store/purchase-orders/${id}/status`, { status })
+      return res.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['store', 'purchase-orders'] })
+    }
+  })
+}
+
 export function useAutoGeneratePO() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -156,6 +169,17 @@ export function useCreateSupplier() {
   return useMutation({
     mutationFn: async (data: any) => {
       const res = await api.post('/store/suppliers', data)
+      return res.data.data
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'suppliers'] })
+  })
+}
+
+export function useUpdateSupplier() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await api.patch(`/store/suppliers/${id}`, data)
       return res.data.data
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['store', 'suppliers'] })

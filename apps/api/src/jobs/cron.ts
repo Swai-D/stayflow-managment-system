@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { startOfDay, subDays, endOfDay } from 'date-fns'
 import { notificationService } from '../services/notification.service'
 import { checkLowStockAlerts } from '../services/alerts.service'
+import { advisorService } from '../services/advisor.service'
 
 const prisma = new PrismaClient()
 
@@ -79,5 +80,32 @@ export const initJobs = () => {
           data: { hotelName: b.hotel.name, reviewUrl: `https://stayflow.app/review/${b.id}` }
         })
      }
+  })
+
+  // 4. Buffalo Business Advisor — background LLM advice generation
+  //    Daily at 07:00, 12:00, 18:00; weekly on Monday; monthly on the 1st.
+  cron.schedule('0 7 * * *', async () => {
+    console.log('[Job] Generating morning DAILY business advice...')
+    await advisorService.generateAdviceForAllHotels('DAILY')
+  })
+
+  cron.schedule('0 12 * * *', async () => {
+    console.log('[Job] Generating midday DAILY business advice...')
+    await advisorService.generateAdviceForAllHotels('DAILY')
+  })
+
+  cron.schedule('0 18 * * *', async () => {
+    console.log('[Job] Generating evening DAILY business advice...')
+    await advisorService.generateAdviceForAllHotels('DAILY')
+  })
+
+  cron.schedule('0 7 * * 1', async () => {
+    console.log('[Job] Generating WEEKLY business advice...')
+    await advisorService.generateAdviceForAllHotels('WEEKLY')
+  })
+
+  cron.schedule('0 7 1 * *', async () => {
+    console.log('[Job] Generating MONTHLY business advice...')
+    await advisorService.generateAdviceForAllHotels('MONTHLY')
   })
 }

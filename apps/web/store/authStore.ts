@@ -2,12 +2,14 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import api from '@/lib/api'
 
-interface User {
+export interface User {
   id: string
   fullName: string
   email: string
-  role: 'admin' | 'receptionist' | 'housekeeping'
+  phone?: string
+  role: 'admin' | 'receptionist' | 'housekeeping' | 'waiter'
   avatarUrl?: string
+  lastLoginAt?: string
   hotel: {
     id: string
     name: string
@@ -28,6 +30,7 @@ interface AuthState {
   logout: () => Promise<void>
   refreshToken: () => Promise<boolean>
   setUser: (user: User) => void
+  updateUser: (data: Partial<User> & { currentPassword?: string; newPassword?: string }) => Promise<User>
   initialize: () => Promise<void>
 }
 
@@ -82,6 +85,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user) => set({ user }),
+
+      updateUser: async (data) => {
+        const res = await api.patch('/auth/me', data)
+        const updatedUser = res.data.data
+        set({ user: updatedUser })
+        return updatedUser
+      },
 
       initialize: async () => {
         // Try to restore session on page load

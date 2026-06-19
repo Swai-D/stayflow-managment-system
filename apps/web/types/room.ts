@@ -1,5 +1,5 @@
 export type RoomStatus = 'available' | 'occupied' | 'dirty' | 'cleaning' | 'maintenance' | 'blocked'
-export type RoomType = 'standard' | 'deluxe' | 'family' | 'suite' | 'presidential' | 'superior' | 'conference'
+export type RoomType = 'standard' | 'deluxe' | 'family' | 'suite' | 'presidential' | 'superior' | 'conference' | 'twin' | 'triple'
 
 export interface Room {
   id: string
@@ -10,6 +10,10 @@ export interface Room {
   status: RoomStatus
   pricePerNight: number
   pricePerHour?: number
+  specialRate?: number
+  fullBoardRate?: number
+  nonResidentRate?: string
+  beds: number
   capacity: number
   description?: string
   amenities: string[]
@@ -111,4 +115,6 @@ export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
   presidential: 'Presidential',
   superior:     'Superior',
   conference:   'Conference',
+  twin:         'Twin',
+  triple:       'Triple',
 }

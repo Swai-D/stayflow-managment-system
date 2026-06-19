@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 
 interface AuthGuardProps {
   children: React.ReactNode
-  allowedRoles?: ('admin' | 'receptionist' | 'housekeeping')[]
+  allowedRoles?: ('admin' | 'receptionist' | 'housekeeping' | 'waiter')[]
 }
 
 export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {

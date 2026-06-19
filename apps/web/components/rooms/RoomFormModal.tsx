@@ -13,9 +13,13 @@ const roomSchema = z.object({
   roomNumber: z.string().min(1, 'Namba ya chumba inahitajika'),
   name: z.string().min(1, 'Jina la chumba linahitajika'),
   floor: z.coerce.number().min(1, 'Ghorofa inahitajika'),
-  type: z.enum(['standard', 'deluxe', 'family', 'suite', 'presidential', 'superior', 'conference']),
+  type: z.enum(['standard', 'deluxe', 'family', 'suite', 'presidential', 'superior', 'conference', 'twin', 'triple']),
   pricePerNight: z.coerce.number().min(0, 'Bei lazima iwe chanya'),
   pricePerHour: z.coerce.number().optional(),
+  specialRate: z.coerce.number().optional(),
+  fullBoardRate: z.coerce.number().optional(),
+  nonResidentRate: z.string().optional(),
+  beds: z.coerce.number().min(1, 'Vitanda lazima viwe angalau 1'),
   capacity: z.coerce.number().min(1, 'Uwezo lazima uwe angalau mtu 1'),
   description: z.string().optional(),
   amenities: z.string().min(1, 'Vifaa vinahitajika'),
@@ -48,12 +52,17 @@ export default function RoomFormModal({ room, onClose }: Props) {
       type: room.type,
       pricePerNight: room.pricePerNight,
       pricePerHour: room.pricePerHour,
+      specialRate: room.specialRate,
+      fullBoardRate: room.fullBoardRate,
+      nonResidentRate: room.nonResidentRate,
+      beds: room.beds,
       capacity: room.capacity,
       description: room.description || '',
       amenities: room.amenities.join(', '),
     } : {
       floor: 1,
       type: 'standard',
+      beds: 1,
       capacity: 2,
       pricePerNight: 0,
       amenities: 'WiFi, AC, TV',
@@ -189,6 +198,15 @@ export default function RoomFormModal({ room, onClose }: Props) {
                      <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">No. of Beds</label>
+                  <input
+                    type="number"
+                    {...register('beds')}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                  />
+                </div>
              </div>
           </div>
 
@@ -207,17 +225,46 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   />
                 </div>
 
-                {selectedType === 'conference' && (
-                  <div className="space-y-2">
-                    <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Hourly Rate (TZS)</label>
-                    <input
-                      type="number"
-                      {...register('pricePerHour')}
-                      className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Special / STO Rate (TZS)</label>
+                  <input
+                    type="number"
+                    {...register('specialRate')}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                  />
+                </div>
              </div>
+
+             <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Full Board Rate (TZS)</label>
+                  <input
+                    type="number"
+                    {...register('fullBoardRate')}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Non-Resident Rate</label>
+                  <input
+                    {...register('nonResidentRate')}
+                    placeholder="e.g. 30USD"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all placeholder:text-[#9ca3af]/60"
+                  />
+                </div>
+             </div>
+
+             {selectedType === 'conference' && (
+                <div className="space-y-2">
+                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Hourly Rate (TZS)</label>
+                  <input
+                    type="number"
+                    {...register('pricePerHour')}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                  />
+                </div>
+             )}
           </div>
 
           {/* Section: Amenities & Details */}

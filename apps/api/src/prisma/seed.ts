@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import * as fs from 'fs'
+import * as path from 'path'
 
 const prisma = new PrismaClient()
 
@@ -74,81 +76,54 @@ async function main() {
   await prisma.room.deleteMany()
   console.log('✅ Data cleaned.')
 
-  // 5. Create new rooms
-  const standardRooms = ['12', '16', '17', '101', '102', '103', '104', '105', '107', '109', '201', '204', '206', '207', '208', '209', '305', '306', '307', '308']
-  const twinRooms = ['106', '108', '202', '203', '301', '302']
-  const deluxeRooms = ['15', '205']
-  const tripleRooms = ['303', '304']
+  // 5. Seed real rooms from BUFFALO HOTEL.xlsx (exported to rooms_info.json)
+  const roomsData = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '..', '..', '..', 'instructions', 'rooms_info.json'), 'utf8')
+  )
+  const rows: any[] = roomsData.sheets['HOTEL STOCK'].rows
 
-  const getFloor = (num: string) => {
-    if (num.startsWith('2')) return 2
-    if (num.startsWith('3')) return 3
-    return 1
+  function normalizeRoomType(type: string): string {
+    const t = type.trim().toLowerCase()
+    if (t === 'standard') return 'standard'
+    if (t === 'deluxe') return 'deluxe'
+    if (t === 'twin') return 'twin'
+    if (t === 'tripple' || t === 'triple') return 'triple'
+    return 'standard'
   }
 
-  const newRooms: any[] = []
-
-  for (const num of standardRooms) {
-    newRooms.push({
-      hotelId: hotel.id,
-      roomNumber: num,
-      name: 'Standard Room',
-      floor: getFloor(num),
-      type: 'standard' as const,
-      status: 'available' as const,
-      pricePerNight: 30,
-      capacity: 2,
-      amenities: ['WiFi', 'AC', 'TV', 'Hot Shower'],
-    })
+  function floorFromRoomNumber(num: number): number {
+    if (num >= 100 && num < 200) return 1
+    if (num >= 200 && num < 300) return 2
+    if (num >= 300 && num < 400) return 3
+    if (num >= 400 && num < 500) return 4
+    if (num >= 500 && num < 600) return 5
+    return 0
   }
 
-  for (const num of twinRooms) {
-    newRooms.push({
-      hotelId: hotel.id,
-      roomNumber: num,
-      name: 'Twin Room',
-      floor: getFloor(num),
-      type: 'twin' as const,
-      status: 'available' as const,
-      pricePerNight: 40,
-      capacity: 2,
-      amenities: ['WiFi', 'AC', 'TV', 'Hot Shower', 'Desk'],
-    })
-  }
+  for (const row of rows) {
+    const roomNumber = String(row['ROOM NUMBER'])
+    const type = normalizeRoomType(row['ROOM TYPE'])
+    const beds = row['NO OF BEDS'] ?? 1
+    const capacity = type === 'triple' ? 3 : type === 'twin' ? 2 : 1
 
-  for (const num of deluxeRooms) {
-    newRooms.push({
-      hotelId: hotel.id,
-      roomNumber: num,
-      name: 'Deluxe Room',
-      floor: getFloor(num),
-      type: 'deluxe' as const,
-      status: 'available' as const,
-      pricePerNight: 80,
-      capacity: 2,
-      amenities: ['WiFi', 'AC', 'Smart TV', 'Hot Shower', 'Balcony', 'Breakfast Included'],
-    })
-  }
-
-  for (const num of tripleRooms) {
-    newRooms.push({
-      hotelId: hotel.id,
-      roomNumber: num,
-      name: 'Triple Room',
-      floor: getFloor(num),
-      type: 'triple' as const,
-      status: 'available' as const,
-      pricePerNight: 70,
-      capacity: 3,
-      amenities: ['WiFi', 'AC', 'TV', 'Hot Shower', 'Spacious Seating', 'Family Amenities'],
-    })
-  }
-
-  for (const room of newRooms) {
     await prisma.room.create({
-      data: room
+      data: {
+        hotelId: hotel.id,
+        roomNumber,
+        name: `${row['ROOM TYPE']} Room ${roomNumber}`,
+        floor: floorFromRoomNumber(row['ROOM NUMBER']),
+        type: type as any,
+        status: 'available',
+        pricePerNight: row['PRICE'],
+        specialRate: row['STO/SPECIAL RATE'],
+        fullBoardRate: row['FULL BOARD'],
+        nonResidentRate: String(row['NON RESIDENT']).trim(),
+        beds,
+        capacity,
+        amenities: ['WiFi', 'AC', 'TV'],
+      }
     })
-    console.log(`✅ Room ${room.roomNumber} created: ${room.name}`)
+    console.log(`✅ Room ${roomNumber} created: ${row['ROOM TYPE']}`)
   }
 
   // 5. Create addon services
@@ -166,164 +141,8 @@ async function main() {
     console.log(`✅ Addon: ${addon.name}`)
   }
 
-  // ── Suppliers ────────────────────────────────────────────
-  console.log('📦 Seeding suppliers...')
-  const supplierMgs = await prisma.supplier.create({
-    data: {
-      hotelId: hotel.id,
-      name: 'Morogoro General Supplies',
-      phone: '+255712000001',
-      email: 'supplies@mgs.co.tz',
-      paymentTerms: '30 days net',
-    }
-  })
-  const supplierTbl = await prisma.supplier.create({
-    data: {
-      hotelId: hotel.id,
-      name: 'Tanzania Breweries Ltd',
-      phone: '+255712000002',
-      paymentTerms: '14 days net',
-    }
-  })
-  const supplierKt = await prisma.supplier.create({
-    data: {
-      hotelId: hotel.id,
-      name: 'Karibu Textiles',
-      phone: '+255712000003',
-      paymentTerms: 'Cash on delivery',
-    }
-  })
-  console.log('✅ Suppliers created')
-
-  // ── F&B Items ─────────────────────────────────────────────
-  console.log('🍽️ Seeding F&B items...')
-  const fbItems = [
-    // Beverages — sellable (appear in POS)
-    {
-      name: 'Serengeti Beer (500ml)', subCategory: 'Bar Stock', unit: 'BOTTLE' as const,
-      currentStock: 48, minimumStock: 24, maximumStock: 120,
-      unitCost: 1800, sellingPrice: 3500, isSellable: true,
-      supplierId: supplierTbl.id, location: 'Bar'
-    },
-    {
-      name: 'Kilimanjaro Beer (500ml)', subCategory: 'Bar Stock', unit: 'BOTTLE' as const,
-      currentStock: 36, minimumStock: 24, maximumStock: 120,
-      unitCost: 1800, sellingPrice: 3500, isSellable: true,
-      supplierId: supplierTbl.id, location: 'Bar'
-    },
-    {
-      name: 'Coca Cola (300ml)', subCategory: 'Beverages', unit: 'BOTTLE' as const,
-      currentStock: 60, minimumStock: 30, maximumStock: 150,
-      unitCost: 600, sellingPrice: 1500, isSellable: true,
-      supplierId: supplierMgs.id, location: 'Bar'
-    },
-    {
-      name: 'Mineral Water (500ml)', subCategory: 'Beverages', unit: 'BOTTLE' as const,
-      currentStock: 80, minimumStock: 40, maximumStock: 200,
-      unitCost: 400, sellingPrice: 1000, isSellable: true,
-      supplierId: supplierMgs.id, location: 'Bar'
-    },
-    {
-      name: 'Fresh Juice (Orange)', subCategory: 'Beverages', unit: 'PCS' as const,
-      currentStock: 20, minimumStock: 10, maximumStock: 50,
-      unitCost: 1500, sellingPrice: 4000, isSellable: true,
-      supplierId: supplierMgs.id, location: 'Kitchen'
-    },
-    // Food
-    {
-      name: 'Breakfast Plate (Full)', subCategory: 'Food', unit: 'PCS' as const,
-      currentStock: 999, minimumStock: 0, maximumStock: 999,
-      unitCost: 3000, sellingPrice: 8000, isSellable: true,
-      supplierId: supplierMgs.id, location: 'Kitchen'
-    },
-    {
-      name: 'Chips (Portion)', subCategory: 'Food', unit: 'PCS' as const,
-      currentStock: 999, minimumStock: 0, maximumStock: 999,
-      unitCost: 1000, sellingPrice: 3000, isSellable: true,
-      supplierId: supplierMgs.id, location: 'Kitchen'
-    },
-    {
-      name: 'Rice (25kg bag)', subCategory: 'Dry Foods', unit: 'KG' as const,
-      currentStock: 75, minimumStock: 25, maximumStock: 200,
-      unitCost: 2200, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Kitchen Store'
-    },
-    {
-      name: 'Cooking Oil (20L)', subCategory: 'Dry Foods', unit: 'LTR' as const,
-      currentStock: 40, minimumStock: 20, maximumStock: 100,
-      unitCost: 4500, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Kitchen Store'
-    },
-  ]
-
-  for (const item of fbItems) {
-    await prisma.storeItem.create({
-      data: { ...item, hotelId: hotel.id, category: 'FB' }
-    })
-    console.log(`✅ F&B Item: ${item.name}`)
-  }
-
-  // ── Hotel Inventory Items ─────────────────────────────────
-  console.log('🏨 Seeding Hotel inventory items...')
-  const hotelItems = [
-    {
-      name: 'Bath Towel (Large)', subCategory: 'Linen & Towels', unit: 'PCS' as const,
-      currentStock: 20, minimumStock: 16, maximumStock: 40,
-      unitCost: 8000, sellingPrice: null, isSellable: false,
-      supplierId: supplierKt.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Bed Sheet (King)', subCategory: 'Linen & Towels', unit: 'PCS' as const,
-      currentStock: 12, minimumStock: 8, maximumStock: 24,
-      unitCost: 15000, sellingPrice: null, isSellable: false,
-      supplierId: supplierKt.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Pillow Case', subCategory: 'Linen & Towels', unit: 'PCS' as const,
-      currentStock: 24, minimumStock: 16, maximumStock: 48,
-      unitCost: 4000, sellingPrice: null, isSellable: false,
-      supplierId: supplierKt.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Shower Gel (50ml)', subCategory: 'Bathroom Amenities', unit: 'PCS' as const,
-      currentStock: 8, minimumStock: 20, maximumStock: 80,
-      unitCost: 1200, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Toilet Soap (bar)', subCategory: 'Bathroom Amenities', unit: 'PCS' as const,
-      currentStock: 15, minimumStock: 20, maximumStock: 80,
-      unitCost: 800, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Toilet Paper (roll)', subCategory: 'Bathroom Amenities', unit: 'ROLL' as const,
-      currentStock: 30, minimumStock: 24, maximumStock: 100,
-      unitCost: 500, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Floor Cleaner (5L)', subCategory: 'Cleaning Supplies', unit: 'LTR' as const,
-      currentStock: 10, minimumStock: 10, maximumStock: 40,
-      unitCost: 3500, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Housekeeping Store'
-    },
-    {
-      name: 'Garbage Bags (roll)', subCategory: 'Cleaning Supplies', unit: 'ROLL' as const,
-      currentStock: 5, minimumStock: 6, maximumStock: 24,
-      unitCost: 2000, sellingPrice: null, isSellable: false,
-      supplierId: supplierMgs.id, location: 'Housekeeping Store'
-    },
-  ]
-
-  for (const item of hotelItems) {
-    await prisma.storeItem.create({
-      data: { ...item, hotelId: hotel.id, category: 'HOTEL' }
-    })
-    console.log(`✅ Hotel Item: ${item.name}`)
-  }
-
   console.log('\n🎉 Seeding completed!')
+  console.log('   Store suppliers and items were intentionally skipped — add real data from the dashboard.')
   console.log('\n📋 Login credentials:')
   console.log('   Admin:       admin@buffalo-hotel.co.tz / Admin@2026!')
   console.log('   Receptionist: reception@buffalo-hotel.co.tz / Recep@2026!')
