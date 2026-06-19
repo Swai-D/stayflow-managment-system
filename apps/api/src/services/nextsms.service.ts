@@ -4,11 +4,12 @@ import axios from 'axios'
  * NextSMS integration for Tanzania.
  * Docs (Reseller / SMS API v1): https://messaging-service.co.tz
  *
- * Auth:
- *   Uses the provided Basic auth header by default.
- *   Override with NEXTSMS_AUTH_HEADER env var if needed.
+ * Auth is built at runtime from NEXTSMS_USERNAME and NEXTSMS_PASSWORD.
+ * Never commit credentials or Base64 auth strings to the repo.
  *
  * Env vars:
+ *   NEXTSMS_USERNAME
+ *   NEXTSMS_PASSWORD
  *   NEXTSMS_SENDER_ID (optional, defaults to hotel name or BUFFALO)
  *   NEXTSMS_TEST_MODE=true (optional, uses test endpoints – no charges)
  */
@@ -17,8 +18,14 @@ const NEXTSMS_API_URL = 'https://messaging-service.co.tz'
 
 export class NextSmsService {
   private getAuthHeader(): string {
-    // Provided by user; override via env var if credentials change
-    return process.env.NEXTSMS_AUTH_HEADER || 'Basic ZGF2eXN3YWk6ZGF2eXN3YWkxOTk1'
+    const username = process.env.NEXTSMS_USERNAME
+    const password = process.env.NEXTSMS_PASSWORD
+
+    if (!username || !password) {
+      throw new Error('NEXTSMS_USERNAME and NEXTSMS_PASSWORD must be configured')
+    }
+
+    return `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`
   }
 
   private getHeaders() {
