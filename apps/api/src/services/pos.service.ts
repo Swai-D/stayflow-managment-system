@@ -1,5 +1,8 @@
 import { PrismaClient, ChargeStatus } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
+import { pdfService } from './pdf.service'
+import { brevoService } from './brevo.service'
+import { format } from 'date-fns'
 
 const prisma = new PrismaClient()
 
@@ -260,6 +263,104 @@ export class POSService {
         }
       })
     })
+  }
+
+  async sendInvoiceEmail(bookingId: string, hotelId: string) {
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId, hotelId },
+      include: { guest: true, room: true, hotel: true }
+    })
+    if (!booking) throw ApiError.notFound('Booking haikupatikana')
+    if (!booking.guest.email) throw ApiError.badRequest('Mgeni hana email address')
+
+    const pdfBuffer = await pdfService.generateInvoice(bookingId)
+    const nights = Math.max(
+      1,
+      Math.ceil(
+        (new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    )
+
+    const hotel = booking.hotel
+    const htmlContent = `
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #111827; line-height: 1.6; max-width: 600px; margin: 0 auto;">
+        <div style="background: #2563EB; color: white; padding: 24px; text-align: center;">
+          <h1 style="margin: 0; font-size: 24px;">${hotel.name}</h1>
+          <p style="margin: 4px 0 0; font-size: 14px; opacity: 0.9;">Comfort in every stay</p>
+        </div>
+
+        <div style="padding: 24px; background: #ffffff;">
+          <h2 style="color: #2563EB; margin-top: 0;">Guest Invoice</h2>
+          <p>Hello <strong>${booking.guest.fullName}</strong>,</p>
+          <p>Please find your updated invoice attached for your stay at <strong>${hotel.name}</strong>.</p>
+
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+            <tr style="background: #F3F4F6;">
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Booking Reference</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB;">${booking.bookingRef}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Room</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB;">${booking.room.roomNumber} (${booking.room.type})</td>
+            </tr>
+            <tr style="background: #F3F4F6;">
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Check-in</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB;">${format(new Date(booking.checkIn), 'dd MMM yyyy')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Check-out</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB;">${format(new Date(booking.checkOut), 'dd MMM yyyy')}</td>
+            </tr>
+            <tr style="background: #F3F4F6;">
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Nights</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB;">${nights}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold;">Balance Due</td>
+              <td style="padding: 10px; border: 1px solid #E5E7EB; font-weight: bold; color: #2563EB;">TZS ${Number(booking.balanceDue).toLocaleString('en-TZ')}</td>
+            </tr>
+          </table>
+
+          <p style="margin-top: 20px;">
+            <strong>Booking Policy</strong><br/>
+            All bookings will be confirmed upon receiving a deposit. The remaining balance should be cleared on arrival or before check-out. Full pre-payment may be required within 7 days of booking.
+          </p>
+
+          <p>
+            <strong>Cancellation & No Show Policy</strong><br/>
+            All cancellations must be received with written confirmation. Cancellations made within 24 hours of check-in or no-shows may be charged the full booking amount.
+          </p>
+
+          <p>If you have any questions, please contact us at your earliest convenience.</p>
+
+          <p>Best regards,<br/><strong>${hotel.name} Team</strong></p>
+        </div>
+
+        <div style="padding: 20px; background: #F9FAFB; text-align: center; font-size: 12px; color: #6B7280; border-top: 1px solid #E5E7EB;">
+          ${hotel.name}<br/>
+          ${hotel.address || ''}<br/>
+          Mobile/WhatsApp: ${hotel.phone || '—'}<br/>
+          Email: ${hotel.email || '—'}<br/>
+          <em>Powered by StayFlow</em>
+        </div>
+      </div>
+    `
+
+    const result = await brevoService.sendEmail({
+      to: booking.guest.email,
+      toName: booking.guest.fullName,
+      subject: `Invoice - ${booking.bookingRef}`,
+      htmlContent,
+      attachments: [{ name: `Invoice-${booking.bookingRef}.pdf`, content: pdfBuffer }]
+    })
+
+    if (!result.success) {
+      console.error('[POS Service] Failed to send invoice email:', result.error)
+      throw ApiError.internal('Imeshindwa kutuma invoice kwa email')
+    }
+
+    return { success: true, email: booking.guest.email }
   }
 }
 

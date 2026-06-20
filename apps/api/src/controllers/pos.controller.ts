@@ -42,6 +42,12 @@ export const getInvoice = asyncHandler(async (req: AuthRequest, res: Response) =
   res.json(new ApiResponse(invoice))
 })
 
+export const sendInvoiceEmail = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const result = await posService.sendInvoiceEmail(req.params.bookingId, hotelId)
+  res.json(new ApiResponse(result, 'Invoice imetumwa kwa email'))
+})
+
 export const getInvoicePdf = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { bookingId } = req.params
   const pdfBuffer = await pdfService.generateInvoice(bookingId)

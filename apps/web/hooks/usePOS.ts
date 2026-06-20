@@ -75,6 +75,15 @@ export function useInvoice(bookingId: string) {
   })
 }
 
+export function useSendInvoiceEmail() {
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const res = await api.post(`/pos/invoice/${bookingId}/email`)
+      return res.data
+    }
+  })
+}
+
 export function useCheckout() {
   const queryClient = useQueryClient()
   return useMutation({

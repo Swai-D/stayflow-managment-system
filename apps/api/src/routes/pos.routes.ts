@@ -3,7 +3,7 @@ import { authenticate } from '../middleware/authenticate'
 import { authorize } from '../middleware/authorize'
 import {
   getSellableItems, getActiveBookings, postCharge, getFolio,
-  voidCharge, getInvoice, getInvoicePdf, checkout
+  voidCharge, getInvoice, sendInvoiceEmail, getInvoicePdf, checkout
 } from '../controllers/pos.controller'
 
 const router = Router()
@@ -19,6 +19,7 @@ router.post('/charge',         authorize('admin', 'receptionist', 'waiter'), pos
 // Folio, Invoice, Checkout: admin, receptionist only
 router.get('/folio/:bookingId',   authorize('admin', 'receptionist'), getFolio)
 router.get('/invoice/:bookingId', authorize('admin', 'receptionist'), getInvoice)
+router.post('/invoice/:bookingId/email', authorize('admin', 'receptionist'), sendInvoiceEmail)
 router.get('/invoice/:bookingId/pdf', authorize('admin', 'receptionist'), getInvoicePdf)
 router.post('/checkout/:bookingId',authorize('admin', 'receptionist'), checkout)
 

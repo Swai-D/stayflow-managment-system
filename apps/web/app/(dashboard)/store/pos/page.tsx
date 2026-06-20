@@ -1,15 +1,18 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { usePOSItems, useActiveBookings, usePostCharge, useGuestFolio } from '@/hooks/usePOS'
+import { usePOSItems, useActiveBookings, usePostCharge, useGuestFolio, useSendInvoiceEmail } from '@/hooks/usePOS'
 import { formatTZS } from '@/lib/formatters'
+import api from '@/lib/api'
 import { type StoreItem, type RoomCharge } from '@/types/store'
 import { type Booking } from '@/types/booking'
 import {
   Search, Plus, Minus, X, ChevronDown, CheckCircle,
-  Receipt, Users, Trash2, ShoppingBag, UtensilsCrossed, Loader2
+  Receipt, Users, Trash2, ShoppingBag, UtensilsCrossed, Loader2,
+  Mail, Printer
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // ── Cart Item type ────────────────────────────────────────────────────────────
 interface CartItem { item: StoreItem; qty: number }
@@ -205,11 +208,14 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
 }
 
 // ── Success screen ────────────────────────────────────────────────────────────
-function SuccessScreen({ booking, total, onReset }: {
+function SuccessScreen({ booking, total, onReset, onSendInvoice, onPrintInvoice, sendingInvoice }: {
   booking: Booking; total: number; onReset: () => void
+  onSendInvoice: () => void
+  onPrintInvoice: () => void
+  sendingInvoice: boolean
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="flex flex-col items-center justify-center py-10 text-center">
       <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
         <CheckCircle size={40} className="text-green-500"/>
       </div>
@@ -217,9 +223,25 @@ function SuccessScreen({ booking, total, onReset }: {
       <p className="text-[14px] text-gray-500 mb-1">
         <span className="font-semibold text-[#2563EB]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
       </p>
-      <p className="text-[13px] text-gray-400 mb-8">{booking.guest.fullName} · {booking.bookingRef}</p>
+      <p className="text-[13px] text-gray-400 mb-6">{booking.guest.fullName} · {booking.bookingRef}</p>
+
+      <div className="flex flex-col gap-2 w-full max-w-[280px] mb-4">
+        <button onClick={onSendInvoice} disabled={sendingInvoice}
+          className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
+          {sendingInvoice ? (
+            <><Loader2 size={15} className="animate-spin"/> Sending...</>
+          ) : (
+            <><Mail size={15}/> Send Invoice to Guest</>
+          )}
+        </button>
+        <button onClick={onPrintInvoice}
+          className="w-full py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
+          <Printer size={15}/> Print Invoice
+        </button>
+      </div>
+
       <button onClick={onReset}
-        className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl px-8 py-3 text-[13px] font-semibold transition-colors">
+        className="text-[13px] font-semibold text-gray-500 hover:text-[#2563EB] transition-colors">
         New Charge
       </button>
     </div>
@@ -231,6 +253,7 @@ export default function POSPage() {
   const { data: posItems = [], isLoading: itemsLoading } = usePOSItems()
   const { data: bookings = [], isLoading: bookingsLoading } = useActiveBookings()
   const { mutate: postCharge, isPending: posting } = usePostCharge()
+  const { mutate: sendInvoice, isPending: sendingInvoice } = useSendInvoiceEmail()
 
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const { data: folio } = useGuestFolio(selectedBooking?.id ?? '')
@@ -293,6 +316,33 @@ export default function POSPage() {
     setCart([])
     setShowSuccess(false)
     setSelectedBooking(null)
+  }
+
+  const handleSendInvoice = () => {
+    if (!selectedBooking) return
+    if (!selectedBooking.guest.email) {
+      toast.error('Mgeni hana email address')
+      return
+    }
+    sendInvoice(selectedBooking.id, {
+      onSuccess: (data) => {
+        toast.success(data?.message || 'Invoice imetumwa kwa email')
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kutuma invoice')
+      }
+    })
+  }
+
+  const handlePrintInvoice = async () => {
+    if (!selectedBooking) return
+    try {
+      const res = await api.get(`/pos/invoice/${selectedBooking.id}/pdf`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      window.open(url, '_blank')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata invoice')
+    }
   }
 
   // Open folio charges for selected booking
@@ -492,7 +542,14 @@ export default function POSPage() {
       {showSuccess && selectedBooking && (
         <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[400px] p-8">
-            <SuccessScreen booking={selectedBooking} total={total} onReset={handleReset}/>
+            <SuccessScreen
+              booking={selectedBooking}
+              total={total}
+              onReset={handleReset}
+              onSendInvoice={handleSendInvoice}
+              onPrintInvoice={handlePrintInvoice}
+              sendingInvoice={sendingInvoice}
+            />
           </div>
         </div>
       )}
