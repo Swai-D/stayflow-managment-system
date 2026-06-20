@@ -3,10 +3,6 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('❌ Store seeder is not allowed in production environment.')
-  }
-
   console.log('🌱 Seeding store & inventory data...')
 
   // ── Lookup default hotel + admin user ─────────────────────────────────────

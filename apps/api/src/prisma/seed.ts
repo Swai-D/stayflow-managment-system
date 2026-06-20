@@ -146,8 +146,8 @@ async function main() {
     console.log(`✅ Addon: ${addon.name}`)
   }
 
-  console.log('\n🎉 Seeding completed!')
-  console.log('   Store suppliers and items were intentionally skipped — add real data from the dashboard.')
+  console.log('\n🎉 Core seeding completed!')
+  console.log('   Run `npm run db:seed:store` separately, or use `npm run db:fresh` to seed store data automatically.')
   console.log('\n📋 Login credentials:')
   console.log('   Admin:       admin@buffalo-hotel.co.tz / Admin@2026!')
   console.log('   Receptionist: reception@buffalo-hotel.co.tz / Recep@2026!')
