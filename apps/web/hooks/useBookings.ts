@@ -79,6 +79,7 @@ export function useCheckIn() {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['pos', 'active-bookings'] })
     }
   })
 }
@@ -96,6 +97,7 @@ export function useCheckOut() {
       queryClient.invalidateQueries({ queryKey: ['rooms'] })
       queryClient.invalidateQueries({ queryKey: ['rooms', 'stats'] })
       queryClient.invalidateQueries({ queryKey: ['housekeeping'] })
+      queryClient.invalidateQueries({ queryKey: ['pos', 'active-bookings'] })
     }
   })
 }

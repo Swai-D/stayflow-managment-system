@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import {
   useBookings, useBookingStats,
-  useCancelBooking, useConfirmPayment
+  useCancelBooking, useConfirmPayment,
+  useCheckIn, useCheckOut
 } from '@/hooks/useBookings'
 import { useOccupancyReport } from '@/hooks/useReports'
 import { BOOKING_STATUS_CONFIG, Booking } from '@/types/booking'
@@ -11,7 +12,7 @@ import { format } from 'date-fns'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import NewBookingModal from '@/components/reservations/NewBookingModal'
 import { cn } from '@/lib/utils'
-import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard } from 'lucide-react'
+import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, LogIn, LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 
@@ -19,6 +20,8 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts'
 function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: () => void }) {
   const { mutate: cancel,   isPending: cancelling }  = useCancelBooking()
   const { mutate: confirmPayment, isPending: confirmingPayment } = useConfirmPayment()
+  const { mutate: checkIn, isPending: checkingIn } = useCheckIn()
+  const { mutate: checkOut, isPending: checkingOut } = useCheckOut()
 
   const [confirmCancel, setConfirmCancel] = useState(false)
 
@@ -43,6 +46,30 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
       },
       onError: (err: any) => {
         toast.error(err?.response?.data?.error?.message || 'Imeshindwa kuthibitisha malipo')
+      }
+    })
+  }
+
+  const handleCheckIn = () => {
+    checkIn(booking.id, {
+      onSuccess: () => {
+        toast.success('Mgeni amewasili (checked in)')
+        onClose()
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kufanya check-in')
+      }
+    })
+  }
+
+  const handleCheckOut = () => {
+    checkOut(booking.id, {
+      onSuccess: () => {
+        toast.success('Mgeni ameondoka (checked out)')
+        onClose()
+      },
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kufanya check-out')
       }
     })
   }
@@ -147,6 +174,22 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                       className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-green-100/50 flex items-center justify-center gap-2">
                       <CreditCard size={15} />
                       {confirmingPayment ? 'Processing...' : 'Confirm Payment & Invoice'}
+                    </button>
+                  )}
+
+                  {['pending','confirmed'].includes(booking.status) && (
+                    <button onClick={handleCheckIn} disabled={checkingIn}
+                      className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2">
+                      <LogIn size={15} />
+                      {checkingIn ? 'Checking in...' : 'Check In'}
+                    </button>
+                  )}
+
+                  {booking.status === 'checked_in' && (
+                    <button onClick={handleCheckOut} disabled={checkingOut}
+                      className="flex-1 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2">
+                      <LogOut size={15} />
+                      {checkingOut ? 'Checking out...' : 'Check Out'}
                     </button>
                   )}
                 </div>
