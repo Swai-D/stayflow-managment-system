@@ -14,8 +14,12 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     checkIn, checkOut, adults, children, roomType, additionalServices, message, source
   } = req.body
 
-  // 1. Get default hotel
-  const hotelId = process.env.DEFAULT_HOTEL_ID || 'default-hotel-id'
+  // 1. Find the system admin and resolve the hotel they belong to
+  const admin = await prisma.user.findFirst({
+    where: { email: 'admin@buffalo-hotel.co.tz' }
+  })
+  if (!admin) throw ApiError.internal('System admin user not found')
+  const hotelId = admin.hotelId
 
   // 2. Find an available room of the requested type
   const availableRooms = await availabilityService.getAvailableRooms(
@@ -33,13 +37,7 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     throw ApiError.conflict('Samahani, chumba cha aina hii hakipatikani kwa tarehe ulizochagua.')
   }
 
-  // 3. Find a system user to be the creator
-  const admin = await prisma.user.findFirst({
-    where: { email: 'admin@buffalo-hotel.co.tz' }
-  })
-  if (!admin) throw ApiError.internal('System admin user not found')
-
-  // 4. Create the booking
+  // 3. Create the booking
   const booking = await bookingsService.createBooking({
     hotelId,
     roomId: room.id,
@@ -95,7 +93,11 @@ export const getAvailability = asyncHandler(async (req: Request, res: Response) 
     throw ApiError.badRequest('checkIn and checkOut dates are required')
   }
 
-  const hotelId = process.env.DEFAULT_HOTEL_ID || 'default-hotel-id'
+  const admin = await prisma.user.findFirst({
+    where: { email: 'admin@buffalo-hotel.co.tz' },
+    select: { hotelId: true }
+  })
+  const hotelId = admin?.hotelId || process.env.DEFAULT_HOTEL_ID || 'default-hotel-id'
 
   const availableRooms = await availabilityService.getAvailableRooms(
     hotelId,
