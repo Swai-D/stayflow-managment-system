@@ -8,6 +8,7 @@ import { paymentsService } from '../services/payments.service'
 import { pdfService } from '../services/pdf.service'
 import { nextSmsService } from '../services/nextsms.service'
 import { brevoService } from '../services/brevo.service'
+import { posService } from '../services/pos.service'
 import { AuthRequest } from '../middleware/authenticate'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient, PaymentMethod } from '@prisma/client'
@@ -212,6 +213,26 @@ export const checkIn = asyncHandler(async (req: AuthRequest, res: Response) => {
 
 export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
+  const sendInvoice = req.body.sendInvoice !== false
+
   const booking = await bookingsService.checkOut(req.params.id, hotelId)
-  res.json(new ApiResponse(booking, 'Check-out imefanyika'))
+
+  let invoiceSent = false
+  let invoiceEmail: string | null = null
+
+  if (sendInvoice) {
+    try {
+      const result = await posService.sendInvoiceEmail(req.params.id, hotelId)
+      invoiceSent = true
+      invoiceEmail = result.email || null
+    } catch (err: any) {
+      console.error('[Checkout] Auto invoice send failed:', err.message)
+    }
+  }
+
+  res.json(new ApiResponse({
+    booking,
+    invoiceSent,
+    invoiceEmail
+  }, invoiceSent ? 'Check-out imefanyika na invoice imetumwa' : 'Check-out imefanyika'))
 })

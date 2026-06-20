@@ -12,8 +12,9 @@ import { format } from 'date-fns'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import NewBookingModal from '@/components/reservations/NewBookingModal'
 import { cn } from '@/lib/utils'
-import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, LogIn, LogOut } from 'lucide-react'
+import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, LogIn, LogOut, Printer, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import api from '@/lib/api'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 
 // ─── Booking Detail Modal ──────────────────────────────
@@ -24,6 +25,9 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
   const { mutate: checkOut, isPending: checkingOut } = useCheckOut()
 
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [checkoutDone, setCheckoutDone] = useState(false)
+  const [invoiceSent, setInvoiceSent] = useState(false)
+  const [invoiceEmail, setInvoiceEmail] = useState<string | null>(null)
 
   const nights = Math.round(
     (new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / 86400000
@@ -64,14 +68,25 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
 
   const handleCheckOut = () => {
     checkOut(booking.id, {
-      onSuccess: () => {
-        toast.success('Mgeni ameondoka (checked out)')
-        onClose()
+      onSuccess: (data) => {
+        setCheckoutDone(true)
+        setInvoiceSent(data?.invoiceSent || false)
+        setInvoiceEmail(data?.invoiceEmail || null)
       },
       onError: (err: any) => {
         toast.error(err?.response?.data?.error?.message || 'Imeshindwa kufanya check-out')
       }
     })
+  }
+
+  const handlePrintInvoice = async () => {
+    try {
+      const res = await api.get(`/pos/invoice/${booking.id}/pdf`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      window.open(url, '_blank')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata invoice')
+    }
   }
 
   return (
@@ -104,7 +119,34 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
           </div>
 
           <div className="p-6 space-y-4 font-sans text-left">
-            {/* Details grid */}
+            {checkoutDone ? (
+              <div className="text-center py-6 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                  <CheckCircle size={32} className="text-green-600"/>
+                </div>
+                <div>
+                  <h3 className="text-[18px] font-bold text-[#111827]">Guest Checked Out</h3>
+                  <p className="text-[13px] text-[#6b7280] mt-1">{booking.guest.fullName} · Room {booking.room.roomNumber}</p>
+                  {invoiceSent ? (
+                    <p className="text-[13px] text-green-600 mt-2">Invoice imetumwa kwa {invoiceEmail}</p>
+                  ) : (
+                    <p className="text-[13px] text-amber-600 mt-2">Mgeni hana email. Tumia Print Invoice.</p>
+                  )}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={handlePrintInvoice}
+                    className="flex-1 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2">
+                    <Printer size={15}/> Print Invoice
+                  </button>
+                  <button onClick={onClose}
+                    className="flex-1 py-2.5 border border-border text-[#6b7280] rounded-xl text-[13px] font-bold hover:bg-subtle transition-all">
+                    Close
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Details grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label:'Check In',   value: formatDate(booking.checkIn) },
@@ -209,6 +251,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                 </div>
               </div>
             )}
+              </>)}
           </div>
         </div>
       </div>

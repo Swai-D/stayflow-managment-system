@@ -89,7 +89,7 @@ export function useCheckOut() {
 
   return useMutation({
     mutationFn: async (bookingId: string) => {
-      const res = await api.post(`/bookings/${bookingId}/check-out`)
+      const res = await api.post(`/bookings/${bookingId}/check-out`, { sendInvoice: true })
       return res.data.data
     },
     onSuccess: () => {
