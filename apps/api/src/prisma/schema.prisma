@@ -155,6 +155,39 @@ enum ChargeStatus {
   SETTLED
 }
 
+enum GuestAccountStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+}
+
+enum RoomServiceOrderStatus {
+  PENDING
+  PREPARING
+  DELIVERED
+  CANCELLED
+}
+
+enum ServiceRequestType {
+  laundry
+  taxi
+  tour
+  housekeeping
+  other
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ExtensionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ─── MODELS ──────────────────────────────────────────
 
 model Hotel {
@@ -315,16 +348,19 @@ model Booking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  hotel         Hotel          @relation(fields: [hotelId], references: [id])
-  guest         Guest          @relation(fields: [guestId], references: [id])
-  room          Room           @relation(fields: [roomId], references: [id])
-  createdBy     User           @relation("CreatedBy", fields: [createdById], references: [id])
-  payments      Payment[]
-  receipts      Receipt[]
-  addons        BookingAddon[]
-  notifications Notification[]
-  review        Review?
-  roomCharges   RoomCharge[]
+  hotel             Hotel              @relation(fields: [hotelId], references: [id])
+  guest             Guest              @relation(fields: [guestId], references: [id])
+  room              Room               @relation(fields: [roomId], references: [id])
+  createdBy         User               @relation("CreatedBy", fields: [createdById], references: [id])
+  payments          Payment[]
+  receipts          Receipt[]
+  addons            BookingAddon[]
+  notifications     Notification[]
+  review            Review?
+  roomCharges       RoomCharge[]
+  roomServiceOrders RoomServiceOrder[]
+  serviceRequests   ServiceRequest[]
+  extensionRequests ExtensionRequest[]
 
   @@map("bookings")
 }
@@ -639,4 +675,76 @@ model AdvisorRefreshLog {
 
   @@index([hotelId, period, createdAt])
   @@map("advisor_refresh_logs")
+}
+
+model GuestAccount {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  passwordHash      String?
+  firstName         String
+  lastName          String
+  phone             String?
+  activationToken   String?            @unique
+  tokenExpiresAt    DateTime?
+  otp               String?
+  otpExpiresAt      DateTime?
+  status            GuestAccountStatus @default(PENDING_ACTIVATION)
+  linkedBookingId   String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  roomServiceOrders RoomServiceOrder[]
+  serviceRequests   ServiceRequest[]
+
+  @@map("guest_accounts")
+}
+
+model RoomServiceOrder {
+  id             String                 @id @default(uuid())
+  orderId        String                 @unique
+  guestAccountId String
+  bookingId      String
+  items          Json
+  totalAmount    Decimal                @db.Decimal(10, 2)
+  notes          String?
+  status         RoomServiceOrderStatus @default(PENDING)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  guestAccount GuestAccount @relation(fields: [guestAccountId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+
+  @@map("room_service_orders")
+}
+
+model ServiceRequest {
+  id             String               @id @default(uuid())
+  requestId      String               @unique
+  guestAccountId String
+  bookingId      String
+  type           ServiceRequestType
+  payload        Json
+  status         ServiceRequestStatus @default(PENDING)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  guestAccount GuestAccount @relation(fields: [guestAccountId], references: [id])
+  booking      Booking      @relation(fields: [bookingId], references: [id])
+
+  @@map("service_requests")
+}
+
+model ExtensionRequest {
+  id                   String                 @id @default(uuid())
+  bookingId            String
+  extraNights          Int
+  requestedNewCheckout DateTime
+  reason               String?
+  status               ExtensionRequestStatus @default(PENDING)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("extension_requests")
 }

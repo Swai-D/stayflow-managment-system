@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse'
 import { ApiError } from '../utils/ApiError'
 import { bookingsService } from '../services/bookings.service'
 import { availabilityService } from '../services/availability.service'
+import { guestService } from '../services/guest.service'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient } from '@prisma/client'
 
@@ -60,6 +61,21 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
   })
 
   const nights = availabilityService.calculateNights(new Date(checkIn), new Date(checkOut))
+
+  // Mark website bookings as confirmed automatically (mock payment flow)
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: 'confirmed' }
+  })
+
+  // Auto-create guest portal account and send activation email/SMS
+  guestService.createOrUpdateGuestAccount({
+    email,
+    firstName,
+    lastName,
+    phone,
+    bookingId: booking.id
+  }).catch(err => console.error('[Website Booking] Guest account creation failed:', err.message))
 
   res.status(201).json({
     success: true,

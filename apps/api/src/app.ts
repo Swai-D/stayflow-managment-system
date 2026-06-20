@@ -21,6 +21,7 @@ import reportRoutes from './routes/reports.routes'
 import searchRoutes from './routes/search.routes'
 import advisorRoutes from './routes/advisor.routes'
 import settingsRoutes from './routes/settings.routes'
+import guestPortalRoutes from './routes/guest.routes'
 
 const app = express()
 
@@ -41,6 +42,9 @@ app.use(cors({
     'http://192.168.1.156:63747',   // Website (Network)
     'http://192.168.1.156:3000',    // Next.js (Network)
     'http://localhost:5173',
+    'http://localhost:5501',
+    'http://127.0.0.1:5501',
+    'https://guest.buffalohotel.co.tz',
   ],
   credentials: true
 }))
@@ -74,6 +78,7 @@ app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/search', searchRoutes)
 app.use('/api/v1/advisor', advisorRoutes)
 app.use('/api/v1/settings', settingsRoutes)
+app.use('/api/guest', guestPortalRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)
