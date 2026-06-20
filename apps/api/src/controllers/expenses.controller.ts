@@ -3,11 +3,13 @@ import { asyncHandler } from '../utils/asyncHandler'
 import { ApiResponse } from '../utils/ApiResponse'
 import { expensesService } from '../services/expenses.service'
 import { AuthRequest } from '../middleware/authenticate'
+import { getSystemHotelId } from '../utils/systemHotel'
 
 export const createExpense = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
   const expense = await expensesService.createExpense({
     ...req.body,
-    hotelId: req.user!.hotelId,
+    hotelId,
     userId: req.user!.id,
     date: req.body.date ? new Date(req.body.date) : undefined
   })
@@ -16,7 +18,8 @@ export const createExpense = asyncHandler(async (req: AuthRequest, res: Response
 
 export const getExpenses = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { category, search, dateFrom, dateTo, page, limit } = req.query
-  const result = await expensesService.getExpenses(req.user!.hotelId, {
+  const hotelId = await getSystemHotelId()
+  const result = await expensesService.getExpenses(hotelId, {
     category: category as any,
     search: search as string,
     dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
@@ -29,8 +32,9 @@ export const getExpenses = asyncHandler(async (req: AuthRequest, res: Response) 
 
 export const getExpenseStats = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { month, year } = req.query
+  const hotelId = await getSystemHotelId()
   const stats = await expensesService.getExpenseStats(
-    req.user!.hotelId,
+    hotelId,
     month ? Number(month) : undefined,
     year ? Number(year) : undefined
   )

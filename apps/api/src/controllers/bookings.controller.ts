@@ -9,6 +9,7 @@ import { pdfService } from '../services/pdf.service'
 import { nextSmsService } from '../services/nextsms.service'
 import { brevoService } from '../services/brevo.service'
 import { AuthRequest } from '../middleware/authenticate'
+import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient, PaymentMethod } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -19,7 +20,8 @@ function generateOtp(): string {
 
 export const getBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { status, source, search, dateFrom, dateTo, page, limit } = req.query
-  const result = await bookingsService.getBookings(req.user!.hotelId, {
+  const hotelId = await getSystemHotelId()
+  const result = await bookingsService.getBookings(hotelId, {
     status: status as any,
     source: source as any,
     search: search as string,
@@ -32,7 +34,8 @@ export const getBookings = asyncHandler(async (req: AuthRequest, res: Response) 
 })
 
 export const getBookingStats = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const stats = await bookingsService.getTodayStats(req.user!.hotelId)
+  const hotelId = await getSystemHotelId()
+  const stats = await bookingsService.getTodayStats(hotelId)
   res.json(new ApiResponse(stats))
 })
 
@@ -40,8 +43,9 @@ export const checkAvailability = asyncHandler(async (req: AuthRequest, res: Resp
   const { checkIn, checkOut } = req.query
   if (!checkIn || !checkOut) throw new Error('checkIn na checkOut zinahitajika')
 
+  const hotelId = await getSystemHotelId()
   const rooms = await availabilityService.getAvailableRooms(
-    req.user!.hotelId,
+    hotelId,
     new Date(checkIn as string),
     new Date(checkOut as string)
   )
@@ -49,15 +53,17 @@ export const checkAvailability = asyncHandler(async (req: AuthRequest, res: Resp
 })
 
 export const getBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const booking = await bookingsService.getBooking(req.params.id, req.user!.hotelId)
+  const hotelId = await getSystemHotelId()
+  const booking = await bookingsService.getBooking(req.params.id, hotelId)
   res.json(new ApiResponse(booking))
 })
 
 export const createBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
   const body = req.body
+  const hotelId = await getSystemHotelId()
   const booking = await bookingsService.createBooking({
     ...body,
-    hotelId: req.user!.hotelId,
+    hotelId,
     createdById: req.user!.id,
     checkIn: new Date(body.checkIn),
     checkOut: new Date(body.checkOut),
@@ -74,7 +80,7 @@ export const createBooking = asyncHandler(async (req: AuthRequest, res: Response
     })
 
     const hotel = await prisma.hotel.findUnique({
-      where: { id: req.user!.hotelId },
+      where: { id: hotelId },
       select: { name: true }
     })
 
@@ -105,9 +111,10 @@ export const createBooking = asyncHandler(async (req: AuthRequest, res: Response
 export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params
   const { method = 'cash', notes } = req.body
+  const hotelId = await getSystemHotelId()
 
   const booking = await prisma.booking.findFirst({
-    where: { id, hotelId: req.user!.hotelId },
+    where: { id, hotelId },
     include: { guest: true, hotel: true }
   })
   if (!booking) throw ApiError.notFound('Booking haikupatikana')
@@ -180,27 +187,31 @@ export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Respons
 })
 
 export const updateBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
   const booking = await bookingsService.updateBooking(
-    req.params.id, req.user!.hotelId, req.body
+    req.params.id, hotelId, req.body
   )
   res.json(new ApiResponse(booking, 'Booking imesasishwa'))
 })
 
 export const cancelBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { reason } = req.body
+  const hotelId = await getSystemHotelId()
   const booking = await bookingsService.cancelBooking(
-    req.params.id, req.user!.hotelId,
+    req.params.id, hotelId,
     reason || 'Imefutwa na mfumo', req.user!.id
   )
   res.json(new ApiResponse(booking, 'Booking imefutwa'))
 })
 
 export const checkIn = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const booking = await bookingsService.checkIn(req.params.id, req.user!.hotelId)
+  const hotelId = await getSystemHotelId()
+  const booking = await bookingsService.checkIn(req.params.id, hotelId)
   res.json(new ApiResponse(booking, 'Check-in imefanyika'))
 })
 
 export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const booking = await bookingsService.checkOut(req.params.id, req.user!.hotelId)
+  const hotelId = await getSystemHotelId()
+  const booking = await bookingsService.checkOut(req.params.id, hotelId)
   res.json(new ApiResponse(booking, 'Check-out imefanyika'))
 })

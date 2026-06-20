@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse'
 import { ApiError } from '../utils/ApiError'
 import { bookingsService } from '../services/bookings.service'
 import { availabilityService } from '../services/availability.service'
+import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -14,12 +15,12 @@ export const createWebsiteBooking = asyncHandler(async (req: Request, res: Respo
     checkIn, checkOut, adults, children, roomType, additionalServices, message, source
   } = req.body
 
-  // 1. Find the system admin and resolve the hotel they belong to
+  // 1. Resolve the canonical hotel for this deployment
+  const hotelId = await getSystemHotelId()
   const admin = await prisma.user.findFirst({
     where: { email: 'admin@buffalo-hotel.co.tz' }
   })
   if (!admin) throw ApiError.internal('System admin user not found')
-  const hotelId = admin.hotelId
 
   // 2. Find an available room of the requested type
   const availableRooms = await availabilityService.getAvailableRooms(
