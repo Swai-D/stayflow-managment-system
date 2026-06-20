@@ -293,9 +293,9 @@ export class PdfService {
       y += 16
 
       doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
-      doc.text('Moshi, Tanzania', margin, y)
+      doc.text(hotel.address || 'Moshi, Tanzania', margin, y)
       y += 14
-      doc.text(`+255765068295 | ${hotel.email || ''}`, margin, y)
+      doc.text(`${hotel.phone || '+255765068295'} | ${hotel.email || ''}`, margin, y)
       y += 22
 
       // Right side invoice meta
@@ -414,7 +414,7 @@ export class PdfService {
       doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
       doc.text(`Thank you for choosing ${hotel.name || 'us'}. We look forward to your stay.`, margin, footerY, { align: 'center', width: contentWidth })
       doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
-      doc.text('Powered by Odessa Lab', margin, footerY + 20, { align: 'center', width: contentWidth })
+      doc.text(process.env.POWERED_BY || 'Powered by Odessa Lab', margin, footerY + 20, { align: 'center', width: contentWidth })
     })
   }
 
