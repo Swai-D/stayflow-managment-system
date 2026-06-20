@@ -339,10 +339,10 @@ export class POSService {
 
         <div style="padding: 20px; background: #F9FAFB; text-align: center; font-size: 12px; color: #6B7280; border-top: 1px solid #E5E7EB;">
           ${hotel.name}<br/>
-          ${hotel.address || ''}<br/>
-          Mobile/WhatsApp: ${hotel.phone || '—'}<br/>
+          Moshi, Tanzania<br/>
+          Mobile/WhatsApp: +255765068295<br/>
           Email: ${hotel.email || '—'}<br/>
-          <em>Powered by StayFlow</em>
+          <em>Powered by Odessa Lab</em>
         </div>
       </div>
     `
