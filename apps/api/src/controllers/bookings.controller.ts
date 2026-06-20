@@ -9,6 +9,7 @@ import { pdfService } from '../services/pdf.service'
 import { nextSmsService } from '../services/nextsms.service'
 import { brevoService } from '../services/brevo.service'
 import { posService } from '../services/pos.service'
+import { guestService } from '../services/guest.service'
 import { AuthRequest } from '../middleware/authenticate'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient, PaymentMethod } from '@prisma/client'
@@ -69,6 +70,19 @@ export const createBooking = asyncHandler(async (req: AuthRequest, res: Response
     checkIn: new Date(body.checkIn),
     checkOut: new Date(body.checkOut),
   })
+
+  // Auto-create guest portal account and send activation email/SMS
+  if (booking.guest?.email) {
+    const [firstName, ...rest] = booking.guest.fullName.split(' ')
+    const lastName = rest.join(' ') || 'Guest'
+    guestService.createOrUpdateGuestAccount({
+      email: booking.guest.email,
+      firstName,
+      lastName,
+      phone: booking.guest.phone || undefined,
+      bookingId: booking.id
+    }).catch(err => console.error('[Dashboard Booking] Guest account creation failed:', err.message))
+  }
 
   // Optional: send confirmation SMS with OTP (used by dashboard quick-book flow)
   if (body.sendConfirmationSms && booking.guest?.phone) {

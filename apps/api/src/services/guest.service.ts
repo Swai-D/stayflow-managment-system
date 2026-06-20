@@ -153,12 +153,19 @@ export class GuestService {
       </div>
     `
 
-    return brevoService.sendEmail({
+    const result = await brevoService.sendEmail({
       to: account.email,
       toName: `${account.firstName} ${account.lastName}`,
       subject: `Booking Confirmation - ${hotel?.name || 'Buffalo Hotel'}`,
       htmlContent: html
     })
+
+    if (!result.success) {
+      console.error('[GuestService] Activation email failed:', result.error)
+      throw ApiError.internal('Imeshindwa kutuma email ya activation')
+    }
+
+    return result
   }
 
   private async sendActivationSms(account: any, token: string) {
