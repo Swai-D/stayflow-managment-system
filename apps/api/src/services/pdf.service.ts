@@ -90,6 +90,10 @@ export class PdfService {
     }).format(amount)
   }
 
+  private formatInvoiceMoney(amount: number) {
+    return `TZS ${Number(amount).toLocaleString('en-TZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
+  }
+
   private async buildBuffer(draw: (doc: PDFKit.PDFDocument) => void): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 40, size: 'A4' })
@@ -228,7 +232,6 @@ export class PdfService {
 
   private async buildInvoicePdf(booking: any): Promise<Buffer> {
     const { hotel, guest, room, roomCharges, addons } = booking
-    const balanceDue = Number(booking.balanceDue)
     const nights = Math.max(
       1,
       Math.ceil(
@@ -236,90 +239,182 @@ export class PdfService {
           (1000 * 60 * 60 * 24)
       )
     )
+    const roomTotal = Number(booking.roomTotal)
+    const paidAmount = Number(booking.paidAmount)
+    const totalAmount = Number(booking.totalAmount)
+    const balanceDue = Number(booking.balanceDue)
 
-    const posItems = (roomCharges || []).flatMap((c: any) =>
-      (c.items || []).map((i: any) => ({
-        date: c.createdAt,
-        name: i.itemName,
-        qty: i.quantity,
-        price: i.unitPrice,
-        total: i.totalPrice
-      }))
-    )
-
-    const rows: string[][] = [
-      [
-        format(new Date(booking.checkIn), 'dd/MM'),
-        `Accommodation (${nights} nights)`,
-        room.roomNumber,
-        '1',
-        this.formatMoney(Number(booking.roomTotal) / nights),
-        this.formatMoney(Number(booking.roomTotal))
-      ]
+    const rows: Array<{ desc: string; sub?: string; qty: string; rate: string; amount: string }> = [
+      {
+        desc: `Accommodation: ${room.type}`,
+        sub: `Stay for ${guest.fullName}`,
+        qty: String(nights),
+        rate: this.formatInvoiceMoney(roomTotal / nights),
+        amount: this.formatInvoiceMoney(roomTotal)
+      }
     ]
 
     ;(addons || []).forEach((a: any) => {
-      rows.push([
-        format(new Date(booking.createdAt), 'dd/MM'),
-        a.addon.name,
-        '-',
-        String(a.quantity),
-        this.formatMoney(Number(a.unitPrice)),
-        this.formatMoney(Number(a.subtotal))
-      ])
+      rows.push({
+        desc: a.addon.name,
+        sub: 'Add-on',
+        qty: String(a.quantity),
+        rate: this.formatInvoiceMoney(Number(a.unitPrice)),
+        amount: this.formatInvoiceMoney(Number(a.subtotal))
+      })
     })
 
-    posItems.forEach((i: any) => {
-      rows.push([
-        format(new Date(i.date), 'dd/MM'),
-        i.name,
-        '-',
-        String(i.qty),
-        this.formatMoney(i.price),
-        this.formatMoney(i.total)
-      ])
+    ;(roomCharges || []).flatMap((c: any) => c.items || []).forEach((i: any) => {
+      rows.push({
+        desc: i.itemName,
+        sub: `Posted ${format(new Date(i.createdAt || Date.now()), 'dd/MM/yyyy')}`,
+        qty: String(i.quantity),
+        rate: this.formatInvoiceMoney(i.unitPrice),
+        amount: this.formatInvoiceMoney(i.totalPrice)
+      })
     })
-
-    const invoiceNo = `INV-${booking.bookingRef.split('-').pop()}`
 
     return this.buildBuffer(doc => {
-      this.drawHeader(doc, hotel, 'GUEST INVOICE', [
-        invoiceNo,
-        `Date: ${format(new Date(), 'dd/MM/yyyy')}`
-      ])
+      const pageWidth = doc.page.width
+      const margin = 50
+      const contentWidth = pageWidth - margin * 2
+      const rightX = pageWidth - margin
+      let y = margin
 
-      this.drawInfoGrid(
-        doc,
-        'Bill To',
-        [guest.fullName, guest.phone, guest.email || ''],
-        'Stay Details',
-        [
-          `Ref: ${booking.bookingRef}`,
-          `Room: ${room.roomNumber} (${room.type})`,
-          `Period: ${format(new Date(booking.checkIn), 'dd/MM')} - ${format(new Date(booking.checkOut), 'dd/MM')}`
-        ]
-      )
+      // ── Header ───────────────────────────────────────────────────────────────
+      doc.font('Helvetica-Bold').fontSize(26).fillColor('#E67E22')
+      const hotelName = (hotel.name || 'Hotel').toUpperCase()
+      doc.text(hotelName, margin, y)
+      const hotelNameHeight = doc.heightOfString(hotelName, { width: contentWidth * 0.6 })
+      y += hotelNameHeight + 4
 
-      this.drawTable(
-        doc,
-        ['Date', 'Description', 'Ref', 'Qty', 'Unit Price', 'Total'],
-        rows,
-        [60, 180, 70, 40, 80, 80],
-        ['left', 'left', 'left', 'left', 'right', 'right']
-      )
+      doc.font('Helvetica-Oblique').fontSize(11).fillColor('#7F8C8D')
+      doc.text('Comfort in every stay', margin, y)
+      y += 16
 
-      this.drawTotals(doc, [
-        { label: 'Subtotal', value: this.formatMoney(Number(booking.totalAmount)) },
-        { label: 'Tax (0%)', value: this.formatMoney(0) },
-        { label: 'Amount Paid', value: this.formatMoney(Number(booking.paidAmount)) },
-        { label: 'Balance Due', value: this.formatMoney(balanceDue), grand: true }
-      ])
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text(hotel.address || '', margin, y)
+      y += 14
+      doc.text(`${hotel.phone || ''} | ${hotel.email || ''}`, margin, y)
+      y += 22
 
-      doc.moveDown(2)
-      doc.fontSize(11).fillColor('#9CA3AF').font('Helvetica')
-      doc.text(`Asante kwa kutembelea ${hotel.name} | Thank you for visiting ${hotel.name}`, {
-        align: 'center'
+      // Right side invoice meta
+      const metaY = margin + 4
+      doc.font('Helvetica-Bold').fontSize(28).fillColor('#2C3E50')
+      const titleWidth = doc.widthOfString('INVOICE')
+      doc.text('INVOICE', rightX - titleWidth, metaY)
+
+      doc.font('Helvetica').fontSize(11).fillColor('#7F8C8D')
+      const refText = `#${booking.bookingRef}`
+      const refWidth = doc.widthOfString(refText)
+      doc.text(refText, rightX - refWidth, metaY + 38)
+
+      const dateText = format(new Date(), 'MMMM dd, yyyy')
+      const dateWidth = doc.widthOfString(dateText)
+      doc.text(dateText, rightX - dateWidth, metaY + 56)
+
+      // Orange divider line
+      const lineY = Math.max(y, metaY + 90)
+      doc.moveTo(margin, lineY).lineTo(rightX, lineY).lineWidth(3).stroke('#E67E22')
+      y = lineY + 30
+
+      // ── Bill To & Stay Details boxes ─────────────────────────────────────────
+      const boxHeight = 96
+      const boxWidth = (contentWidth - 20) / 2
+
+      // Bill to
+      doc.rect(margin, y, boxWidth, boxHeight).fill('#F8F9FA')
+      doc.fillColor('#7F8C8D').font('Helvetica-Bold').fontSize(10)
+      doc.text('BILL TO', margin + 14, y + 12)
+      doc.fillColor('#2C3E50').font('Helvetica-Bold').fontSize(12)
+      doc.text(guest.fullName, margin + 14, y + 34)
+      doc.font('Helvetica').fontSize(10).fillColor('#555555')
+      doc.text(guest.email || '', margin + 14, y + 52)
+      doc.text(guest.phone || '', margin + 14, y + 70)
+
+      // Stay details
+      doc.rect(margin + boxWidth + 20, y, boxWidth, boxHeight).fill('#F8F9FA')
+      doc.fillColor('#7F8C8D').font('Helvetica-Bold').fontSize(10)
+      doc.text('STAY DETAILS', margin + boxWidth + 34, y + 12)
+      doc.fillColor('#2C3E50').font('Helvetica-Bold').fontSize(11)
+      doc.text(`Check-in: ${format(new Date(booking.checkIn), 'MMM dd, yyyy')}`, margin + boxWidth + 34, y + 34)
+      doc.text(`Check-out: ${format(new Date(booking.checkOut), 'MMM dd, yyyy')}`, margin + boxWidth + 34, y + 52)
+      doc.text(`Duration: ${nights} Night${nights > 1 ? 's' : ''}`, margin + boxWidth + 34, y + 70)
+
+      y += boxHeight + 28
+
+      // ── Items table ──────────────────────────────────────────────────────────
+      const colDesc = contentWidth * 0.45
+      const colQty = contentWidth * 0.15
+      const colRate = contentWidth * 0.20
+      const colAmount = contentWidth * 0.20
+
+      const tableTop = y
+      doc.rect(margin, tableTop, contentWidth, 36).fill('#2C3E50')
+      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
+      doc.text('DESCRIPTION', margin + 12, tableTop + 12)
+      doc.text('QTY', margin + colDesc + 12, tableTop + 12, { width: colQty, align: 'center' })
+      doc.text('RATE', margin + colDesc + colQty + 12, tableTop + 12, { width: colRate, align: 'right' })
+      doc.text('AMOUNT', margin + colDesc + colQty + colRate + 12, tableTop + 12, { width: colAmount - 12, align: 'right' })
+
+      y = tableTop + 36 + 10
+      rows.forEach(row => {
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#2C3E50')
+        doc.text(row.desc, margin + 12, y, { width: colDesc - 24 })
+        const descHeight = doc.heightOfString(row.desc, { width: colDesc - 24 })
+        let rowHeight = Math.max(28, descHeight + 8)
+
+        if (row.sub) {
+          doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
+          doc.text(row.sub, margin + 12, y + descHeight + 4)
+          rowHeight = Math.max(rowHeight, descHeight + 20)
+        }
+
+        doc.font('Helvetica').fontSize(10).fillColor('#333333')
+        doc.text(row.qty, margin + colDesc + 12, y, { width: colQty, align: 'center' })
+        doc.text(row.rate, margin + colDesc + colQty + 12, y, { width: colRate - 12, align: 'right' })
+        doc.text(row.amount, margin + colDesc + colQty + colRate + 12, y, { width: colAmount - 12, align: 'right' })
+
+        doc.moveTo(margin, y + rowHeight).lineTo(rightX, y + rowHeight).lineWidth(0.5).stroke('#E5E7EB')
+        y += rowHeight + 8
       })
+
+      y += 24
+
+      // ── Policies & Totals ────────────────────────────────────────────────────
+      const totalsBoxWidth = 220
+      const totalsBoxHeight = 126
+
+      // Policies (left)
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#2C3E50')
+      doc.text('Policies', margin, y)
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text('• 50% deposit required for confirmation.', margin, y + 22)
+      doc.text('• Full cancellation allowed 30 days before arrival.', margin, y + 38)
+
+      // Totals box (right)
+      const totalsBoxX = rightX - totalsBoxWidth
+      doc.rect(totalsBoxX, y, totalsBoxWidth, totalsBoxHeight).fill('#F8F9FA')
+      let ty = y + 16
+      const addTotalLine = (label: string, value: string, bold = false) => {
+        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#2C3E50' : '#7F8C8D')
+        doc.text(label, totalsBoxX + 16, ty)
+        doc.text(value, totalsBoxX + 100, ty, { width: totalsBoxWidth - 120, align: 'right' })
+        ty += bold ? 28 : 22
+      }
+      addTotalLine('Subtotal', this.formatInvoiceMoney(totalAmount))
+      addTotalLine('Amount Paid', this.formatInvoiceMoney(paidAmount))
+      doc.moveTo(totalsBoxX + 16, ty - 8).lineTo(totalsBoxX + totalsBoxWidth - 16, ty - 8).lineWidth(1).stroke('#D1D5DB')
+      addTotalLine('TOTAL DUE', this.formatInvoiceMoney(balanceDue), true)
+
+      y += Math.max(totalsBoxHeight, 60) + 24
+
+      // ── Footer ───────────────────────────────────────────────────────────────
+      const footerY = doc.page.height - margin - 40
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text(`Thank you for choosing ${hotel.name || 'us'}. We look forward to your stay.`, margin, footerY, { align: 'center', width: contentWidth })
+      doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
+      doc.text('Powered by StayFlow', margin, footerY + 20, { align: 'center', width: contentWidth })
     })
   }
 
