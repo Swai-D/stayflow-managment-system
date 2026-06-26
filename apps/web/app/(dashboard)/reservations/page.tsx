@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   useBookings, useBookingStats,
   useCancelBooking, useConfirmPayment,
@@ -11,8 +11,9 @@ import { BOOKING_STATUS_CONFIG, Booking } from '@/types/booking'
 import { format } from 'date-fns'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import NewBookingModal from '@/components/reservations/NewBookingModal'
+import RecordPaymentModal from '@/components/payments/RecordPaymentModal'
 import { cn } from '@/lib/utils'
-import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, LogIn, LogOut, Printer, CheckCircle } from 'lucide-react'
+import { Search, Plus, ChevronLeft, ChevronRight, Settings, ChevronDown, CreditCard, LogIn, LogOut, Printer, CheckCircle, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
@@ -28,6 +29,8 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
   const [checkoutDone, setCheckoutDone] = useState(false)
   const [invoiceSent, setInvoiceSent] = useState(false)
   const [invoiceEmail, setInvoiceEmail] = useState<string | null>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [confirmCheckIn, setConfirmCheckIn] = useState(false)
 
   const nights = Math.round(
     (new Date(booking.checkOut).getTime() - new Date(booking.checkIn).getTime()) / 86400000
@@ -55,6 +58,11 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
   }
 
   const handleCheckIn = () => {
+    if (Number(booking.balanceDue) > 0 && !confirmCheckIn) {
+      setConfirmCheckIn(true)
+      return
+    }
+    setConfirmCheckIn(false)
     checkIn(booking.id, {
       onSuccess: () => {
         toast.success('Mgeni amewasili (checked in)')
@@ -262,21 +270,48 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
               </div>
             )}
 
+            {/* Check-in with balance warning */}
+            {confirmCheckIn && Number(booking.balanceDue) > 0 && (
+              <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 space-y-3">
+                <p className="text-[13px] font-bold text-amber-700">
+                  Mgeni hajalipa {formatTZS(booking.balanceDue)}. Unataka kumcheck in bila malipo?
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={handleCheckIn} disabled={checkingIn}
+                    className="flex-1 py-2.5 bg-amber-600 text-white rounded-xl text-[12px] font-bold hover:bg-amber-700 shadow-sm transition-all">
+                    {checkingIn ? 'Inaingiza...' : 'Ndiyo, Check In'}
+                  </button>
+                  <button onClick={() => { setConfirmCheckIn(false); setShowPaymentModal(true) }}
+                    className="flex-1 py-2.5 border border-amber-200 text-amber-600 rounded-xl text-[12px] font-bold hover:bg-white transition-all">
+                    Record Payment
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Action buttons */}
             {!confirmCancel && (
               <div className="space-y-2 pt-1">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {booking.status === 'pending' && Number(booking.balanceDue) > 0 && (
                     <button onClick={handleConfirmPayment} disabled={confirmingPayment}
-                      className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-green-100/50 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-green-100/50 flex items-center justify-center gap-2 min-w-[140px]">
                       <CreditCard size={15} />
                       {confirmingPayment ? 'Processing...' : 'Confirm Payment & Invoice'}
                     </button>
                   )}
 
-                  {['pending','confirmed'].includes(booking.status) && (
+                  {Number(booking.balanceDue) > 0 && ['pending','confirmed','checked_in'].includes(booking.status) && (
+                    <button onClick={() => setShowPaymentModal(true)}
+                      className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2 min-w-[120px]">
+                      <Wallet size={15} />
+                      Record Payment
+                    </button>
+                  )}
+
+                  {['pending','confirmed'].includes(booking.status) && !confirmCheckIn && (
                     <button onClick={handleCheckIn} disabled={checkingIn}
-                      className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2 min-w-[100px]">
                       <LogIn size={15} />
                       {checkingIn ? 'Checking in...' : 'Check In'}
                     </button>
@@ -310,6 +345,13 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
           </div>
         </div>
       </div>
+
+      {showPaymentModal && (
+        <RecordPaymentModal
+          booking={booking}
+          onClose={() => setShowPaymentModal(false)}
+        />
+      )}
 
     </>
   )
@@ -351,6 +393,16 @@ export default function ReservationsPage() {
     limit: 10
   })
   const { data: occupancyTrend = [] } = useOccupancyReport(7)
+
+  // Sync selected booking with fresh list data (e.g. after payment)
+  useEffect(() => {
+    if (selectedBooking && bookingsData?.data) {
+      const updated = bookingsData.data.find((b: Booking) => b.id === selectedBooking.id)
+      if (updated && (updated.balanceDue !== selectedBooking.balanceDue || updated.paidAmount !== selectedBooking.paidAmount || updated.status !== selectedBooking.status)) {
+        setSelectedBooking(updated)
+      }
+    }
+  }, [bookingsData?.data, selectedBooking])
 
   const bookings = bookingsData?.data || []
   const meta = bookingsData?.meta || { total: 0, totalPages: 1 }
@@ -459,7 +511,7 @@ export default function ReservationsPage() {
               <tr className="border-b border-border/50">
                 {[
                   'Full Name', 'Order Ref', 'Room', 'Check In', 'Day',
-                  'Guests', 'Origins', 'Status'
+                  'Guests', 'Origins', 'Status', 'Payment'
                 ].map((h) => (
                   <th key={h} className="text-left text-[10px] font-medium text-[#9ca3af] uppercase tracking-[0.12em] p-[10px_16px] whitespace-nowrap">
                     <div className="flex items-center gap-1">
@@ -472,7 +524,7 @@ export default function ReservationsPage() {
             <tbody className="divide-y divide-subtle/50">
               {bookingsLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i}><td colSpan={8} className="p-4"><div className="h-4 bg-subtle animate-pulse rounded" /></td></tr>
+                    <tr key={i}><td colSpan={9} className="p-4"><div className="h-4 bg-subtle animate-pulse rounded" /></td></tr>
                   ))
                 : bookings.map((booking: Booking) => {
                     const status = booking.status
@@ -519,12 +571,23 @@ export default function ReservationsPage() {
                             {BOOKING_STATUS_CONFIG[status].label}
                           </span>
                         </td>
+                        <td className="p-[14px_16px]">
+                          {Number(booking.balanceDue) > 0 ? (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-sm border border-white/20 bg-red-50 text-red-700">
+                              Unpaid {formatTZS(booking.balanceDue)}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider shadow-sm border border-white/20 bg-green-50 text-green-700">
+                              Paid
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     )
                   })
               }
               {!bookingsLoading && bookings.length === 0 && (
-                <tr><td colSpan={8} className="py-20 text-center text-[#9ca3af] text-[11px] font-medium uppercase tracking-widest italic">No results found</td></tr>
+                <tr><td colSpan={9} className="py-20 text-center text-[#9ca3af] text-[11px] font-medium uppercase tracking-widest italic">No results found</td></tr>
               )}
             </tbody>
           </table>

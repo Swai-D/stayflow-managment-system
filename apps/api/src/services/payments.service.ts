@@ -48,7 +48,7 @@ export class PaymentsService {
           data: {
             paidAmount: updatedPaidAmount,
             balanceDue: updatedBalanceDue,
-            status: updatedBalanceDue <= 0 ? 'confirmed' : booking.status
+            status: updatedBalanceDue <= 0 && booking.status === 'pending' ? 'confirmed' : booking.status
           }
         })
       }
