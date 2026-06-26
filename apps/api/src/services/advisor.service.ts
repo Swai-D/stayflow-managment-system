@@ -515,7 +515,7 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
           'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
           'X-Title': 'Buffalo Business Advisor'
         },
-        timeout: 15000
+        timeout: 8000
       }
     )
 
@@ -537,7 +537,7 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
       },
       {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 15000
+        timeout: 8000
       }
     )
 
@@ -564,7 +564,7 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 15000
+        timeout: 8000
       }
     )
 
