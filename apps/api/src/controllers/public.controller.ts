@@ -112,6 +112,10 @@ export const createPublicBooking = asyncHandler(async (req, res) => {
   const { slug } = req.params
   const { roomId, checkIn, checkOut, adults, children, guestData, specialRequests } = req.body
 
+  if (!guestData?.email?.trim()) {
+    throw ApiError.badRequest('Email ya mgeni inahitajika.')
+  }
+
   const hotel = await prisma.hotel.findUnique({ where: { slug } })
   if (!hotel) throw ApiError.notFound('Hotel haikupatikana')
 

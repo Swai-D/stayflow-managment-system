@@ -1,7 +1,24 @@
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show' | 'late_checkout'
 export type BookingSource = 'online_self' | 'staff_entry' | 'walk_in'
+export type BookingType = 'individual' | 'company'
+export type GuestAgeCategory = 'adult' | 'child'
 
 import { RoomCharge } from './store'
+
+export interface BookingGuest {
+  id: string
+  bookingId: string
+  fullName: string
+  phone?: string
+  email?: string
+  nationality?: string
+  idType?: string
+  idNumber?: string
+  ageCategory: GuestAgeCategory
+  isPrimary: boolean
+  createdAt: string
+  updatedAt: string
+}
 
 export interface Booking {
   id: string
@@ -12,6 +29,7 @@ export interface Booking {
   createdById: string
   source: BookingSource
   status: BookingStatus
+  bookingType: BookingType
   checkIn: string
   checkOut: string
   startTime?: string
@@ -38,6 +56,12 @@ export interface Booking {
     idType?: string
     idNumber?: string
   }
+  company?: {
+    id: string
+    name: string
+    phone?: string
+    email?: string
+  }
   room: {
     id: string
     roomNumber: string
@@ -51,6 +75,7 @@ export interface Booking {
   payments?: any[]
   receipts?: any[]
   roomCharges?: RoomCharge[]
+  guests?: BookingGuest[]
 }
 
 export interface BookingStats {

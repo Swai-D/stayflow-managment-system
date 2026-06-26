@@ -12,11 +12,20 @@ export interface CreateBookingParams {
   guestData?: {
     fullName: string
     phone: string
-    email?: string
+    email: string
     idType?: string
     idNumber?: string
     nationality?: string
   }
+  guests?: {
+    fullName: string
+    phone?: string
+    email?: string
+    idType?: string
+    idNumber?: string
+    nationality?: string
+    ageCategory: 'adult' | 'child'
+  }[]
   roomId: string
   checkIn: Date
   checkOut: Date
@@ -28,6 +37,17 @@ export interface CreateBookingParams {
   source: BookingSource
   createdById: string
   addonIds?: { addonId: string; quantity: number }[]
+  bookingType?: 'individual' | 'company'
+  companyId?: string
+  companyData?: {
+    name: string
+    email?: string
+    phone?: string
+    address?: string
+    tinNumber?: string
+    contactPerson?: string
+    notes?: string
+  }
 }
 
 export class BookingsService {
@@ -36,8 +56,9 @@ export class BookingsService {
   async createBooking(params: CreateBookingParams) {
     const {
       hotelId, roomId, checkIn, checkOut, startTime, endTime,
-      adults = 1, children = 0, specialRequests, source, createdById,
-      addonIds = []
+      specialRequests, source, createdById,
+      addonIds = [],
+      bookingType = 'individual'
     } = params
 
     // 1. Get room details
@@ -60,14 +81,37 @@ export class BookingsService {
       )
     }
 
-    // 3. Resolve or create guest
+    // 3. Resolve or create primary guest
     let guestId = params.guestId
-    if (!guestId && params.guestData) {
+    let guestList = params.guests && params.guests.length > 0 ? params.guests : undefined
+
+    if (guestList) {
+      const primary = guestList[0]
+      const email = primary.email?.trim()
+      if (!email) {
+        throw ApiError.badRequest('Email ya mgeni mkuu inahitajika kwa ajili ya invoice na guest portal.')
+      }
+      const guest = await prisma.guest.create({
+        data: {
+          fullName: primary.fullName,
+          phone: primary.phone || '',
+          email,
+          idType: primary.idType as any,
+          idNumber: primary.idNumber,
+          nationality: primary.nationality,
+        }
+      })
+      guestId = guest.id
+    } else if (!guestId && params.guestData) {
+      const email = params.guestData.email?.trim()
+      if (!email) {
+        throw ApiError.badRequest('Email ya mgeni inahitajika kwa ajili ya invoice na guest portal.')
+      }
       const guest = await prisma.guest.create({
         data: {
           fullName: params.guestData.fullName,
           phone: params.guestData.phone,
-          email: params.guestData.email,
+          email,
           idType: params.guestData.idType as any,
           idNumber: params.guestData.idNumber,
           nationality: params.guestData.nationality,
@@ -76,6 +120,41 @@ export class BookingsService {
       guestId = guest.id
     }
     if (!guestId) throw ApiError.badRequest('Taarifa za mgeni zinahitajika')
+
+    // 3b. Resolve or create company (for company bookings)
+    let companyId: string | undefined = params.companyId
+    if (bookingType === 'company') {
+      if (params.companyData && !companyId) {
+        const existingCompany = await prisma.company.findFirst({
+          where: { hotelId, name: { equals: params.companyData.name, mode: 'insensitive' }, isActive: true }
+        })
+        if (existingCompany) {
+          companyId = existingCompany.id
+        } else {
+          const company = await prisma.company.create({
+            data: { ...params.companyData, hotelId }
+          })
+          companyId = company.id
+        }
+      }
+      if (!companyId) throw ApiError.badRequest('Kampuni inahitajika kwa ajili ya company booking')
+      if (!guestList || guestList.length === 0) {
+        throw ApiError.badRequest('Tafadhali sajili angalau mgeni mmoja kwa ajili ya company booking')
+      }
+    }
+
+    // Derive adults / children counts from guest list or legacy params
+    const adults = guestList
+      ? guestList.filter(g => g.ageCategory === 'adult').length
+      : (params.adults ?? 1)
+    const children = guestList
+      ? guestList.filter(g => g.ageCategory === 'child').length
+      : (params.children ?? 0)
+
+    // Validate room capacity (non-conference rooms)
+    if (!isConference && room.capacity && adults + children > room.capacity) {
+      throw ApiError.badRequest(`Jumla ya wageni (${adults + children}) imeshinda uwezo wa chumba (${room.capacity})`)
+    }
 
     // 4. Calculate totals
     const nights = availabilityService.calculateNights(checkIn, checkOut)
@@ -124,10 +203,12 @@ export class BookingsService {
           bookingRef,
           hotelId,
           guestId: guestId!,
+          companyId: companyId || null,
           roomId,
           createdById,
           source,
           status: 'pending',
+          bookingType,
           checkIn,
           checkOut,
           startTime,
@@ -143,10 +224,28 @@ export class BookingsService {
         },
         include: {
           guest: { select: { id: true, fullName: true, phone: true, email: true, idType: true, idNumber: true, nationality: true } },
+          company: { select: { id: true, name: true, phone: true, email: true } },
           room: { select: { id: true, roomNumber: true, name: true, type: true } },
           createdBy: { select: { id: true, fullName: true } },
         }
       })
+
+      // Create detailed guest list if provided
+      if (guestList && guestList.length > 0) {
+        await tx.bookingGuest.createMany({
+          data: guestList.map((g, idx) => ({
+            bookingId: newBooking.id,
+            fullName: g.fullName,
+            phone: g.phone || null,
+            email: g.email || null,
+            nationality: g.nationality || null,
+            idType: g.idType || null,
+            idNumber: g.idNumber || null,
+            ageCategory: g.ageCategory,
+            isPrimary: idx === 0
+          }))
+        })
+      }
 
       if (addonDetails.length > 0) {
         await tx.bookingAddon.createMany({
@@ -159,20 +258,34 @@ export class BookingsService {
       return newBooking
     })
 
-    return booking
+    // Fetch full booking with registered guests
+    const fullBooking = await prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: {
+        guest: { select: { id: true, fullName: true, phone: true, email: true, idType: true, idNumber: true, nationality: true } },
+        company: { select: { id: true, name: true, phone: true, email: true } },
+        room: { select: { id: true, roomNumber: true, name: true, type: true } },
+        createdBy: { select: { id: true, fullName: true } },
+        guests: true,
+        payments: { select: { id: true, amount: true, status: true, method: true } }
+      }
+    })
+
+    return fullBooking!
   }
 
   // ─── Get all bookings ─────────────────────────────────
   async getBookings(hotelId: string, filters?: {
     status?: BookingStatus
     source?: BookingSource | 'direct'
+    bookingType?: 'individual' | 'company'
     search?: string
     dateFrom?: Date
     dateTo?: Date
     page?: number
     limit?: number
   }) {
-    const { status, source, search, dateFrom, dateTo, page = 1, limit = 20 } = filters || {}
+    const { status, source, bookingType, search, dateFrom, dateTo, page = 1, limit = 20 } = filters || {}
     const skip = (page - 1) * limit
 
     const where: any = {
@@ -181,6 +294,7 @@ export class BookingsService {
       ...(source && { 
         source: source === 'direct' ? { in: ['staff_entry', 'walk_in'] } : source 
       }),
+      ...(bookingType && { bookingType }),
       ...(dateFrom && dateTo && {
         checkIn: { gte: dateFrom, lte: dateTo }
       }),
@@ -188,6 +302,7 @@ export class BookingsService {
         OR: [
           { bookingRef: { contains: search, mode: 'insensitive' } },
           { guest: { fullName: { contains: search, mode: 'insensitive' } } },
+          { company: { name: { contains: search, mode: 'insensitive' } } },
           { room: { roomNumber: { contains: search, mode: 'insensitive' } } },
         ]
       })
@@ -198,10 +313,12 @@ export class BookingsService {
         where,
         include: {
           guest: { select: { id: true, fullName: true, phone: true, nationality: true, idType: true, idNumber: true } },
+          company: { select: { id: true, name: true, phone: true, email: true } },
           room:  { select: { id: true, roomNumber: true, name: true, type: true } },
           createdBy: { select: { id: true, fullName: true } },
           payments: { select: { id: true, amount: true, status: true, method: true } },
           receipts: { select: { id: true, pdfUrl: true, receiptNumber: true } },
+          guests: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -222,11 +339,13 @@ export class BookingsService {
       where: { id, hotelId },
       include: {
         guest: true,
+        company: true,
         room: true,
         createdBy: { select: { id: true, fullName: true } },
         payments: true,
         receipts: true,
         addons: { include: { addon: true } },
+        guests: true,
       }
     })
     if (!booking) throw ApiError.notFound('Booking haikupatikana')

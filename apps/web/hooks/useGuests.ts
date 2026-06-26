@@ -23,6 +23,17 @@ export function useGuest(id: string) {
   })
 }
 
+export function useRegisteredGuests(search?: string) {
+  return useQuery({
+    queryKey: ['registered-guests', search],
+    queryFn: async () => {
+      const res = await api.get(`/guests/registered${search ? `?search=${search}` : ''}`)
+      return res.data.data
+    },
+    staleTime: 30_000,
+  })
+}
+
 export function useUpdateGuest() {
   const queryClient = useQueryClient()
   return useMutation({

@@ -2,6 +2,7 @@ import { PrismaClient, ChargeStatus } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { pdfService } from './pdf.service'
 import { brevoService } from './brevo.service'
+import { webhookService } from './webhook.service'
 import { format } from 'date-fns'
 
 const prisma = new PrismaClient()
@@ -106,6 +107,9 @@ export class POSService {
         }
       })
 
+      // Dispatch webhook asynchronously
+      webhookService.dispatch(booking.hotelId, 'room_charge.created', { charge, booking }).catch(console.error)
+
       return charge
     })
   }
@@ -184,6 +188,7 @@ export class POSService {
       where: { id: bookingId, hotelId },
       include: {
         guest: true,
+        company: true,
         room: true,
         roomCharges: { include: { items: true } },
         hotel: true,
@@ -193,7 +198,11 @@ export class POSService {
     if (!booking) throw ApiError.notFound('Booking haikupatikana')
 
     const nights = Math.max(1, Math.ceil((booking.checkOut.getTime() - booking.checkIn.getTime()) / (1000 * 60 * 60 * 24)))
-    
+    const isCompany = !!booking.company
+    const billToName = isCompany ? booking.company!.name : booking.guest.fullName
+    const billToEmail = isCompany ? booking.company!.email : booking.guest.email
+    const billToPhone = isCompany ? booking.company!.phone : booking.guest.phone
+
     const posCharges = booking.roomCharges.flatMap(c => c.items.map(i => ({
       date: c.createdAt,
       description: i.itemName,
@@ -203,7 +212,7 @@ export class POSService {
     })))
 
     return {
-      invoiceNumber: `INV-${new Date().getFullYear()}-${booking.bookingRef.split('-').pop()}`,
+      invoiceNumber: `FOL-${new Date().getFullYear()}-${booking.bookingRef.split('-').pop()}`,
       hotel: {
         name: booking.hotel.name,
         address: booking.hotel.address,
@@ -211,8 +220,9 @@ export class POSService {
         email: booking.hotel.email
       },
       guest: {
-        name: booking.guest.fullName,
-        phone: booking.guest.phone,
+        name: billToName,
+        phone: billToPhone,
+        email: billToEmail,
         nationality: booking.guest.nationality
       },
       booking: {
@@ -265,15 +275,19 @@ export class POSService {
     })
   }
 
-  async sendInvoiceEmail(bookingId: string, hotelId: string) {
+  async sendInvoiceEmail(bookingId: string, hotelId: string, type: 'invoice' | 'folio' = 'folio') {
     const booking = await prisma.booking.findFirst({
       where: { id: bookingId, hotelId },
-      include: { guest: true, room: true, hotel: true }
+      include: { guest: true, room: true, hotel: true, company: true }
     })
     if (!booking) throw ApiError.notFound('Booking haikupatikana')
-    if (!booking.guest.email) throw ApiError.badRequest('Mgeni hana email address')
 
-    const pdfBuffer = await pdfService.generateInvoice(bookingId)
+    const recipientEmail = booking.company?.email || booking.guest.email
+    const recipientName = booking.company?.name || booking.guest.fullName
+    if (!recipientEmail) throw ApiError.badRequest('Mgeni au kampuni hana email address')
+
+    // POS emails a running folio by default; checkout/payment can request the final invoice PDF.
+    const pdfBuffer = await pdfService.generateInvoice(bookingId, type)
     const nights = Math.max(
       1,
       Math.ceil(
@@ -281,6 +295,9 @@ export class POSService {
           (1000 * 60 * 60 * 24)
       )
     )
+    const docLabel = type === 'invoice'
+      ? (booking.company ? 'Company Invoice' : 'Guest Invoice')
+      : (booking.company ? 'Folio Summary' : 'Guest Folio')
 
     const hotel = booking.hotel
     const htmlContent = `
@@ -291,9 +308,9 @@ export class POSService {
         </div>
 
         <div style="padding: 24px; background: #ffffff;">
-          <h2 style="color: #2563EB; margin-top: 0;">Guest Invoice</h2>
-          <p>Hello <strong>${booking.guest.fullName}</strong>,</p>
-          <p>Please find your updated invoice attached for your stay at <strong>${hotel.name}</strong>.</p>
+          <h2 style="color: #2563EB; margin-top: 0;">${docLabel}</h2>
+          <p>Hello <strong>${recipientName}</strong>,</p>
+          <p>Please find your updated ${docLabel.toLowerCase()} attached for your stay at <strong>${hotel.name}</strong>. This is a running statement; the official invoice will be issued at checkout or upon payment confirmation.</p>
 
           <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
             <tr style="background: #F3F4F6;">
@@ -348,19 +365,19 @@ export class POSService {
     `
 
     const result = await brevoService.sendEmail({
-      to: booking.guest.email,
-      toName: booking.guest.fullName,
-      subject: `Invoice - ${booking.bookingRef}`,
+      to: recipientEmail,
+      toName: recipientName,
+      subject: `${docLabel} - ${booking.bookingRef}`,
       htmlContent,
-      attachments: [{ name: `Invoice-${booking.bookingRef}.pdf`, content: pdfBuffer }]
+      attachments: [{ name: `${type === 'invoice' ? 'Invoice' : 'Folio'}-${booking.bookingRef}.pdf`, content: pdfBuffer }]
     })
 
     if (!result.success) {
-      console.error('[POS Service] Failed to send invoice email:', result.error)
-      throw ApiError.internal('Imeshindwa kutuma invoice kwa email')
+      console.error('[POS Service] Failed to send folio email:', result.error)
+      throw ApiError.internal('Imeshindwa kutuma folio kwa email')
     }
 
-    return { success: true, email: booking.guest.email }
+    return { success: true, email: recipientEmail }
   }
 }
 

@@ -22,22 +22,51 @@ const createBookingSchema = z.object({
   children:   z.number().min(0).default(0),
   source:     z.enum(['online_self', 'staff_entry', 'walk_in']).default('staff_entry'),
   specialRequests: z.string().optional(),
-  // Guest — either existing id or new guest data
+  // Guest — either existing id, legacy guest data, or modern guest list
   guestId:    z.string().uuid().optional(),
   guestData:  z.object({
     fullName:    z.string().min(2),
     phone:       z.string().min(9),
-    email:       z.string().email().optional(),
+    email:       z.string().email(),
     idType:      z.string().optional(),
     idNumber:    z.string().optional(),
     nationality: z.string().optional(),
   }).optional(),
+  guests: z.array(z.object({
+    fullName:    z.string().min(2),
+    phone:       z.string().optional(),
+    email:       z.string().email().optional().or(z.literal('')),
+    idType:      z.string().optional(),
+    idNumber:    z.string().optional(),
+    nationality: z.string().optional(),
+    ageCategory: z.enum(['adult', 'child']),
+  })).optional(),
   addonIds: z.array(z.object({
     addonId:  z.string().uuid(),
     quantity: z.number().min(1),
   })).optional(),
-}).refine(data => data.guestId || data.guestData, {
-  message: 'Lazima uweke guestId au guestData'
+  // Company booking support
+  bookingType: z.enum(['individual', 'company']).default('individual'),
+  companyId:   z.string().uuid().optional(),
+  companyData: z.object({
+    name:          z.string().min(2),
+    email:         z.string().email().optional().or(z.literal('')),
+    phone:         z.string().optional(),
+    address:       z.string().optional(),
+    tinNumber:     z.string().optional(),
+    contactPerson: z.string().optional(),
+    notes:         z.string().optional(),
+  }).optional(),
+}).refine(data => data.guestId || data.guestData || (data.guests && data.guests.length > 0), {
+  message: 'Lazima uweke angalau mgeni mmoja'
+}).refine(data => {
+  if (data.bookingType === 'company') {
+    return !!data.companyId || !!data.companyData
+  }
+  return true
+}, {
+  message: 'Kampuni inahitajika kwa ajili ya company booking',
+  path: ['companyId']
 })
 
 const cancelSchema = z.object({

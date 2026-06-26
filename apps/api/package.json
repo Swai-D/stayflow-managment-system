@@ -17,7 +17,9 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "ts-node src/prisma/seed.ts",
+    "db:seed:full": "ts-node src/prisma/seed-full.ts",
     "db:fresh": "prisma db push --force-reset --accept-data-loss && ts-node src/prisma/seed.ts && ts-node src/prisma/seed-store.ts",
+    "db:fresh:full": "prisma db push --force-reset --accept-data-loss && ts-node src/prisma/seed-full.ts",
     "db:seed:store": "ts-node src/prisma/seed-store.ts",
     "db:studio": "prisma studio"
   },

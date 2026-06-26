@@ -10,6 +10,8 @@ import { nextSmsService } from '../services/nextsms.service'
 import { brevoService } from '../services/brevo.service'
 import { posService } from '../services/pos.service'
 import { guestService } from '../services/guest.service'
+import { invoicesService } from '../services/invoices.service'
+import { webhookService } from '../services/webhook.service'
 import { AuthRequest } from '../middleware/authenticate'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient, PaymentMethod } from '@prisma/client'
@@ -21,11 +23,12 @@ function generateOtp(): string {
 }
 
 export const getBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { status, source, search, dateFrom, dateTo, page, limit } = req.query
+  const { status, source, bookingType, search, dateFrom, dateTo, page, limit } = req.query
   const hotelId = await getSystemHotelId()
   const result = await bookingsService.getBookings(hotelId, {
     status: status as any,
     source: source as any,
+    bookingType: bookingType as 'individual' | 'company' | undefined,
     search: search as string,
     dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
     dateTo: dateTo ? new Date(dateTo as string) : undefined,
@@ -63,13 +66,18 @@ export const getBooking = asyncHandler(async (req: AuthRequest, res: Response) =
 export const createBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
   const body = req.body
   const hotelId = await getSystemHotelId()
+
   const booking = await bookingsService.createBooking({
     ...body,
     hotelId,
     createdById: req.user!.id,
     checkIn: new Date(body.checkIn),
     checkOut: new Date(body.checkOut),
+    bookingType: body.bookingType || 'individual'
   })
+
+  // Dispatch webhook asynchronously
+  webhookService.dispatch(hotelId, 'booking.created', booking).catch(console.error)
 
   // Auto-create guest portal account and send activation email/SMS
   if (booking.guest?.email) {
@@ -115,7 +123,7 @@ export const createBooking = asyncHandler(async (req: AuthRequest, res: Response
       booking,
       otp,
       otpExpiresAt: otpExpiresAt.toISOString(),
-      message: 'Booking imeundwa. OTP imetumwa kwa SMS.'
+      message: 'Booking imeundwa. Activation link imetumwa kwa email na OTP kwa SMS.'
     }))
     return
   }
@@ -130,7 +138,7 @@ export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Respons
 
   const booking = await prisma.booking.findFirst({
     where: { id, hotelId },
-    include: { guest: true, hotel: true }
+    include: { guest: true, company: true, hotel: true }
   })
   if (!booking) throw ApiError.notFound('Booking haikupatikana')
 
@@ -150,10 +158,36 @@ export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Respons
     status: 'completed'
   })
 
-  // 2. Generate invoice PDF
+  // 2. Create invoice record (if not exists)
+  let invoice = null
+  try {
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: { bookingId: id, type: booking.bookingType === 'company' ? 'company' : 'individual', status: { not: 'cancelled' } }
+    })
+    if (!existingInvoice) {
+      const createdInvoice = await invoicesService.createInvoice(hotelId, {
+        type: booking.bookingType === 'company' ? 'company' : 'individual',
+        bookingId: id,
+        companyId: booking.companyId || undefined,
+        amount: Number(booking.totalAmount),
+        totalAmount: Number(booking.totalAmount),
+        notes: `Invoice generated on payment confirmation for ${booking.bookingRef}`
+      })
+      invoice = await invoicesService.updateInvoice(createdInvoice.id, hotelId, { status: 'paid', paidAmount: amount, paidAt: new Date() })
+    } else {
+      invoice = await invoicesService.recordPayment(existingInvoice.id, hotelId, amount)
+    }
+    if (invoice) {
+      webhookService.dispatch(hotelId, 'invoice.paid', invoice).catch(console.error)
+    }
+  } catch (err: any) {
+    console.error('[Confirm Payment] Invoice record creation failed:', err.message)
+  }
+
+  // 3. Generate invoice PDF
   let pdfBuffer: Buffer
   try {
-    pdfBuffer = Buffer.from(await pdfService.generateInvoice(id))
+    pdfBuffer = Buffer.from(await pdfService.generateInvoice(id, 'invoice'))
   } catch (err: any) {
     console.error('[Confirm Payment] Invoice generation failed:', err.message)
     res.status(200).json(new ApiResponse({
@@ -165,13 +199,15 @@ export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Respons
     return
   }
 
-  // 3. Send invoice email via Brevo
+  // 4. Send invoice email via Brevo
   let emailSent = false
-  if (booking.guest.email) {
+  const recipientEmail = booking.company?.email || booking.guest.email
+  const recipientName = booking.company?.name || booking.guest.fullName
+  if (recipientEmail) {
     try {
       const emailResult = await brevoService.sendInvoiceEmail(
-        booking.guest.email,
-        booking.guest.fullName,
+        recipientEmail,
+        recipientName,
         booking.bookingRef,
         pdfBuffer
       )
@@ -206,6 +242,7 @@ export const updateBooking = asyncHandler(async (req: AuthRequest, res: Response
   const booking = await bookingsService.updateBooking(
     req.params.id, hotelId, req.body
   )
+  webhookService.dispatch(hotelId, 'booking.updated', booking).catch(console.error)
   res.json(new ApiResponse(booking, 'Booking imesasishwa'))
 })
 
@@ -216,27 +253,53 @@ export const cancelBooking = asyncHandler(async (req: AuthRequest, res: Response
     req.params.id, hotelId,
     reason || 'Imefutwa na mfumo', req.user!.id
   )
+  webhookService.dispatch(hotelId, 'booking.cancelled', booking).catch(console.error)
   res.json(new ApiResponse(booking, 'Booking imefutwa'))
 })
 
 export const checkIn = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
   const booking = await bookingsService.checkIn(req.params.id, hotelId)
+  webhookService.dispatch(hotelId, 'booking.checked_in', booking).catch(console.error)
   res.json(new ApiResponse(booking, 'Check-in imefanyika'))
 })
 
 export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
   const sendInvoice = req.body.sendInvoice !== false
+  const bookingId = req.params.id
 
-  const booking = await bookingsService.checkOut(req.params.id, hotelId)
+  const booking = await bookingsService.checkOut(bookingId, hotelId)
+
+  // Create invoice record if not exists
+  let invoice = null
+  try {
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: { bookingId, type: booking.bookingType === 'company' ? 'company' : 'individual', status: { not: 'cancelled' } }
+    })
+    if (!existingInvoice) {
+      const createdInvoice = await invoicesService.createInvoice(hotelId, {
+        type: booking.bookingType === 'company' ? 'company' : 'individual',
+        bookingId,
+        companyId: booking.companyId || undefined,
+        amount: Number(booking.totalAmount),
+        totalAmount: Number(booking.totalAmount),
+        notes: `Invoice generated on check-out for ${booking.bookingRef}`
+      })
+      invoice = await invoicesService.updateInvoice(createdInvoice.id, hotelId, { status: 'paid', paidAmount: Number(booking.totalAmount), paidAt: new Date() })
+    } else {
+      invoice = existingInvoice
+    }
+  } catch (err: any) {
+    console.error('[Checkout] Invoice record creation failed:', err.message)
+  }
 
   let invoiceSent = false
   let invoiceEmail: string | null = null
 
   if (sendInvoice) {
     try {
-      const result = await posService.sendInvoiceEmail(req.params.id, hotelId)
+      const result = await posService.sendInvoiceEmail(bookingId, hotelId, 'invoice')
       invoiceSent = true
       invoiceEmail = result.email || null
     } catch (err: any) {
@@ -244,8 +307,11 @@ export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => 
     }
   }
 
+  webhookService.dispatch(hotelId, 'booking.checked_out', { booking, invoice }).catch(console.error)
+
   res.json(new ApiResponse({
     booking,
+    invoice,
     invoiceSent,
     invoiceEmail
   }, invoiceSent ? 'Check-out imefanyika na invoice imetumwa' : 'Check-out imefanyika'))

@@ -64,6 +64,39 @@ export class GuestsService {
       data
     })
   }
+
+  // Get all registered guests from bookings (including company guests, children, etc.)
+  async getRegisteredGuests(hotelId: string, search?: string) {
+    return prisma.bookingGuest.findMany({
+      where: {
+        booking: { hotelId },
+        ...(search ? {
+          OR: [
+            { fullName: { contains: search, mode: 'insensitive' } },
+            { phone: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+            { booking: { bookingRef: { contains: search, mode: 'insensitive' } } }
+          ]
+        } : {})
+      },
+      include: {
+        booking: {
+          select: {
+            id: true,
+            bookingRef: true,
+            bookingType: true,
+            checkIn: true,
+            checkOut: true,
+            status: true,
+            guest: { select: { fullName: true, email: true } },
+            room: { select: { roomNumber: true, type: true } },
+            company: { select: { name: true } }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+  }
 }
 
 export const guestsService = new GuestsService()

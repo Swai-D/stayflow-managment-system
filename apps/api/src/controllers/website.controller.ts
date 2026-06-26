@@ -4,87 +4,92 @@ import { ApiResponse } from '../utils/ApiResponse'
 import { ApiError } from '../utils/ApiError'
 import { bookingsService } from '../services/bookings.service'
 import { availabilityService } from '../services/availability.service'
-import { guestService } from '../services/guest.service'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 export const createWebsiteBooking = asyncHandler(async (req: Request, res: Response) => {
-  const {
-    firstName, lastName, email, phone, nationality, idType, idNumber,
-    checkIn, checkOut, adults, children, roomType, additionalServices, message, source
-  } = req.body
+  try {
+    const {
+      firstName, lastName, email, phone, nationality, idType, idNumber,
+      checkIn, checkOut, adults, children, roomType, additionalServices, message, source
+    } = req.body
 
-  // 1. Resolve the canonical hotel for this deployment
-  const hotelId = await getSystemHotelId()
-  const admin = await prisma.user.findFirst({
-    where: { email: 'admin@buffalo-hotel.co.tz' }
-  })
-  if (!admin) throw ApiError.internal('System admin user not found')
+    if (!email?.trim()) {
+      throw ApiError.badRequest('Email inahitajika.')
+    }
 
-  // 2. Find an available room of the requested type
-  const availableRooms = await availabilityService.getAvailableRooms(
-    hotelId,
-    new Date(checkIn),
-    new Date(checkOut)
-  )
+    // 1. Resolve the canonical hotel for this deployment
+    const hotelId = await getSystemHotelId()
+    const admin = await prisma.user.findFirst({
+      where: { email: 'admin@buffalo-hotel.co.tz' }
+    })
+    if (!admin) throw ApiError.internal('System admin user not found')
 
-  const room = availableRooms.find(r =>
-    r.name.toLowerCase().includes(roomType.toLowerCase()) ||
-    r.type.toLowerCase() === roomType.toLowerCase()
-  )
+    // 2. Find an available room of the requested type
+    const availableRooms = await availabilityService.getAvailableRooms(
+      hotelId,
+      new Date(checkIn),
+      new Date(checkOut)
+    )
 
-  if (!room) {
-    throw ApiError.conflict('Samahani, chumba cha aina hii hakipatikani kwa tarehe ulizochagua.')
+    const room = availableRooms.find(r =>
+      r.name.toLowerCase().includes(roomType.toLowerCase()) ||
+      r.type.toLowerCase() === roomType.toLowerCase()
+    )
+
+    if (!room) {
+      throw ApiError.conflict('Samahani, chumba cha aina hii hakipatikani kwa tarehe ulizochagua.')
+    }
+
+    // 3. Create the booking
+    const booking = await bookingsService.createBooking({
+      hotelId,
+      roomId: room.id,
+      checkIn: new Date(checkIn),
+      checkOut: new Date(checkOut),
+      adults: Number(adults) || 1,
+      children: Number(children) || 0,
+      guestData: {
+        fullName: `${firstName} ${lastName}`,
+        email,
+        phone,
+        nationality,
+        idType,
+        idNumber,
+      },
+      source: 'online_self',
+      createdById: admin.id,
+      specialRequests: `${additionalServices ? 'Services: ' + additionalServices + '. ' : ''}${message || ''}`,
+    })
+
+    const nights = availabilityService.calculateNights(new Date(checkIn), new Date(checkOut))
+
+    // Website bookings remain pending until staff confirms payment.
+    // Guest portal activation email is sent after payment confirmation.
+
+    res.status(201).json({
+      success: true,
+      bookingId: booking.bookingRef,
+      totalAmount: Number(booking.totalAmount),
+      currency: 'TZS',
+      nights,
+      roomType: room.name
+    })
+  } catch (err: any) {
+    if (err instanceof ApiError) throw err
+    console.error('[Website Booking] Unhandled error:', err)
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: err.message || 'Hitilafu ya mfumo — jaribu tena',
+        stack: err.stack
+      }
+    })
+    return
   }
-
-  // 3. Create the booking
-  const booking = await bookingsService.createBooking({
-    hotelId,
-    roomId: room.id,
-    checkIn: new Date(checkIn),
-    checkOut: new Date(checkOut),
-    adults: Number(adults) || 1,
-    children: Number(children) || 0,
-    guestData: {
-      fullName: `${firstName} ${lastName}`,
-      email,
-      phone,
-      nationality,
-      idType,
-      idNumber,
-    },
-    source: 'online_self',
-    createdById: admin.id,
-    specialRequests: `${additionalServices ? 'Services: ' + additionalServices + '. ' : ''}${message || ''}`,
-  })
-
-  const nights = availabilityService.calculateNights(new Date(checkIn), new Date(checkOut))
-
-  // Mark website bookings as confirmed automatically (mock payment flow)
-  await prisma.booking.update({
-    where: { id: booking.id },
-    data: { status: 'confirmed' }
-  })
-
-  // Auto-create guest portal account and send activation email/SMS
-  guestService.createOrUpdateGuestAccount({
-    email,
-    firstName,
-    lastName,
-    phone,
-    bookingId: booking.id
-  }).catch(err => console.error('[Website Booking] Guest account creation failed:', err.message))
-
-  res.status(201).json({
-    success: true,
-    bookingId: booking.bookingRef,
-    totalAmount: Number(booking.totalAmount),
-    currency: 'TZS',
-    nights,
-    roomType: room.name
-  })
 })
 
 export const initiatePayment = asyncHandler(async (req: Request, res: Response) => {
@@ -147,5 +152,17 @@ export const getAvailability = asyncHandler(async (req: Request, res: Response) 
   res.json({
     success: true,
     rooms: roomsStatus
+  })
+})
+
+export const getPaymentNumbers = asyncHandler(async (req: Request, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: hotelId },
+    select: { paymentNumbers: true }
+  })
+  res.json({
+    success: true,
+    paymentNumbers: hotel?.paymentNumbers || []
   })
 })

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { recordPayment, initiateSnippePayment, handleSnippeWebhook } from '../controllers/payments.controller'
+import { recordPayment, initiateSnippePayment, handleSnippeWebhook, getPayments, getPaymentStats } from '../controllers/payments.controller'
 import { authenticate } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
 import { asyncHandler } from '../utils/asyncHandler'
@@ -18,6 +18,8 @@ const recordPaymentSchema = z.object({
   bankRef: z.string().optional(),
 })
 
+router.get('/', authenticate, getPayments)
+router.get('/stats', authenticate, getPaymentStats)
 router.post('/', authenticate, validate(recordPaymentSchema), recordPayment)
 router.get('/booking/:bookingId', authenticate, asyncHandler(async (req, res) => {
   const payments = await paymentsService.getPayments(req.params.bookingId)

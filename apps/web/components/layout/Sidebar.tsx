@@ -8,7 +8,8 @@ import {
   LayoutDashboard, CalendarDays, CalendarIcon, Users, DoorOpen,
   Sparkles, Receipt, TrendingUp, Settings, LogOut,
   ChevronDown, LayoutGrid, Package, ArrowLeftRight,
-  ShoppingCart, Truck, CreditCard
+  ShoppingCart, Truck, CreditCard, Banknote, FileText, Building2,
+  Code2, KeyRound, Webhook, ScrollText, Activity
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -36,6 +37,15 @@ const NAV_GROUPS = [
     ]
   },
   {
+    key: 'billing',
+    label: 'BILLING',
+    items: [
+      { label:'Payments',     href:'/payments',     icon:Banknote },
+      { label:'Invoices',     href:'/invoices',     icon:FileText },
+      { label:'Companies',    href:'/companies',    icon:Building2 },
+    ]
+  },
+  {
     key: 'store',
     label: 'STORE & INVENTORY',
     items: [
@@ -45,6 +55,16 @@ const NAV_GROUPS = [
       { label:'Purchase Orders',    href:'/store/purchase-orders',    icon:ShoppingCart },
       { label:'Suppliers',          href:'/store/suppliers',          icon:Truck },
       { label:'POS — Post to Room', href:'/store/pos',                icon:CreditCard },
+    ]
+  },
+  {
+    key: 'developer',
+    label: 'DEVELOPER',
+    items: [
+      { label:'API Keys',       href:'/developer/api-keys',    icon:KeyRound },
+      { label:'Webhooks',       href:'/developer/webhooks',    icon:Webhook },
+      { label:'API Logs',       href:'/developer/logs',        icon:Activity },
+      { label:'Documentation',  href:'/developer/docs',        icon:ScrollText },
     ]
   },
 ]

@@ -188,6 +188,23 @@ enum ExtensionRequestStatus {
   REJECTED
 }
 
+enum BookingType {
+  individual
+  company
+}
+
+enum InvoiceType {
+  individual
+  company
+}
+
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+  cancelled
+}
+
 // ─── MODELS ──────────────────────────────────────────
 
 model Hotel {
@@ -219,6 +236,10 @@ model Hotel {
   storeItems StoreItem[]
   purchaseOrders PurchaseOrder[]
   businessAdvice BusinessAdvice[]
+  companies Company[]
+  invoices  Invoice[]
+  apiKeys   ApiKey[]
+  webhooks  Webhook[]
 
   @@map("hotels")
 }
@@ -247,6 +268,8 @@ model User {
   storeTransactions StoreTransaction[]
   purchaseOrders    PurchaseOrder[]
   roomChargesPosted RoomCharge[]
+  apiKeysCreated    ApiKey[]
+  webhooksCreated   Webhook[]
 
   @@map("users")
 }
@@ -308,10 +331,12 @@ model Booking {
   bookingRef  String        @unique
   hotelId     String
   guestId     String
+  companyId   String?
   roomId      String
   createdById String
   source      BookingSource @default(staff_entry)
   status      BookingStatus @default(pending)
+  bookingType BookingType   @default(individual)
 
   checkIn        DateTime
   checkOut       DateTime
@@ -350,6 +375,7 @@ model Booking {
 
   hotel             Hotel              @relation(fields: [hotelId], references: [id])
   guest             Guest              @relation(fields: [guestId], references: [id])
+  company           Company?           @relation(fields: [companyId], references: [id])
   room              Room               @relation(fields: [roomId], references: [id])
   createdBy         User               @relation("CreatedBy", fields: [createdById], references: [id])
   payments          Payment[]
@@ -361,6 +387,8 @@ model Booking {
   roomServiceOrders RoomServiceOrder[]
   serviceRequests   ServiceRequest[]
   extensionRequests ExtensionRequest[]
+  invoices          Invoice[]
+  guests            BookingGuest[]
 
   @@map("bookings")
 }
@@ -405,6 +433,26 @@ model Receipt {
   issuedBy User?   @relation(fields: [issuedById], references: [id])
 
   @@map("receipts")
+}
+
+model BookingGuest {
+  id          String   @id @default(uuid())
+  bookingId   String
+  fullName    String
+  phone       String?
+  email       String?
+  nationality String?
+  idType      String?
+  idNumber    String?
+  ageCategory String   // adult | child
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_guests")
 }
 
 model AddonService {
@@ -747,4 +795,139 @@ model ExtensionRequest {
   booking Booking @relation(fields: [bookingId], references: [id])
 
   @@map("extension_requests")
+}
+
+model Company {
+  id            String    @id @default(uuid())
+  hotelId       String
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  tinNumber     String?
+  contactPerson String?
+  notes         String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  hotel     Hotel     @relation(fields: [hotelId], references: [id])
+  bookings  Booking[]
+  invoices  Invoice[]
+
+  @@index([hotelId, name])
+  @@map("companies")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  hotelId       String
+  invoiceNumber String        @unique
+  type          InvoiceType
+  status        InvoiceStatus @default(draft)
+  bookingId     String?
+  companyId     String?
+  amount        Decimal       @db.Decimal(10, 2)
+  taxAmount     Decimal       @db.Decimal(10, 2) @default(0)
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  paidAmount    Decimal       @db.Decimal(10, 2) @default(0)
+  dueDate       DateTime?
+  notes         String?
+  pdfUrl        String?
+  sentAt        DateTime?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  hotel   Hotel    @relation(fields: [hotelId], references: [id])
+  booking Booking? @relation(fields: [bookingId], references: [id])
+  company Company? @relation(fields: [companyId], references: [id])
+
+  @@index([hotelId, type])
+  @@index([hotelId, status])
+  @@map("invoices")
+}
+
+// ─── DEVELOPER / API INTEGRATION ─────────────────────
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  hotelId     String
+  name        String
+  keyPrefix   String
+  keyHash     String   @unique
+  scopes      Json     @default("[]")
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotel   Hotel     @relation(fields: [hotelId], references: [id])
+  createdBy User?   @relation(fields: [createdById], references: [id])
+  logs    ApiLog[]
+
+  @@index([hotelId, isActive])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+model Webhook {
+  id          String   @id @default(uuid())
+  hotelId     String
+  name        String
+  url         String
+  secret      String?
+  events      Json     @default("[]")
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hotel      Hotel             @relation(fields: [hotelId], references: [id])
+  createdBy  User?             @relation(fields: [createdById], references: [id])
+  deliveries WebhookDelivery[]
+
+  @@index([hotelId, isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id              String   @id @default(uuid())
+  webhookId       String
+  event           String
+  payload         Json
+  responseStatus  Int?
+  responseBody    String?
+  errorMessage    String?
+  attemptCount    Int      @default(1)
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, createdAt])
+  @@map("webhook_deliveries")
+}
+
+model ApiLog {
+  id          String   @id @default(uuid())
+  hotelId     String?
+  apiKeyId    String?
+  method      String
+  path        String
+  statusCode  Int?
+  ipAddress   String?
+  userAgent   String?
+  requestBody Json?
+  responseBody Json?
+  durationMs  Int?
+  createdAt   DateTime @default(now())
+
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id])
+
+  @@index([hotelId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@map("api_logs")
 }

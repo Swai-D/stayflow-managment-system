@@ -16,12 +16,16 @@ import housekeepingRoutes from './routes/housekeeping.routes'
 import storeRoutes from './routes/store.routes'
 import posRoutes from './routes/pos.routes'
 import paymentRoutes from './routes/payments.routes'
+import invoiceRoutes from './routes/invoices.routes'
+import companyRoutes from './routes/companies.routes'
 import expenseRoutes from './routes/expenses.routes'
 import reportRoutes from './routes/reports.routes'
 import searchRoutes from './routes/search.routes'
 import advisorRoutes from './routes/advisor.routes'
 import settingsRoutes from './routes/settings.routes'
 import guestPortalRoutes from './routes/guest.routes'
+import developerRoutes from './routes/developer.routes'
+import publicApiRoutes from './routes/public-api.routes'
 
 const app = express()
 
@@ -45,6 +49,7 @@ app.use(cors({
     'http://localhost:5501',
     'http://127.0.0.1:5501',
     'https://guest.buffalohotel.co.tz',
+    'https://guest-portal-production.up.railway.app',
   ],
   credentials: true
 }))
@@ -73,11 +78,15 @@ app.use('/api/v1/housekeeping', housekeepingRoutes)
 app.use('/api/v1/store', storeRoutes)
 app.use('/api/v1/pos', posRoutes)
 app.use('/api/v1/payments', paymentRoutes)
+app.use('/api/v1/invoices', invoiceRoutes)
+app.use('/api/v1/companies', companyRoutes)
 app.use('/api/v1/expenses', expenseRoutes)
 app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/search', searchRoutes)
 app.use('/api/v1/advisor', advisorRoutes)
 app.use('/api/v1/settings', settingsRoutes)
+app.use('/api/v1/developer', developerRoutes)
+app.use('/api/v1/ext', publicApiRoutes)
 app.use('/api/guest', guestPortalRoutes)
 
 // Error handler (must be last)

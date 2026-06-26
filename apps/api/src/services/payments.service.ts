@@ -66,6 +66,62 @@ export class PaymentsService {
       orderBy: { createdAt: 'desc' }
     })
   }
+
+  async getPaymentStats(hotelId: string, dateFrom?: Date, dateTo?: Date) {
+    const where: Prisma.PaymentWhereInput = {
+      booking: { hotelId },
+      ...(dateFrom || dateTo ? {
+        createdAt: {
+          ...(dateFrom && { gte: dateFrom }),
+          ...(dateTo && { lte: dateTo })
+        }
+      } : {})
+    }
+
+    const payments = await prisma.payment.findMany({
+      where,
+      include: {
+        booking: { select: { hotelId: true } }
+      }
+    })
+
+    const completed = payments.filter(p => p.status === 'completed')
+    const pending = payments.filter(p => p.status === 'pending')
+    const failed = payments.filter(p => p.status === 'failed')
+    const refunded = payments.filter(p => p.status === 'refunded')
+    const partial = payments.filter(p => p.status === 'partial')
+
+    const methodBreakdown: Record<string, number> = {}
+    payments.forEach(p => {
+      methodBreakdown[p.method] = (methodBreakdown[p.method] || 0) + Number(p.amount)
+    })
+
+    // Group by date for trend chart
+    const trendMap = new Map<string, number>()
+    completed.forEach(p => {
+      const date = p.createdAt.toISOString().split('T')[0]
+      trendMap.set(date, (trendMap.get(date) || 0) + Number(p.amount))
+    })
+    const trend = Array.from(trendMap.entries())
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    return {
+      totalTransactions: payments.length,
+      totalAmount: payments.reduce((sum, p) => sum + Number(p.amount), 0),
+      completedAmount: completed.reduce((sum, p) => sum + Number(p.amount), 0),
+      pendingAmount: pending.reduce((sum, p) => sum + Number(p.amount), 0),
+      failedAmount: failed.reduce((sum, p) => sum + Number(p.amount), 0),
+      refundedAmount: refunded.reduce((sum, p) => sum + Number(p.amount), 0),
+      partialAmount: partial.reduce((sum, p) => sum + Number(p.amount), 0),
+      completedCount: completed.length,
+      pendingCount: pending.length,
+      failedCount: failed.length,
+      refundedCount: refunded.length,
+      methodBreakdown,
+      trend
+    }
+  }
 }
 
 export const paymentsService = new PaymentsService()

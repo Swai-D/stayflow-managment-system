@@ -149,12 +149,12 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                 {/* Details grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
+                { label:'Booking Type', value: booking.bookingType === 'company' ? `🏢 Company${booking.company ? ` — ${booking.company.name}` : ''}` : '👤 Individual' },
                 { label:'Check In',   value: formatDate(booking.checkIn) },
                 { label:'Check Out',  value: formatDate(booking.checkOut) },
                 { label:'Nights Stay', value: `${nights} nights` },
                 { label:'Guests Count', value: `${booking.adults} adults${booking.children ? `, ${booking.children} children` : ''}` },
-                { label:'Nationality', value: booking.guest.nationality || '—' },
-                { label:'ID Document', value: booking.guest.idType ? `${booking.guest.idType.replace(/_/g, ' ')} · ${booking.guest.idNumber || '—'}` : '—' },
+                { label:'Primary Guest', value: booking.guest.fullName },
                 { label:'Room Total', value: formatTZS(booking.roomTotal) },
                 { label:'Balance Due',value: formatTZS(booking.balanceDue) },
               ].map(item => (
@@ -164,6 +164,61 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                 </div>
               ))}
             </div>
+
+            {/* Registered Guests */}
+            {booking.guests && booking.guests.length > 0 && (
+              <div className="border-t border-border/50 pt-4">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <p className="text-[11px] text-[#9ca3af] font-medium uppercase tracking-wider">Registered Guests</p>
+                  <span className="text-[10px] font-bold text-[#2563eb] bg-[#eff6ff] px-2 py-1 rounded-full border border-[#dbeafe]">
+                    {booking.adults} Adults · {booking.children} Children
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  {booking.guests.map((g: any, idx: number) => (
+                    <div
+                      key={g.id || idx}
+                      className="bg-white rounded-xl p-4 border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#eff6ff] to-[#dbeafe] text-[#2563eb] flex items-center justify-center font-bold text-sm shrink-0 border border-[#dbeafe]">
+                            {g.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-[13px] font-bold text-[#111827]">{g.fullName}</p>
+                              {g.isPrimary && (
+                                <span className="text-[9px] font-bold text-[#2563eb] bg-[#eff6ff] px-1.5 py-0.5 rounded border border-[#dbeafe]">
+                                  Primary
+                                </span>
+                              )}
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${g.ageCategory === 'adult' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {g.ageCategory}
+                              </span>
+                            </div>
+                            <div className="mt-1.5 space-y-0.5">
+                              {g.phone && <p className="text-[11px] text-[#6b7280]">📞 {g.phone}</p>}
+                              {g.email && <p className="text-[11px] text-[#6b7280]">✉️ {g.email}</p>}
+                              {(g.nationality || g.idType) && (
+                                <p className="text-[11px] text-[#6b7280]">
+                                  🆔 {g.nationality || '—'}
+                                  {g.idType && (
+                                    <span className="ml-1.5 text-[#9ca3af]">
+                                      · {g.idType.replace(/_/g, ' ')} {g.idNumber ? `· ${g.idNumber}` : ''}
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Payments History */}
             {booking.payments && booking.payments.length > 0 && (
@@ -430,7 +485,12 @@ export default function ReservationsPage() {
                         className="hover:bg-subtle/40 cursor-pointer transition-all group"
                       >
                         <td className="p-[14px_16px] text-[13px] font-bold text-[#111827] group-hover:text-[#2563eb]">
-                          {booking.guest.fullName}
+                          <div className="flex flex-col">
+                            <span>{booking.guest.fullName}</span>
+                            {booking.bookingType === 'company' && booking.company && (
+                              <span className="text-[10px] text-blue-600 font-medium">🏢 {booking.company.name}</span>
+                            )}
+                          </div>
                         </td>
                         <td className="p-[14px_16px] text-[12px] text-[#9ca3af] font-medium font-mono">
                           {booking.bookingRef}

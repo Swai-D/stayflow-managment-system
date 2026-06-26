@@ -18,6 +18,13 @@ export const getGuest = asyncHandler(async (req: AuthRequest, res: Response) => 
   res.json(new ApiResponse(guest))
 })
 
+export const getRegisteredGuests = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { search } = req.query
+  const hotelId = await getSystemHotelId()
+  const guests = await guestsService.getRegisteredGuests(hotelId, search as string)
+  res.json(new ApiResponse(guests))
+})
+
 export const createGuest = asyncHandler(async (req: AuthRequest, res: Response) => {
   const guest = await guestsService.createGuest(req.body)
   res.status(201).json(new ApiResponse(guest, 'Mgeni amesajiliwa'))

@@ -4,13 +4,15 @@ import { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useCreateBooking } from '@/hooks/useBookings'
 import { useHotelSettings } from '@/hooks/useSettings'
+import { useCompanies } from '@/hooks/useCompanies'
 import { Room, ROOM_TYPE_LABELS } from '@/types/room'
+import { Company } from '@/types/company'
 import { CountrySelect } from '@/components/ui/CountrySelect'
 import api from '@/lib/api'
 import {
   X, Calendar, User, Phone, Users, Mail, CheckCircle2,
   CreditCard, Smartphone, Copy, Search, BedDouble,
-  ArrowRight
+  ArrowRight, Building2, UserCircle2
 } from 'lucide-react'
 import { format, differenceInCalendarDays } from 'date-fns'
 import { toast } from 'sonner'
@@ -41,22 +43,30 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
   const [search, setSearch] = useState('')
   const [availabilityError, setAvailabilityError] = useState<string | null>(null)
 
-  const [guestData, setGuestData] = useState({
-    fullName: '',
-    phone: '',
+  const [bookingType, setBookingType] = useState<'individual' | 'company'>('individual')
+  const [companyMode, setCompanyMode] = useState<'existing' | 'new'>('existing')
+  const [selectedCompanyId, setSelectedCompanyId] = useState('')
+  const [companyData, setCompanyData] = useState({
+    name: '',
     email: '',
-    nationality: '',
-    idType: '',
-    idNumber: ''
+    phone: '',
+    address: '',
+    tinNumber: '',
+    contactPerson: '',
+    notes: ''
   })
-  const [adults, setAdults] = useState(1)
-  const [children, setChildren] = useState(0)
   const [specialRequests, setSpecialRequests] = useState('')
+
+  // Modern guest registry: each person is registered individually
+  type GuestForm = { fullName: string; phone: string; email: string; nationality: string; idType: string; idNumber: string; ageCategory: 'adult' | 'child' }
+  const emptyGuest: GuestForm = { fullName: '', phone: '', email: '', nationality: '', idType: '', idNumber: '', ageCategory: 'adult' }
+  const [guests, setGuests] = useState<GuestForm[]>([{ ...emptyGuest }])
 
   const [result, setResult] = useState<any>(null)
 
   const { data: hotel } = useHotelSettings()
   const { mutate: createBooking, isPending: isCreating } = useCreateBooking()
+  const { data: companies = [] } = useCompanies()
 
   const paymentNumbers = hotel?.paymentNumbers?.length ? hotel.paymentNumbers : DEFAULT_PAYMENT_NUMBERS
 
@@ -100,6 +110,19 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
     return selectedRoom ? Number(selectedRoom.pricePerNight) * nights : 0
   }, [selectedRoom, nights])
 
+  const adults = useMemo(() => guests.filter(g => g.ageCategory === 'adult').length, [guests])
+  const children = useMemo(() => guests.filter(g => g.ageCategory === 'child').length, [guests])
+  const totalGuests = guests.length
+
+  const addGuest = () => setGuests(prev => [...prev, { ...emptyGuest }])
+  const removeGuest = (idx: number) => setGuests(prev => prev.filter((_, i) => i !== idx))
+  const updateGuest = (idx: number, field: string, value: string) => {
+    setGuests(prev => prev.map((g, i) => i === idx ? { ...g, [field]: value } : g))
+  }
+  const toggleAgeCategory = (idx: number) => {
+    setGuests(prev => prev.map((g, i) => i === idx ? { ...g, ageCategory: g.ageCategory === 'adult' ? 'child' : 'adult' } : g))
+  }
+
   const updateDate = (field: 'checkIn' | 'checkOut', value: string) => {
     setDates(prev => {
       const next = { ...prev, [field]: value }
@@ -118,9 +141,47 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
 
   const handleGuestSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!guestData.fullName || !guestData.phone) {
-      toast.error('Tafadhali jaza jina na namba ya simu')
+    if (guests.length === 0) {
+      toast.error('Tafadhali sajili angalau mgeni mmoja')
       return
+    }
+
+    const primary = guests[0]
+    if (!primary.fullName.trim() || !primary.phone.trim()) {
+      toast.error('Tafadhali jaza jina na namba ya simu ya mgeni mkuu')
+      return
+    }
+    if (!primary.email.trim()) {
+      toast.error('Tafadhali jaza email ya mgeni mkuu')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(primary.email.trim())) {
+      toast.error('Tafadhali weka email sahihi ya mgeni mkuu')
+      return
+    }
+
+    for (let i = 0; i < guests.length; i++) {
+      if (!guests[i].fullName.trim()) {
+        toast.error(`Tafadhali jaza jina la mgeni wa ${i + 1}`)
+        return
+      }
+    }
+
+    if (selectedRoom && selectedRoom.capacity && totalGuests > selectedRoom.capacity) {
+      toast.error(`Jumla ya wageni (${totalGuests}) imeshinda uwezo wa chumba (${selectedRoom.capacity})`)
+      return
+    }
+
+    if (bookingType === 'company') {
+      if (companyMode === 'existing' && !selectedCompanyId) {
+        toast.error('Tafadhali chagua kampuni')
+        return
+      }
+      if (companyMode === 'new' && !companyData.name.trim()) {
+        toast.error('Tafadhali jaza jina la kampuni')
+        return
+      }
     }
     if (!selectedRoom) return
     if (new Date(dates.checkOut) <= new Date(dates.checkIn)) {
@@ -133,29 +194,41 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
 
   const handlePaymentConfirm = () => {
     if (!selectedRoom) return
-    const payload = {
+    const payload: any = {
       roomId: selectedRoom.id,
       checkIn: dates.checkIn,
       checkOut: dates.checkOut,
-      adults,
-      children,
       specialRequests,
       source: 'staff_entry',
-      guestData: {
-        fullName: guestData.fullName,
-        phone: guestData.phone,
-        email: guestData.email,
-        nationality: guestData.nationality,
-        idType: guestData.idType,
-        idNumber: guestData.idNumber,
-      },
+      bookingType,
+      guests: guests.map(g => ({
+        fullName: g.fullName.trim(),
+        phone: g.phone.trim(),
+        email: g.email.trim(),
+        nationality: g.nationality.trim(),
+        idType: g.idType.trim(),
+        idNumber: g.idNumber.trim(),
+        ageCategory: g.ageCategory
+      })),
       sendConfirmationSms: true
     }
+
+    if (bookingType === 'company') {
+      if (companyMode === 'existing' && selectedCompanyId) {
+        payload.companyId = selectedCompanyId
+      } else if (companyMode === 'new') {
+        payload.companyData = {
+          ...companyData,
+          email: companyData.email || undefined
+        }
+      }
+    }
+
     createBooking(payload, {
       onSuccess: (data) => {
         setResult(data)
         setStep(5)
-        toast.success('Booking imekamilika. OTP imetumwa kwa SMS.')
+        toast.success('Booking imekamilika. Activation email na OTP zimetumwa.')
       },
       onError: (err: any) => {
         toast.error(err?.response?.data?.error?.message || 'Imeshindwa kuunda booking. Jaribu tena.')
@@ -246,13 +319,55 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
     </div>
   )
 
+  const renderBookingTypeSelector = (showLabel = true) => (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+      {showLabel && (
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Booking Type</label>
+      )}
+      <div className="grid grid-cols-2 gap-4">
+        <button
+          type="button"
+          onClick={() => setBookingType('individual')}
+          className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+            bookingType === 'individual'
+              ? 'border-blue-600 bg-blue-50/50'
+              : 'border-transparent bg-gray-50 hover:bg-gray-100'
+          }`}
+        >
+          <UserCircle2 size={24} className={bookingType === 'individual' ? 'text-blue-600' : 'text-gray-400'} />
+          <div className="text-left">
+            <p className={`text-sm font-bold ${bookingType === 'individual' ? 'text-blue-700' : 'text-gray-700'}`}>Individual</p>
+            <p className="text-[10px] text-gray-400">Mtu binafsi</p>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setBookingType('company')}
+          className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
+            bookingType === 'company'
+              ? 'border-blue-600 bg-blue-50/50'
+              : 'border-transparent bg-gray-50 hover:bg-gray-100'
+          }`}
+        >
+          <Building2 size={24} className={bookingType === 'company' ? 'text-blue-600' : 'text-gray-400'} />
+          <div className="text-left">
+            <p className={`text-sm font-bold ${bookingType === 'company' ? 'text-blue-700' : 'text-gray-700'}`}>Company</p>
+            <p className="text-[10px] text-gray-400">Kampuni</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  )
+
   // Step 1: Room Selection
   const renderRoomSelection = () => (
     <div className="space-y-6 animate-in slide-in-from-left-4 duration-200">
       <div className="space-y-1">
         <h2 className="text-2xl font-bold text-gray-900">Choose Room</h2>
-        <p className="text-sm text-gray-500">Select dates and an available room for the guest.</p>
+        <p className="text-sm text-gray-500">Select booking type, dates and an available room for the guest.</p>
       </div>
+
+      {renderBookingTypeSelector()}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
@@ -363,9 +478,100 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
   const renderGuestDetails = () => (
     <form onSubmit={handleGuestSubmit} className="space-y-6 animate-in slide-in-from-right-4 duration-200">
       <div className="space-y-1">
-        <h2 className="text-2xl font-bold text-gray-900">Guest Details</h2>
-        <p className="text-sm text-gray-500">Enter guest information to secure the booking.</p>
+        <h2 className="text-2xl font-bold text-gray-900">Guest & Booking Type</h2>
+        <p className="text-sm text-gray-500">Choose booking type and enter guest information.</p>
       </div>
+
+      {renderBookingTypeSelector()}
+
+      {bookingType === 'company' && (
+          <div className="space-y-4 pt-2 border-t border-gray-50">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setCompanyMode('existing')}
+                className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all ${
+                  companyMode === 'existing' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                Existing Company
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompanyMode('new')}
+                className={`px-4 py-2 rounded-lg text-[12px] font-bold transition-all ${
+                  companyMode === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                New Company
+              </button>
+            </div>
+
+            {companyMode === 'existing' ? (
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select Company *</label>
+                <select
+                  value={selectedCompanyId}
+                  onChange={e => setSelectedCompanyId(e.target.value)}
+                  className="w-full mt-1 h-11 bg-gray-50 border border-gray-200 rounded-xl px-3 text-[13px] outline-none focus:border-blue-500"
+                >
+                  <option value="">Select company...</option>
+                  {companies.map((c: Company) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Company Name *</label>
+                  <input
+                    value={companyData.name}
+                    onChange={e => setCompanyData({ ...companyData, name: e.target.value })}
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
+                    placeholder="e.g. ABC Limited"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Contact Person</label>
+                  <input
+                    value={companyData.contactPerson}
+                    onChange={e => setCompanyData({ ...companyData, contactPerson: e.target.value })}
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
+                    placeholder="Name"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Phone</label>
+                  <input
+                    value={companyData.phone}
+                    onChange={e => setCompanyData({ ...companyData, phone: e.target.value })}
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
+                    placeholder="+255..."
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Email</label>
+                  <input
+                    value={companyData.email}
+                    onChange={e => setCompanyData({ ...companyData, email: e.target.value })}
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
+                    placeholder="company@email.com"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Address</label>
+                  <input
+                    value={companyData.address}
+                    onChange={e => setCompanyData({ ...companyData, address: e.target.value })}
+                    className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
+                    placeholder="Physical address"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       {availabilityError && (
         <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-red-700 text-sm font-bold">
@@ -373,117 +579,128 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
         </div>
       )}
 
+      {/* Guest Registry */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Full Name</label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input
-              required
-              value={guestData.fullName}
-              onChange={e => setGuestData({ ...guestData, fullName: e.target.value })}
-              placeholder="Guest full name"
-              className="w-full bg-gray-50 border-none rounded-xl pl-10 pr-3 py-3 text-sm"
-            />
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">Guest Registry</h3>
+            <p className="text-[10px] text-gray-400">Sajili kila mtu aliyeingia</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-bold text-blue-600">{adults} Adults · {children} Children</p>
+            <p className="text-[9px] text-gray-400">Capacity: {selectedRoom?.capacity || '—'}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Phone</label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                required
-                value={guestData.phone}
-                onChange={e => setGuestData({ ...guestData, phone: e.target.value })}
-                placeholder="+255..."
-                className="w-full bg-gray-50 border-none rounded-xl pl-10 pr-3 py-3 text-sm"
-              />
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          {guests.map((guest, idx) => (
+            <div key={idx} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center">{idx + 1}</span>
+                  <span className="text-xs font-bold text-gray-700">{idx === 0 ? 'Primary Guest' : 'Guest'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleAgeCategory(idx)}
+                    className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                      guest.ageCategory === 'adult'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}
+                  >
+                    {guest.ageCategory === 'adult' ? 'Adult' : 'Child'}
+                  </button>
+                  {guests.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeGuest(idx)}
+                      className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-all"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <input
+                    value={guest.fullName}
+                    onChange={e => updateGuest(idx, 'fullName', e.target.value)}
+                    placeholder="Full name"
+                    className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                <div>
+                  <input
+                    value={guest.phone}
+                    onChange={e => updateGuest(idx, 'phone', e.target.value)}
+                    placeholder="Phone number"
+                    className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    value={guest.email}
+                    onChange={e => updateGuest(idx, 'email', e.target.value)}
+                    placeholder={idx === 0 ? 'Email (required for invoice)' : 'Email'}
+                    className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                <div>
+                  <CountrySelect
+                    value={guest.nationality}
+                    onChange={value => updateGuest(idx, 'nationality', value)}
+                    placeholder="Nationality"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={guest.idType}
+                    onChange={e => updateGuest(idx, 'idType', e.target.value)}
+                    className="w-full h-10 bg-gray-50 border-none rounded-xl px-3 text-[13px] appearance-none outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    <option value="">ID Type</option>
+                    <option value="national_id">National ID</option>
+                    <option value="passport">Passport</option>
+                    <option value="drivers_license">Driving License</option>
+                    <option value="voter_id">Voter ID</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <input
+                    value={guest.idNumber}
+                    onChange={e => updateGuest(idx, 'idNumber', e.target.value)}
+                    placeholder="ID Number"
+                    className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-[13px] outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Email (Optional)</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-              <input
-                type="email"
-                value={guestData.email}
-                onChange={e => setGuestData({ ...guestData, email: e.target.value })}
-                placeholder="guest@email.com"
-                className="w-full bg-gray-50 border-none rounded-xl pl-10 pr-3 py-3 text-sm"
-              />
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nationality</label>
-            <CountrySelect
-              value={guestData.nationality}
-              onChange={value => setGuestData({ ...guestData, nationality: value })}
-              placeholder="Select country"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">ID Type</label>
-            <select
-              value={guestData.idType}
-              onChange={e => setGuestData({ ...guestData, idType: e.target.value })}
-              className="w-full h-11 bg-gray-50 border-none rounded-xl px-3 text-sm appearance-none"
-            >
-              <option value="">Select ID type...</option>
-              <option value="national_id">National ID</option>
-              <option value="passport">Passport</option>
-              <option value="drivers_license">Driving License</option>
-            </select>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={addGuest}
+          className="w-full py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-all"
+        >
+          + Add Guest
+        </button>
+      </div>
 
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">ID Number</label>
-          <input
-            value={guestData.idNumber}
-            onChange={e => setGuestData({ ...guestData, idNumber: e.target.value })}
-            placeholder="Enter ID number"
-            className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Adults</label>
-            <input
-              type="number"
-              min={1}
-              value={adults}
-              onChange={e => setAdults(Math.max(1, Number(e.target.value)))}
-              className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Children</label>
-            <input
-              type="number"
-              min={0}
-              value={children}
-              onChange={e => setChildren(Math.max(0, Number(e.target.value)))}
-              className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Special Requests</label>
-          <textarea
-            value={specialRequests}
-            onChange={e => setSpecialRequests(e.target.value)}
-            placeholder="Any special requests..."
-            rows={2}
-            className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm resize-none"
-          />
-        </div>
+      <div className="space-y-1">
+        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Special Requests</label>
+        <textarea
+          value={specialRequests}
+          onChange={e => setSpecialRequests(e.target.value)}
+          placeholder="Any special requests..."
+          rows={2}
+          className="w-full bg-gray-50 border-none rounded-xl px-3 py-3 text-sm resize-none"
+        />
       </div>
 
       <div className="flex gap-3">
@@ -513,16 +730,36 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
-        <PreviewRow label="Full Name" value={guestData.fullName} />
-        <PreviewRow label="Phone" value={guestData.phone} />
-        <PreviewRow label="Email" value={guestData.email || '—'} />
-        <PreviewRow label="Nationality" value={guestData.nationality || '—'} />
-        <PreviewRow label="ID Document" value={guestData.idType ? `${guestData.idType.replace(/_/g, ' ')} · ${guestData.idNumber || '—'}` : '—'} />
+        <PreviewRow label="Booking Type" value={bookingType === 'company' ? '🏢 Company' : '👤 Individual'} />
+        {bookingType === 'company' && (
+          <PreviewRow
+            label="Company"
+            value={
+              companyMode === 'existing'
+                ? (companies.find((c: Company) => c.id === selectedCompanyId)?.name || '—')
+                : companyData.name
+            }
+          />
+        )}
         <PreviewRow label="Check In" value={format(new Date(dates.checkIn), 'EEE, dd MMM yyyy')} />
         <PreviewRow label="Check Out" value={format(new Date(dates.checkOut), 'EEE, dd MMM yyyy')} />
-        <PreviewRow label="Guests" value={`${adults} adults${children ? `, ${children} children` : ''}`} />
+        <PreviewRow label="Guests" value={`${adults} adults${children ? `, ${children} children` : ''} (${totalGuests} total)`} />
         <PreviewRow label="Room" value={selectedRoom ? `Room ${selectedRoom.roomNumber} · ${ROOM_TYPE_LABELS[selectedRoom.type] || selectedRoom.type}` : '—'} />
         {specialRequests && <PreviewRow label="Requests" value={specialRequests} />}
+
+        <div className="pt-2 border-t border-gray-50">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Registered Guests</p>
+          <div className="space-y-1.5">
+            {guests.map((g, idx) => (
+              <div key={idx} className="flex items-center justify-between text-sm">
+                <span className="text-gray-700 truncate">{idx + 1}. {g.fullName || '—'}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${g.ageCategory === 'adult' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'}`}>
+                  {g.ageCategory}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex gap-3">
@@ -609,8 +846,8 @@ export default function NewBookingModal({ onClose, preselectedRoomId, preselecte
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-gray-900">Booking Confirmed!</h2>
           <p className="text-sm text-gray-500">
-            Booking for <span className="font-bold text-gray-900">{guestData.fullName}</span> has been created.
-            {otp ? ' An SMS with OTP has been sent.' : ''}
+            Booking for <span className="font-bold text-gray-900">{guests[0]?.fullName}</span> has been created.
+            {otp ? ' An activation email and SMS with OTP have been sent.' : ''}
           </p>
         </div>
 

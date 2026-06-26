@@ -208,12 +208,17 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
 }
 
 // ── Success screen ────────────────────────────────────────────────────────────
-function SuccessScreen({ booking, total, onReset, onSendInvoice, onPrintInvoice, sendingInvoice }: {
+function SuccessScreen({ booking, total, onReset, onSendFolio, onPrintFolio, sendingFolio }: {
   booking: Booking; total: number; onReset: () => void
-  onSendInvoice: () => void
-  onPrintInvoice: () => void
-  sendingInvoice: boolean
+  onSendFolio: () => void
+  onPrintFolio: () => void
+  sendingFolio: boolean
 }) {
+  // Folio is emailed to the primary guest (or company contact) – this is a running
+  // statement, NOT a final invoice. The official invoice is created at checkout/payment.
+  const recipientName = booking.company?.name || booking.guest.fullName
+  const canEmail = !!(booking.company?.email || booking.guest.email)
+
   return (
     <div className="flex flex-col items-center justify-center py-10 text-center">
       <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
@@ -223,22 +228,26 @@ function SuccessScreen({ booking, total, onReset, onSendInvoice, onPrintInvoice,
       <p className="text-[14px] text-gray-500 mb-1">
         <span className="font-semibold text-[#2563EB]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
       </p>
-      <p className="text-[13px] text-gray-400 mb-6">{booking.guest.fullName} · {booking.bookingRef}</p>
+      <p className="text-[13px] text-gray-400 mb-6">{recipientName} · {booking.bookingRef}</p>
 
       <div className="flex flex-col gap-2 w-full max-w-[280px] mb-4">
-        <button onClick={onSendInvoice} disabled={sendingInvoice}
+        <button onClick={onSendFolio} disabled={sendingFolio || !canEmail}
           className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
-          {sendingInvoice ? (
+          {sendingFolio ? (
             <><Loader2 size={15} className="animate-spin"/> Sending...</>
           ) : (
-            <><Mail size={15}/> Send Invoice to Guest</>
+            <><Mail size={15}/> Email Folio Summary</>
           )}
         </button>
-        <button onClick={onPrintInvoice}
+        <button onClick={onPrintFolio}
           className="w-full py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
-          <Printer size={15}/> Print Invoice
+          <Printer size={15}/> Print Folio Summary
         </button>
       </div>
+
+      <p className="text-[11px] text-gray-400 mb-4 px-4">
+        This is a running folio. The official invoice will be generated at checkout or when payment is confirmed.
+      </p>
 
       <button onClick={onReset}
         className="text-[13px] font-semibold text-gray-500 hover:text-[#2563EB] transition-colors">
@@ -253,7 +262,7 @@ export default function POSPage() {
   const { data: posItems = [], isLoading: itemsLoading } = usePOSItems()
   const { data: bookings = [], isLoading: bookingsLoading } = useActiveBookings()
   const { mutate: postCharge, isPending: posting } = usePostCharge()
-  const { mutate: sendInvoice, isPending: sendingInvoice } = useSendInvoiceEmail()
+  const { mutate: sendFolio, isPending: sendingFolio } = useSendInvoiceEmail()
 
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const { data: folio } = useGuestFolio(selectedBooking?.id ?? '')
@@ -318,30 +327,31 @@ export default function POSPage() {
     setSelectedBooking(null)
   }
 
-  const handleSendInvoice = () => {
+  const handleSendFolio = () => {
     if (!selectedBooking) return
-    if (!selectedBooking.guest.email) {
-      toast.error('Mgeni hana email address')
+    const email = selectedBooking.company?.email || selectedBooking.guest.email
+    if (!email) {
+      toast.error('Mgeni au kampuni hana email address')
       return
     }
-    sendInvoice(selectedBooking.id, {
+    sendFolio(selectedBooking.id, {
       onSuccess: (data) => {
-        toast.success(data?.message || 'Invoice imetumwa kwa email')
+        toast.success(data?.message || 'Folio imetumwa kwa email')
       },
       onError: (err: any) => {
-        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kutuma invoice')
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kutuma folio')
       }
     })
   }
 
-  const handlePrintInvoice = async () => {
+  const handlePrintFolio = async () => {
     if (!selectedBooking) return
     try {
       const res = await api.get(`/pos/invoice/${selectedBooking.id}/pdf`, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
       window.open(url, '_blank')
     } catch (err: any) {
-      toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata invoice')
+      toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata folio')
     }
   }
 
@@ -546,9 +556,9 @@ export default function POSPage() {
               booking={selectedBooking}
               total={total}
               onReset={handleReset}
-              onSendInvoice={handleSendInvoice}
-              onPrintInvoice={handlePrintInvoice}
-              sendingInvoice={sendingInvoice}
+              onSendFolio={handleSendFolio}
+              onPrintFolio={handlePrintFolio}
+              sendingFolio={sendingFolio}
             />
           </div>
         </div>

@@ -57,6 +57,15 @@ export default function PublicBookingPage() {
       toast.error('Tafadhali jaza jina na namba ya simu')
       return
     }
+    if (!formData.email.trim()) {
+      toast.error('Tafadhali jaza email yako')
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error('Tafadhali weka email sahihi')
+      return
+    }
     if (!selectedRoom) return
 
     if (new Date(formData.checkOut) <= new Date(formData.checkIn)) {
@@ -251,10 +260,14 @@ export default function PublicBookingPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">Email (Optional)</label>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest px-1">
+                          Email <span className="text-red-500">*</span>
+                        </label>
+                        <p className="text-[10px] text-gray-400 px-1">Inahitajika kwa invoice na guest portal</p>
                         <div className="relative">
                           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                           <input 
+                            required
                             type="email"
                             value={formData.email}
                             onChange={e => setFormData({...formData, email: e.target.value})}

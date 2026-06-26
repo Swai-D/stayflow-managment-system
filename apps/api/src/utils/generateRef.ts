@@ -29,3 +29,17 @@ export async function generateReceiptNumber(): Promise<string> {
   const num = String(count + 1).padStart(3, '0')
   return `RCP-${year}-${num}`
 }
+
+export async function generateInvoiceNumber(): Promise<string> {
+  const year = new Date().getFullYear()
+  const count = await prisma.invoice.count({
+    where: {
+      createdAt: {
+        gte: new Date(`${year}-01-01`),
+        lt: new Date(`${year + 1}-01-01`)
+      }
+    }
+  })
+  const num = String(count + 1).padStart(3, '0')
+  return `INV-${year}-${num}`
+}

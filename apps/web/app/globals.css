@@ -98,6 +98,24 @@
   }
 }
 
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .shadow-card, .shadow-sm, .shadow-lg, .shadow-md {
+    box-shadow: none !important;
+  }
+  .rounded-xl, .rounded-2xl, .rounded-lg {
+    border-radius: 8px !important;
+  }
+  .border-border\/20, .border-border {
+    border-color: #e5e7eb !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

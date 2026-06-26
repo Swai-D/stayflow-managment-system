@@ -10,3 +10,4 @@ Thumbs.db
 coverage/
 prisma/migrations/*.sql.bak
 instructions/
+sample-invoice.pdf

@@ -38,22 +38,23 @@ export const voidCharge = asyncHandler(async (req: AuthRequest, res: Response) =
 
 export const getInvoice = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
-  const invoice = await posService.getInvoiceData(req.params.bookingId, hotelId)
-  res.json(new ApiResponse(invoice))
+  const folio = await posService.getInvoiceData(req.params.bookingId, hotelId)
+  res.json(new ApiResponse(folio))
 })
 
 export const sendInvoiceEmail = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
   const result = await posService.sendInvoiceEmail(req.params.bookingId, hotelId)
-  res.json(new ApiResponse(result, 'Invoice imetumwa kwa email'))
+  res.json(new ApiResponse(result, 'Folio imetumwa kwa email'))
 })
 
 export const getInvoicePdf = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { bookingId } = req.params
-  const pdfBuffer = await pdfService.generateInvoice(bookingId)
+  // PDF generated from POS is a running folio, not the final invoice.
+  const pdfBuffer = await pdfService.generateInvoice(bookingId, 'folio')
 
   res.setHeader('Content-Type', 'application/pdf')
-  res.setHeader('Content-Disposition', `attachment; filename=INV-${bookingId}.pdf`)
+  res.setHeader('Content-Disposition', `attachment; filename=FOLIO-${bookingId}.pdf`)
   res.send(pdfBuffer)
 })
 

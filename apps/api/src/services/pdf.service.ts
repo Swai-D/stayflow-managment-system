@@ -60,11 +60,12 @@ export class PdfService {
     return `RCP-${year}-${num}`
   }
 
-  async generateInvoice(bookingId: string): Promise<Buffer> {
+  async generateInvoice(bookingId: string, type: 'invoice' | 'folio' = 'invoice'): Promise<Buffer> {
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
         guest: true,
+        company: true,
         room: true,
         hotel: true,
         roomCharges: { include: { items: true } },
@@ -75,7 +76,7 @@ export class PdfService {
     if (!booking) throw ApiError.notFound('Booking haikupatikana')
 
     try {
-      return await this.buildInvoicePdf(booking)
+      return await this.buildInvoicePdf(booking, type)
     } catch (err) {
       console.error('Invoice PDF Error:', err)
       throw ApiError.internal('Imeshindwa kutengeneza invoice ya PDF')
@@ -230,8 +231,13 @@ export class PdfService {
     doc.opacity(1)
   }
 
-  private async buildInvoicePdf(booking: any): Promise<Buffer> {
-    const { hotel, guest, room, roomCharges, addons } = booking
+  private async buildInvoicePdf(booking: any, docType: 'invoice' | 'folio' = 'invoice'): Promise<Buffer> {
+    const { hotel, guest, company, room, roomCharges, addons } = booking
+    const isCompany = !!company
+    const billToName = isCompany ? company.name : guest.fullName
+    const billToEmail = isCompany ? company.email : guest.email
+    const billToPhone = isCompany ? company.phone : guest.phone
+    const billToTin = isCompany ? company.tinNumber : null
     const nights = Math.max(
       1,
       Math.ceil(
@@ -247,7 +253,9 @@ export class PdfService {
     const rows: Array<{ desc: string; sub?: string; qty: string; rate: string; amount: string }> = [
       {
         desc: `Accommodation: ${room.type}`,
-        sub: `Stay for ${guest.fullName}`,
+        sub: isCompany
+          ? `Guest: ${guest.fullName} · Company: ${company.name}`
+          : `Stay for ${guest.fullName}`,
         qty: String(nights),
         rate: this.formatInvoiceMoney(roomTotal / nights),
         amount: this.formatInvoiceMoney(roomTotal)
@@ -300,9 +308,10 @@ export class PdfService {
 
       // Right side invoice meta
       const metaY = margin + 4
-      doc.font('Helvetica-Bold').fontSize(28).fillColor('#2C3E50')
-      const titleWidth = doc.widthOfString('INVOICE')
-      doc.text('INVOICE', rightX - titleWidth, metaY)
+      const titleText = docType === 'folio' ? 'GUEST FOLIO' : 'INVOICE'
+      doc.font('Helvetica-Bold').fontSize(docType === 'folio' ? 24 : 28).fillColor('#2C3E50')
+      const titleWidth = doc.widthOfString(titleText)
+      doc.text(titleText, rightX - titleWidth, metaY)
 
       doc.font('Helvetica').fontSize(11).fillColor('#7F8C8D')
       const refText = `#${booking.bookingRef}`
@@ -327,10 +336,16 @@ export class PdfService {
       doc.fillColor('#7F8C8D').font('Helvetica-Bold').fontSize(10)
       doc.text('BILL TO', margin + 14, y + 12)
       doc.fillColor('#2C3E50').font('Helvetica-Bold').fontSize(12)
-      doc.text(guest.fullName, margin + 14, y + 34)
+      doc.text(billToName, margin + 14, y + 34)
       doc.font('Helvetica').fontSize(10).fillColor('#555555')
-      doc.text(guest.email || '', margin + 14, y + 52)
-      doc.text(guest.phone || '', margin + 14, y + 70)
+      if (isCompany && billToTin) {
+        doc.text(`TIN: ${billToTin}`, margin + 14, y + 50)
+        doc.text(billToEmail || '', margin + 14, y + 64)
+        doc.text(billToPhone || '', margin + 14, y + 78)
+      } else {
+        doc.text(billToEmail || '', margin + 14, y + 52)
+        doc.text(billToPhone || '', margin + 14, y + 70)
+      }
 
       // Stay details
       doc.rect(margin + boxWidth + 20, y, boxWidth, boxHeight).fill('#F8F9FA')
@@ -415,6 +430,112 @@ export class PdfService {
       doc.text(`Thank you for choosing ${hotel.name || 'us'}. We look forward to your stay.`, margin, footerY, { align: 'center', width: contentWidth })
       doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
       doc.text(process.env.POWERED_BY || 'Powered by Odessa Lab', margin, footerY + 20, { align: 'center', width: contentWidth })
+    })
+  }
+
+  async generateCompanyInvoicePdf(invoice: any): Promise<Buffer> {
+    const { hotel, company, amount, totalAmount, paidAmount, invoiceNumber, createdAt, notes } = invoice
+
+    const bookings = company?.bookings || []
+    const rows = bookings.map((b: any) => ({
+      desc: `Accommodation — ${b.guest?.fullName || 'Guest'} (${b.room?.roomNumber || '-'})`,
+      qty: `${Math.max(1, Math.ceil((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / (1000 * 60 * 60 * 24)))} nights`,
+      amount: Number(b.totalAmount)
+    }))
+
+    return this.buildBuffer(doc => {
+      const pageWidth = doc.page.width
+      const margin = 50
+      const contentWidth = pageWidth - margin * 2
+      const rightX = pageWidth - margin
+      let y = margin
+
+      doc.font('Helvetica-Bold').fontSize(26).fillColor('#2563EB')
+      doc.text((hotel.name || 'Hotel').toUpperCase(), margin, y)
+      y += 30
+
+      doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
+      doc.text(hotel.address || '', margin, y)
+      y += 14
+      doc.text(`${hotel.phone || ''} | ${hotel.email || ''}`, margin, y)
+      y += 30
+
+      doc.font('Helvetica-Bold').fontSize(24).fillColor('#111827')
+      const title = 'COMPANY INVOICE'
+      const titleWidth = doc.widthOfString(title)
+      doc.text(title, rightX - titleWidth, margin)
+
+      doc.font('Helvetica').fontSize(11).fillColor('#6B7280')
+      const refText = `#${invoiceNumber}`
+      const refWidth = doc.widthOfString(refText)
+      doc.text(refText, rightX - refWidth, margin + 32)
+
+      const dateText = format(new Date(createdAt || Date.now()), 'MMMM dd, yyyy')
+      const dateWidth = doc.widthOfString(dateText)
+      doc.text(dateText, rightX - dateWidth, margin + 50)
+
+      doc.moveTo(margin, y).lineTo(rightX, y).lineWidth(2).stroke('#2563EB')
+      y += 24
+
+      doc.font('Helvetica-Bold').fontSize(11).fillColor('#6B7280')
+      doc.text('BILL TO', margin, y)
+      y += 16
+      doc.font('Helvetica-Bold').fontSize(13).fillColor('#111827')
+      doc.text(company.name, margin, y)
+      y += 18
+      doc.font('Helvetica').fontSize(10).fillColor('#4B5563')
+      if (company.address) { doc.text(company.address, margin, y); y += 14 }
+      if (company.phone) { doc.text(`Phone: ${company.phone}`, margin, y); y += 14 }
+      if (company.email) { doc.text(`Email: ${company.email}`, margin, y); y += 14 }
+      if (company.tinNumber) { doc.text(`TIN: ${company.tinNumber}`, margin, y); y += 14 }
+      y += 16
+
+      if (notes) {
+        doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
+        doc.text(`Notes: ${notes}`, margin, y, { width: contentWidth })
+        y += 24
+      }
+
+      const colDesc = contentWidth * 0.55
+      const colQty = contentWidth * 0.20
+      const colAmount = contentWidth * 0.25
+      const tableTop = y
+      doc.rect(margin, tableTop, contentWidth, 32).fill('#F3F4F6')
+      doc.fillColor('#374151').font('Helvetica-Bold').fontSize(10)
+      doc.text('DESCRIPTION', margin + 12, tableTop + 10)
+      doc.text('QTY', margin + colDesc + 12, tableTop + 10, { width: colQty, align: 'center' })
+      doc.text('AMOUNT', margin + colDesc + colQty + 12, tableTop + 10, { width: colAmount - 12, align: 'right' })
+
+      y = tableTop + 32
+      rows.forEach((row: any) => {
+        doc.font('Helvetica').fontSize(10).fillColor('#111827')
+        doc.text(row.desc, margin + 12, y + 8, { width: colDesc - 24 })
+        doc.text(row.qty, margin + colDesc + 12, y + 8, { width: colQty, align: 'center' })
+        doc.text(this.formatInvoiceMoney(row.amount), margin + colDesc + colQty + 12, y + 8, { width: colAmount - 12, align: 'right' })
+        doc.moveTo(margin, y + 28).lineTo(rightX, y + 28).stroke('#F3F4F6')
+        y += 34
+      })
+
+      y += 20
+      const totalsWidth = 220
+      const totalsX = rightX - totalsWidth
+      doc.rect(totalsX, y, totalsWidth, 120).fill('#F8F9FA')
+      let ty = y + 16
+      const addTotalLine = (label: string, value: string, bold = false) => {
+        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#111827' : '#6B7280')
+        doc.text(label, totalsX + 16, ty)
+        doc.text(value, totalsX + 100, ty, { width: totalsWidth - 120, align: 'right' })
+        ty += bold ? 28 : 22
+      }
+      addTotalLine('Total', this.formatInvoiceMoney(totalAmount))
+      addTotalLine('Paid', this.formatInvoiceMoney(paidAmount))
+      doc.moveTo(totalsX + 16, ty - 8).lineTo(totalsX + totalsWidth - 16, ty - 8).stroke('#D1D5DB')
+      addTotalLine('DUE', this.formatInvoiceMoney(amount), true)
+
+      y += 140
+      const footerY = doc.page.height - margin - 40
+      doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
+      doc.text(`Thank you for choosing ${hotel.name || 'us'}.`, margin, footerY, { align: 'center', width: contentWidth })
     })
   }
 
