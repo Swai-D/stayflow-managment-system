@@ -329,6 +329,10 @@ export default function PurchaseOrdersPage() {
   const [page, setPage] = useState(1)
   const limit = 10
 
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter])
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-6 animate-pulse">
@@ -354,10 +358,6 @@ export default function PurchaseOrdersPage() {
 
   const totalPages = Math.ceil(filtered.length / limit)
   const paginated = filtered.slice((page - 1) * limit, page * limit)
-
-  useEffect(() => {
-    setPage(1)
-  }, [search, statusFilter])
 
   const totalPending  = orders.filter(o => ['DRAFT','SUBMITTED','APPROVED','SENT_TO_SUPPLIER'].includes(o.status)).length
   const totalValue    = orders.filter(o => o.status !== 'CLOSED').reduce((s, o) => s + o.totalAmount, 0)

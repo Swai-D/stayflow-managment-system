@@ -251,6 +251,10 @@ export default function StoreItemsPage() {
   const [page, setPage] = useState(1)
   const limit = 10
 
+  useEffect(() => {
+    setPage(1)
+  }, [search, catFilter, statusFilter])
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-6 animate-pulse">
@@ -274,10 +278,6 @@ export default function StoreItemsPage() {
 
   const totalPages = Math.ceil(filtered.length / limit)
   const paginated = filtered.slice((page - 1) * limit, page * limit)
-
-  useEffect(() => {
-    setPage(1)
-  }, [search, catFilter, statusFilter])
 
   const counts = {
     total: items.length,

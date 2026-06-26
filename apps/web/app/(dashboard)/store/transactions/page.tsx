@@ -120,6 +120,10 @@ export default function TransactionsPage() {
   const limit = 10
   const [now] = useState(() => Date.now())
 
+  useEffect(() => {
+    setPage(1)
+  }, [search, typeFilter])
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-6 animate-pulse">
@@ -146,10 +150,6 @@ export default function TransactionsPage() {
 
   const totalPages = Math.ceil(filtered.length / limit)
   const paginated = filtered.slice((page - 1) * limit, page * limit)
-
-  useEffect(() => {
-    setPage(1)
-  }, [search, typeFilter])
 
   // Summary stats
   const totalIn  = transactions.filter(t => t.type === 'STOCK_IN').reduce((s, t) => s + (t.quantity * (t.unitCost ?? 0)), 0)

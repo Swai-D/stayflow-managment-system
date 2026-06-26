@@ -206,6 +206,10 @@ export default function SuppliersPage() {
   const [page, setPage] = useState(1)
   const limit = 10
 
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-6 animate-pulse">
@@ -230,10 +234,6 @@ export default function SuppliersPage() {
 
   const totalPages = Math.ceil(filtered.length / limit)
   const paginated = filtered.slice((page - 1) * limit, page * limit)
-
-  useEffect(() => {
-    setPage(1)
-  }, [search])
 
   const totalSpend = suppliers.reduce((s, x) => s + (x.totalValue ?? 0), 0)
   const activeCount = suppliers.filter(s => s.isActive).length
