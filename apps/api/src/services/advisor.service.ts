@@ -21,6 +21,7 @@ export interface AdviceResponse {
   period: AdvicePeriod
   refreshedAt?: Date
   remainingRefreshes: number
+  isFallback?: boolean
 }
 
 const MAX_DAILY_REFRESHES = 3
@@ -91,7 +92,8 @@ export class AdvisorService {
           generatedAt: stored.generatedAt,
           expiresAt: stored.expiresAt,
           period,
-          remainingRefreshes: await this.remainingRefreshes(hotelId, period)
+          remainingRefreshes: await this.remainingRefreshes(hotelId, period),
+          isFallback: true
         }
       }
 
@@ -105,7 +107,8 @@ export class AdvisorService {
         generatedAt: now,
         expiresAt: new Date(now.getTime() + 1000 * 60 * 15),
         period,
-        remainingRefreshes: MAX_DAILY_REFRESHES
+        remainingRefreshes: MAX_DAILY_REFRESHES,
+        isFallback: true
       }
     }
   }

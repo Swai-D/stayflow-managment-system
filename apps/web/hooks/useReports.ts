@@ -102,6 +102,7 @@ export interface BusinessAdviceResponse {
   expiresAt: string
   period: 'DAILY' | 'WEEKLY' | 'MONTHLY'
   remainingRefreshes: number
+  isFallback?: boolean
 }
 
 export type AdvicePeriod = 'DAILY' | 'WEEKLY' | 'MONTHLY'

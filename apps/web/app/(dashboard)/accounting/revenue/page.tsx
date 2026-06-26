@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatTZS } from '@/lib/formatters'
+import { toast } from 'sonner'
 
 const PERIOD_OPTIONS: { value: AdvicePeriod; label: string }[] = [
   { value: 'DAILY', label: 'Daily Advice' },
@@ -38,8 +39,19 @@ export default function RevenuePage() {
   const generatedAt = adviceResponse?.generatedAt
   const remainingRefreshes = adviceResponse?.remainingRefreshes ?? 0
 
+  const isFallback = adviceResponse?.isFallback
+
   const handleRefresh = () => {
-    refreshAdvice(period)
+    if (remainingRefreshes <= 0) {
+      toast.error('Umeshafikia kikomo cha kurefresh ushauri leo. Jaribu kesho.')
+      return
+    }
+    refreshAdvice(period, {
+      onSuccess: () => toast.success('Ushauri mpya umeandaliwa'),
+      onError: (err: any) => {
+        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata ushauri mpya. Tafadhali jaribu tena.')
+      }
+    })
   }
 
   return (
@@ -158,7 +170,7 @@ export default function RevenuePage() {
                </select>
                <button
                   onClick={handleRefresh}
-                  disabled={isRefreshing || adviceLoading}
+                  disabled={isRefreshing}
                   className="h-10 px-4 bg-[#2563eb] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
                >
                   {isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
@@ -179,6 +191,16 @@ export default function RevenuePage() {
                )}>
                   {remainingRefreshes} refreshes zilizobaki leo
                </p>
+            </div>
+         )}
+
+         {isFallback && (
+            <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/30 flex items-start gap-3 mb-6">
+               <Info size={20} className="text-amber-600 shrink-0 mt-0.5" />
+               <div>
+                 <h4 className="text-[13px] font-bold text-amber-800">Ushauri wa kawaida</h4>
+                 <p className="text-[12px] text-amber-700">Advisor haijaweza kupata ushauri kutoka AI. Bofya &quot;Pata Ushauri Mpya&quot; kujaribu tena.</p>
+               </div>
             </div>
          )}
 
