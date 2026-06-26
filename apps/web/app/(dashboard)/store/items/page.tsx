@@ -3,12 +3,10 @@
 import { useState } from 'react'
 import { useStoreItems, useCreateStoreItem, useUpdateStoreItem, useCreateTransaction } from '@/hooks/useStore'
 import { formatTZS } from '@/lib/formatters'
-import { STOCK_STATUS_CONFIG, type StoreItem, type StoreCategory, type StockUnit } from '@/types/store'
-import { Search, Plus, Filter, ArrowUpDown, Package, X, ChevronDown } from 'lucide-react'
+import { STOCK_STATUS_CONFIG, type StoreItem, type StockUnit, type TransactionType } from '@/types/store'
+import { Search, Plus, Package, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const CATEGORIES = ['All','FB','HOTEL']
-const STATUS_FILTERS = ['All','in_stock','low_stock','out_of_stock','overstocked']
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
 // ── Stock Transaction Modal ──────────────────────────────────────────────────
@@ -18,7 +16,7 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
   const [notes, setNotes] = useState('')
   const createTx = useCreateTransaction()
 
-  const types = [
+  const types: { value: TransactionType; label: string; color: string; bg: string }[] = [
     { value:'STOCK_IN',   label:'Stock In',   color:'text-green-600', bg:'bg-green-50'  },
     { value:'STOCK_OUT',  label:'Stock Out',  color:'text-blue-600',  bg:'bg-blue-50'   },
     { value:'ADJUSTMENT', label:'Adjustment', color:'text-gray-600',  bg:'bg-gray-100'  },
@@ -65,7 +63,7 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
             <label className="text-[11.5px] font-semibold text-gray-700 block mb-2">Transaction Type</label>
             <div className="grid grid-cols-2 gap-2">
               {types.map(t => (
-                <button key={t.value} onClick={() => setType(t.value as any)}
+                <button key={t.value} onClick={() => setType(t.value)}
                   className={cn('h-9 rounded-lg border-2 text-[12px] font-semibold transition-colors',
                     type === t.value ? `border-current ${t.bg} ${t.color}` : 'border-gray-200 text-gray-500 hover:border-gray-300')}>
                   {t.label}
@@ -92,14 +90,17 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
           )}
           {/* Notes */}
           <div>
-            <label className="text-[11.5px] font-semibold text-gray-700 block mb-1.5">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+            <label className="text-[11.5px] font-semibold text-gray-700 block mb-1.5">
+              Notes {(type === 'ADJUSTMENT' || type === 'WASTAGE') && <span className="text-red-500">*</span>}
+              {(type !== 'ADJUSTMENT' && type !== 'WASTAGE') && <span className="text-gray-400 font-normal">(optional)</span>}
+            </label>
             <textarea value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Reason for adjustment, delivery note number..."
               className={cn(INPUT, 'resize-none h-16')}/>
           </div>
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button onClick={handleConfirm} disabled={!qty || Number(qty) <= 0 || createTx.isPending}
+            <button onClick={handleConfirm} disabled={!qty || Number(qty) <= 0 || ((type === 'ADJUSTMENT' || type === 'WASTAGE') && !notes.trim()) || createTx.isPending}
               className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createTx.isPending ? 'Confirming...' : 'Confirm'}
             </button>
@@ -129,7 +130,7 @@ function ItemFormModal({ item, onClose }: { item?: StoreItem; onClose: () => voi
   const createItem = useCreateStoreItem()
   const updateItem = useUpdateStoreItem()
 
-  const set = (k: string) => (e: any) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const FB_SUBCATS = ['Bar Stock','Beverages','Dry Foods','Fresh Produce','Condiments','Food']
   const HT_SUBCATS = ['Linen & Towels','Bathroom Amenities','Cleaning Supplies','Kitchen Equipment','Stationery']

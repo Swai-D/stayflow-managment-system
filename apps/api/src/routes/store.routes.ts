@@ -3,7 +3,7 @@ import { authenticate } from '../middleware/authenticate'
 import { authorize } from '../middleware/authorize'
 import {
   getItems, getItem, createItem, updateItem, getLowStockItems,
-  getTransactions, createTransaction,
+  getTransactions, createTransaction, recordHousekeepingConsumption,
   getPurchaseOrders, createPurchaseOrder, autoGeneratePO, receivePurchaseOrder, updatePOStatus,
   getSuppliers, createSupplier, updateSupplier,
   getDashboardStats
@@ -25,6 +25,7 @@ router.patch('/items/:id',     authorize('admin', 'receptionist'), updateItem)
 // Transactions: admin, receptionist
 router.get('/transactions',    authorize('admin', 'receptionist'), getTransactions)
 router.post('/transactions',   authorize('admin', 'receptionist'), createTransaction)
+router.post('/housekeeping-consumption', authorize('admin', 'receptionist', 'housekeeping'), recordHousekeepingConsumption)
 
 // Purchase Orders: admin/recep can view/create, admin only for auto-generate (usually)
 router.get('/purchase-orders',               authorize('admin', 'receptionist'), getPurchaseOrders)

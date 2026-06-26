@@ -2,19 +2,20 @@
 
 import { useState } from 'react'
 import { useRooms, useUpdateRoomStatus } from '@/hooks/useRooms'
+import { useStoreItems, useRecordHousekeepingConsumption } from '@/hooks/useStore'
 import { Room, RoomStatus, ROOM_STATUS_CONFIG } from '@/types/room'
 import { cn } from '@/lib/utils'
 import { 
   Brush, CheckCircle2, Clock, AlertTriangle, 
-  ChevronRight, Search, LayoutGrid, Filter,
-  CheckSquare, ShieldAlert, Sparkles, Loader2, X,
-  ChevronLeft, MapPin
+  Search, LayoutGrid,
+  ShieldAlert, Sparkles, Loader2, X,
+  ChevronLeft, ChevronRight, MapPin, Package
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 // ─── Housekeeping Display Config ────────────────────
-const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon: any; color: string; action: string; btn: string; image: string }> = {
+const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon: React.ElementType; color: string; action: string; btn: string; image: string }> = {
   available:   { 
     label: 'Clean & Ready', 
     bg: 'bg-[#f0fdf4]', text: 'text-[#166534]', icon: CheckCircle2, color: '#10B981', 
@@ -47,9 +48,106 @@ const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon:
   },
 }
 
+// ─── Record Supplies Modal ───────────────────────────────────────────────────
+function SupplyModal({ room, onClose }: { room: Room; onClose: () => void }) {
+  const { data: items = [] } = useStoreItems({ category: 'HOTEL', isActive: true })
+  const { mutate: record, isPending } = useRecordHousekeepingConsumption()
+  const [selected, setSelected] = useState<Record<string, number>>({})
+
+  const toggleItem = (itemId: string, qty: number) => {
+    setSelected(prev => {
+      const next = { ...prev }
+      if (qty <= 0) delete next[itemId]
+      else next[itemId] = qty
+      return next
+    })
+  }
+
+  const handleSave = () => {
+    const entries = Object.entries(selected)
+      .filter(([, qty]) => qty > 0)
+      .map(([itemId, quantity]) => ({ itemId, quantity }))
+
+    if (entries.length === 0) {
+      toast.error('Chagua item angalau moja')
+      return
+    }
+
+    record({ roomNumber: room.roomNumber, items: entries }, {
+      onSuccess: () => {
+        toast.success('Vifaa vimetumika vimehifadhiwa')
+        onClose()
+      },
+      onError: () => toast.error('Imeshindwa kuhifadhi vifaa')
+    })
+  }
+
+  const hasSelection = Object.values(selected).some(q => q > 0)
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white rounded-[28px] w-full max-w-[440px] p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-[18px] font-bold text-[#111827]">Record Supplies</h3>
+            <p className="text-[12px] text-[#9ca3af] font-medium">Room {room.roomNumber} · {room.type}</p>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+          {items.length === 0 ? (
+            <p className="text-[13px] text-[#9ca3af] text-center py-6">No hotel inventory items found.</p>
+          ) : items.map(item => (
+            <div key={item.id} className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-100 hover:border-blue-200 transition-colors">
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-[#111827] truncate">{item.name}</p>
+                <p className="text-[11px] text-[#9ca3af]">Stock: {item.currentStock} {item.unit.toLowerCase()}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleItem(item.id, (selected[item.id] || 0) - 1)}
+                  disabled={(selected[item.id] || 0) <= 0}
+                  className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center text-[13px] font-bold text-[#111827]">{selected[item.id] || 0}</span>
+                <button
+                  onClick={() => toggleItem(item.id, (selected[item.id] || 0) + 1)}
+                  disabled={item.currentStock <= (selected[item.id] || 0)}
+                  className="w-7 h-7 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] flex items-center justify-center text-[#2563eb] disabled:opacity-40"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 h-11 border border-gray-200 rounded-2xl text-[13px] font-bold text-[#6b7280] hover:bg-gray-50">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!hasSelection || isPending}
+            className="flex-[1.5] h-11 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-2xl text-[13px] font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+            Save Consumption
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function HousekeepingPage() {
   const [filter, setFilter] = useState<RoomStatus | 'all'>('all')
-  const [selected, setSelected] = useState<Room | null>(null)
+  const [supplyRoom, setSupplyRoom] = useState<Room | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
@@ -103,16 +201,16 @@ export default function HousekeepingPage() {
 
       {/* ── Status Pills (Horizontal) ─────────────────────── */}
       <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-1">
-        {[
+        {([
           { key: 'all', label: 'All Units', icon: LayoutGrid },
           { key: 'dirty', label: 'Need Cleaning', icon: AlertTriangle },
           { key: 'cleaning', label: 'In Progress', icon: Brush },
           { key: 'available', label: 'Clean & Ready', icon: CheckCircle2 },
           { key: 'occupied', label: 'Occupied', icon: Clock },
-        ].map((s: any) => (
+        ] as { key: RoomStatus | 'all'; label: string; icon: React.ElementType }[]).map((s) => (
           <button 
             key={s.key}
-            onClick={() => { setFilter(s.key as any); setPage(1) }}
+            onClick={() => { setFilter(s.key); setPage(1) }}
             className={cn(
               "flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap border shadow-sm",
               filter === s.key 
@@ -207,7 +305,7 @@ export default function HousekeepingPage() {
                 </div>
 
                 {/* 3. Action Section */}
-                <div className="p-6 pt-0 mt-auto">
+                <div className="p-6 pt-0 mt-auto space-y-2">
                    <button 
                      onClick={() => handleStatusChange(room)}
                      disabled={isPending || room.status === 'occupied'}
@@ -220,11 +318,25 @@ export default function HousekeepingPage() {
                      {isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
                      {cfg.action}
                    </button>
+                   <button
+                     onClick={() => setSupplyRoom(room)}
+                     className="w-full h-10 rounded-2xl font-semibold text-[12px] text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe] transition-all flex items-center justify-center gap-2"
+                   >
+                     <Package size={14} /> Record Supplies
+                   </button>
                 </div>
               </div>
             )
           })}
         </div>
+      )}
+
+      {/* ── Record Supplies Modal ─────────────────────────── */}
+      {supplyRoom && (
+        <SupplyModal
+          room={supplyRoom}
+          onClose={() => setSupplyRoom(null)}
+        />
       )}
 
       {/* ── Pagination Section ────────────────────────────── */}

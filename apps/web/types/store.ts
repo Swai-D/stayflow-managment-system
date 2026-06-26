@@ -1,7 +1,7 @@
 export type StoreCategory = 'FB' | 'HOTEL'
 export type StockUnit = 'KG' | 'LTR' | 'PCS' | 'BOX' | 'DOZEN' | 'BOTTLE' | 'PACK' | 'ROLL'
 export type TransactionType = 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT' | 'WASTAGE'
-export type POStatus = 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'SENT_TO_SUPPLIER' | 'RECEIVED' | 'CLOSED'
+export type POStatus = 'PENDING' | 'RECEIVED' | 'CLOSED'
 export type ChargeStatus = 'OPEN' | 'SETTLED'
 
 export interface StoreItem {
@@ -142,10 +142,7 @@ export const TRANSACTION_TYPE_CONFIG = {
 }
 
 export const PO_STATUS_CONFIG = {
-  DRAFT:            { label: 'Draft',              bg: 'bg-gray-100',   text: 'text-gray-500'  },
-  SUBMITTED:        { label: 'Submitted',          bg: 'bg-blue-50',    text: 'text-blue-600'  },
-  APPROVED:         { label: 'Approved',           bg: 'bg-indigo-50',  text: 'text-indigo-600'},
-  SENT_TO_SUPPLIER: { label: 'Sent to Supplier',   bg: 'bg-amber-50',   text: 'text-amber-600' },
-  RECEIVED:         { label: 'Received',           bg: 'bg-green-50',   text: 'text-green-600' },
-  CLOSED:           { label: 'Closed',             bg: 'bg-gray-100',   text: 'text-gray-400'  },
+  PENDING:  { label: 'Pending',  bg: 'bg-amber-50',  text: 'text-amber-600' },
+  RECEIVED: { label: 'Received', bg: 'bg-green-50',  text: 'text-green-600' },
+  CLOSED:   { label: 'Closed',   bg: 'bg-gray-100',  text: 'text-gray-400'  },
 }

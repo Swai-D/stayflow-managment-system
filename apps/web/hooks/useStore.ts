@@ -94,6 +94,21 @@ export function useCreateTransaction() {
   })
 }
 
+export function useRecordHousekeepingConsumption() {
+  const queryClient = useQueryClient()
+  return useMutation<StoreTransaction[], unknown, { roomNumber: string; items: { itemId: string; quantity: number }[] }>({
+    mutationFn: async (data) => {
+      const res = await api.post('/store/housekeeping-consumption', data)
+      return res.data.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['store', 'items'] })
+      queryClient.invalidateQueries({ queryKey: ['store', 'transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['store', 'dashboard'] })
+    }
+  })
+}
+
 // ─── Purchase Orders ───────────────────────────────────
 export function usePurchaseOrders() {
   return useQuery<PurchaseOrder[]>({

@@ -142,10 +142,7 @@ enum TransactionType {
 }
 
 enum POStatus {
-  DRAFT
-  SUBMITTED
-  APPROVED
-  SENT_TO_SUPPLIER
+  PENDING
   RECEIVED
   CLOSED
 }
@@ -639,7 +636,7 @@ model PurchaseOrder {
   id              String          @id @default(cuid())
   hotelId         String
   poNumber        String          
-  status          POStatus        @default(DRAFT)
+  status          POStatus        @default(PENDING)
   supplierId      String
   supplier        Supplier        @relation(fields: [supplierId], references: [id])
   items           PurchaseOrderItem[]

@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useStoreTransactions, useCreateTransaction, useStoreItems } from '@/hooks/useStore'
-import { formatTZS, formatDateTime } from '@/lib/formatters'
-import { TRANSACTION_TYPE_CONFIG, type StoreTransaction, type TransactionType } from '@/types/store'
-import { Search, Plus, Filter, Download, X, ArrowUpDown } from 'lucide-react'
+import { formatTZS } from '@/lib/formatters'
+import { TRANSACTION_TYPE_CONFIG, type TransactionType } from '@/types/store'
+import { Search, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TYPE_FILTERS = ['All', 'STOCK_IN', 'STOCK_OUT', 'ADJUSTMENT', 'WASTAGE']
@@ -89,13 +89,16 @@ function NewTransactionModal({ onClose }: { onClose: () => void }) {
           </div>
           {/* Notes */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11.5px] font-semibold text-gray-700">Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+            <label className="text-[11.5px] font-semibold text-gray-700">
+              Notes {(type === 'ADJUSTMENT' || type === 'WASTAGE') && <span className="text-red-500">*</span>}
+              {(type !== 'ADJUSTMENT' && type !== 'WASTAGE') && <span className="text-gray-400 font-normal">(optional)</span>}
+            </label>
             <textarea className={cn(INPUT, 'resize-none h-16')} value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Additional details..."/>
           </div>
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button onClick={handleRecord} disabled={!itemId || !qty || createTx.isPending}
+            <button onClick={handleRecord} disabled={!itemId || !qty || ((type === 'ADJUSTMENT' || type === 'WASTAGE') && !notes.trim()) || createTx.isPending}
               className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createTx.isPending ? 'Recording...' : 'Record Transaction'}
             </button>
@@ -112,6 +115,7 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [showModal, setShowModal] = useState(false)
+  const [now] = useState(() => Date.now())
 
   if (isLoading) {
     return (
@@ -143,7 +147,7 @@ export default function TransactionsPage() {
   const wastage  = transactions.filter(t => t.type === 'WASTAGE').reduce((s, t) => s + (t.quantity * (t.unitCost ?? 0)), 0)
 
   const formatRelative = (iso: string) => {
-    const diff = Date.now() - new Date(iso).getTime()
+    const diff = now - new Date(iso).getTime()
     if (diff < 3600000) return `${Math.round(diff/60000)}m ago`
     if (diff < 86400000) return `${Math.round(diff/3600000)}h ago`
     return new Date(iso).toLocaleDateString('en-GB', { day:'2-digit', month:'short' })

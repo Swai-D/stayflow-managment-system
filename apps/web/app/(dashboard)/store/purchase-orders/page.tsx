@@ -1,18 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePOStatus, useAutoGeneratePO, useReceivePO, useSuppliers, useStoreItems } from '@/hooks/useStore'
+import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePOStatus, useReceivePO, useSuppliers, useStoreItems } from '@/hooks/useStore'
 import { formatTZS, formatDateShort } from '@/lib/formatters'
 import { PO_STATUS_CONFIG, type PurchaseOrder, type POStatus } from '@/types/store'
 import {
-  Plus, Search, X, ChevronDown, ChevronRight,
-  Truck, FileText, CheckCircle, Zap, Eye
+  Plus, Search, X,
+  Truck, CheckCircle, Eye
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
-const STATUS_FLOW: POStatus[] = ['DRAFT','SUBMITTED','APPROVED','SENT_TO_SUPPLIER','RECEIVED','CLOSED']
+const STATUS_FLOW: POStatus[] = ['PENDING','RECEIVED','CLOSED']
 
 // ── PO Detail Modal ──────────────────────────────────────────────────────────
 function PODetailModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void }) {
@@ -20,12 +20,9 @@ function PODetailModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void
   const receivePO = useReceivePO()
   const updateStatus = useUpdatePOStatus()
 
-  const nextStatus: Partial<Record<POStatus, { label: string; action: string }>> = {
-    DRAFT:            { label:'Submit for Approval', action:'SUBMITTED'        },
-    SUBMITTED:        { label:'Approve Order',       action:'APPROVED'         },
-    APPROVED:         { label:'Mark as Sent',        action:'SENT_TO_SUPPLIER' },
-    SENT_TO_SUPPLIER: { label:'Mark as Received',    action:'RECEIVED'         },
-    RECEIVED:         { label:'Close Order',         action:'CLOSED'           },
+  const nextStatus: Partial<Record<POStatus, { label: string; action: POStatus }>> = {
+    PENDING:  { label:'Mark as Received', action:'RECEIVED' },
+    RECEIVED: { label:'Close Order',      action:'CLOSED'   },
   }
   const next = nextStatus[po.status]
 
@@ -34,7 +31,7 @@ function PODetailModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void
     if (next.action === 'RECEIVED') {
       receivePO.mutate(po.id, { onSuccess: () => onClose() })
     } else {
-      updateStatus.mutate({ id: po.id, status: next.action as POStatus }, { onSuccess: () => onClose() })
+      updateStatus.mutate({ id: po.id, status: next.action }, { onSuccess: () => onClose() })
     }
   }
 

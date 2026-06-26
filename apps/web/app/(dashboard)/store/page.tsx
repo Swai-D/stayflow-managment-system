@@ -111,7 +111,7 @@ export default function StoreDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={<Package size={16}/>}      label="Total Items"      value={stats.totalItems}                   sub="All categories"      bg="bg-blue-50"   iconColor="text-[#2563EB]" href="/store/items"/>
         <StatCard icon={<AlertTriangle size={16}/>} label="Low Stock Alerts" value={stats.lowStockCount}                sub={`${stats.outOfStockCount} out of stock`} subColor={stats.outOfStockCount > 0 ? 'text-red-500' : 'text-gray-400'} bg="bg-amber-50" iconColor="text-amber-600" href="/store/items" alert={stats.lowStockCount > 0}/>
-        <StatCard icon={<TrendingUp size={16}/>}    label="Monthly Spend"    value={formatTZSShort(stats.monthlySpend)} sub="+8% vs last month"   subColor="text-red-500"  bg="bg-green-50"  iconColor="text-green-600"  href="/store/transactions"/>
+        <StatCard icon={<TrendingUp size={16}/>}    label="Monthly Spend"    value={formatTZSShort(stats.monthlySpend)} sub="Stock purchases this month"   subColor="text-gray-400"  bg="bg-green-50"  iconColor="text-green-600"  href="/store/transactions"/>
         <StatCard icon={<ShoppingCart size={16}/>}  label="Pending Orders"   value={stats.pendingPOs}                   sub="Awaiting delivery"   bg="bg-indigo-50" iconColor="text-indigo-600" href="/store/purchase-orders" alert={stats.pendingPOs > 0}/>
       </div>
 

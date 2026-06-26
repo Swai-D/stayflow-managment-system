@@ -101,6 +101,10 @@ export class StoreService {
       }
     }
 
+    if ((data.type === 'ADJUSTMENT' || data.type === 'WASTAGE') && !data.notes?.trim()) {
+      throw ApiError.badRequest('Tafadhali eleza sababu ya adjustment au wastage')
+    }
+
     const balanceBefore = item.currentStock
     const balanceAfter = data.type === 'STOCK_IN' || (data.type === 'ADJUSTMENT' && data.quantity > 0)
       ? balanceBefore + Math.abs(data.quantity)
@@ -125,6 +129,50 @@ export class StoreService {
           performedById: userId
         }
       })
+    })
+  }
+
+  async recordHousekeepingConsumption(hotelId: string, userId: string, data: {
+    roomNumber: string;
+    items: Array<{ itemId: string; quantity: number }>;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const results = []
+      for (const reqItem of data.items) {
+        if (!reqItem.quantity || reqItem.quantity <= 0) continue
+
+        const item = await tx.storeItem.findFirst({
+          where: { id: reqItem.itemId, hotelId, isActive: true }
+        })
+        if (!item) continue
+        if (item.currentStock < reqItem.quantity) {
+          throw ApiError.badRequest(`Stock haitoshi kwa ${item.name}. Inapatikana: ${item.currentStock}`)
+        }
+
+        const balanceBefore = item.currentStock
+        const balanceAfter = balanceBefore - reqItem.quantity
+
+        await tx.storeItem.update({
+          where: { id: item.id },
+          data: { currentStock: balanceAfter }
+        })
+
+        const transaction = await tx.storeTransaction.create({
+          data: {
+            itemId: item.id,
+            type: 'STOCK_OUT',
+            quantity: reqItem.quantity,
+            unitCost: item.unitCost,
+            balanceBefore,
+            balanceAfter,
+            reference: `Room ${data.roomNumber}`,
+            notes: `Housekeeping consumption for room ${data.roomNumber}`,
+            performedById: userId
+          }
+        })
+        results.push(transaction)
+      }
+      return results
     })
   }
 
@@ -178,7 +226,7 @@ export class StoreService {
       include: { items: true }
     })
     if (!po) throw ApiError.notFound('PO haikupatikana')
-    if (po.status === 'RECEIVED' || po.status === 'CLOSED') throw ApiError.badRequest('PO tayari imeshapokelewa')
+    if (po.status === 'RECEIVED' || po.status === 'CLOSED') throw ApiError.badRequest('PO tayari imeshapokelewa au imefungwa')
 
     return prisma.$transaction(async (tx) => {
       // 1. Update PO status
@@ -335,7 +383,7 @@ export class StoreService {
         },
         _sum: { quantity: true, unitCost: true } // Simplified spend calculation
       }),
-      prisma.purchaseOrder.count({ where: { hotelId, status: { notIn: ['RECEIVED', 'CLOSED'] } } }),
+      prisma.purchaseOrder.count({ where: { hotelId, status: { notIn: ['RECEIVED', 'CLOSED'] as POStatus[] } } }),
       prisma.storeTransaction.findMany({
         where: { item: { hotelId } },
         include: { item: true, performedBy: { select: { fullName: true } } },

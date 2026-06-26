@@ -56,6 +56,13 @@ export const createTransaction = asyncHandler(async (req: AuthRequest, res: Resp
   res.status(201).json(new ApiResponse(transaction))
 })
 
+export const recordHousekeepingConsumption = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const { roomNumber, items } = req.body
+  const transactions = await storeService.recordHousekeepingConsumption(hotelId, req.user!.id, { roomNumber, items })
+  res.status(201).json(new ApiResponse(transactions, 'Supplies recorded successfully'))
+})
+
 export const getPurchaseOrders = asyncHandler(async (req: AuthRequest, res: Response) => {
   const hotelId = await getSystemHotelId()
   const pos = await storeService.getPurchaseOrders(hotelId)
