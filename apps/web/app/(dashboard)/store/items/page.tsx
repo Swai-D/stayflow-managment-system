@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStoreItems, useCreateStoreItem, useUpdateStoreItem, useCreateTransaction } from '@/hooks/useStore'
 import { formatTZS } from '@/lib/formatters'
 import { STOCK_STATUS_CONFIG, type StoreItem, type StockUnit, type TransactionType } from '@/types/store'
 import { Search, Plus, Package, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Pagination from '@/components/ui/Pagination'
 
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
@@ -247,6 +248,8 @@ export default function StoreItemsPage() {
   const [statusFilter, setStatusFilter] = useState('All')
   const [stockModal, setStockModal] = useState<StoreItem | null>(null)
   const [itemModal, setItemModal] = useState<StoreItem | 'new' | null>(null)
+  const [page, setPage] = useState(1)
+  const limit = 10
 
   if (isLoading) {
     return (
@@ -268,6 +271,13 @@ export default function StoreItemsPage() {
     const matchStatus = statusFilter === 'All' || item.stockStatus === statusFilter
     return matchSearch && matchCat && matchStatus
   })
+
+  const totalPages = Math.ceil(filtered.length / limit)
+  const paginated = filtered.slice((page - 1) * limit, page * limit)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, catFilter, statusFilter])
 
   const counts = {
     total: items.length,
@@ -331,7 +341,7 @@ export default function StoreItemsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(item => {
+              {paginated.map(item => {
                 const sc = STOCK_STATUS_CONFIG[item.stockStatus]
                 const pct = Math.min(100, Math.round((item.currentStock / item.maximumStock) * 100))
                 return (
@@ -397,6 +407,8 @@ export default function StoreItemsPage() {
           </table>
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} showing={paginated.length} total={filtered.length} />
 
       {stockModal && <StockModal item={stockModal} onClose={() => setStockModal(null)}/>}
       {itemModal && <ItemFormModal item={itemModal === 'new' ? undefined : itemModal} onClose={() => setItemModal(null)}/>}

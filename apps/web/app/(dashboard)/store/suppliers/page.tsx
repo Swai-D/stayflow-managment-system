@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSuppliers, useCreateSupplier, useUpdateSupplier } from '@/hooks/useStore'
 import { formatTZS, formatDateShort } from '@/lib/formatters'
 import { type Supplier } from '@/types/store'
 import { Search, Plus, X, Phone, Mail, MapPin, Package, Edit2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Pagination from '@/components/ui/Pagination'
 
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
@@ -202,6 +203,8 @@ export default function SuppliersPage() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Supplier | null>(null)
   const [formModal, setFormModal] = useState<Supplier | 'new' | null>(null)
+  const [page, setPage] = useState(1)
+  const limit = 10
 
   if (isLoading) {
     return (
@@ -224,6 +227,13 @@ export default function SuppliersPage() {
     !search || s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.phone.includes(search) || s.email?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalPages = Math.ceil(filtered.length / limit)
+  const paginated = filtered.slice((page - 1) * limit, page * limit)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
 
   const totalSpend = suppliers.reduce((s, x) => s + (x.totalValue ?? 0), 0)
   const activeCount = suppliers.filter(s => s.isActive).length
@@ -263,9 +273,9 @@ export default function SuppliersPage() {
           </div>
 
           <div className="divide-y divide-gray-50">
-            {filtered.length === 0 ? (
+            {paginated.length === 0 ? (
               <div className="px-5 py-12 text-center text-[13px] text-gray-400">No suppliers found</div>
-            ) : filtered.map(supplier => (
+            ) : paginated.map(supplier => (
               <div key={supplier.id}
                 onClick={() => setSelected(selected?.id === supplier.id ? null : supplier)}
                 className={cn(
@@ -311,6 +321,8 @@ export default function SuppliersPage() {
               </div>
             ))}
           </div>
+
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} showing={paginated.length} total={filtered.length} />
         </div>
 
         {/* Detail panel */}

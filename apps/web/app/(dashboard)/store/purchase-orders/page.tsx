@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePurchaseOrders, useCreatePurchaseOrder, useUpdatePOStatus, useReceivePO, useSuppliers, useStoreItems } from '@/hooks/useStore'
 import { formatTZS, formatDateShort } from '@/lib/formatters'
 import { PO_STATUS_CONFIG, type PurchaseOrder, type POStatus } from '@/types/store'
@@ -9,6 +9,7 @@ import {
   Truck, CheckCircle, Eye
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Pagination from '@/components/ui/Pagination'
 
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
@@ -325,6 +326,8 @@ export default function PurchaseOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<POStatus | 'All'>('All')
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null)
   const [showNewPO, setShowNewPO] = useState(false)
+  const [page, setPage] = useState(1)
+  const limit = 10
 
   if (isLoading) {
     return (
@@ -348,6 +351,13 @@ export default function PurchaseOrdersPage() {
     const matchStatus = statusFilter === 'All' || po.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const totalPages = Math.ceil(filtered.length / limit)
+  const paginated = filtered.slice((page - 1) * limit, page * limit)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter])
 
   const totalPending  = orders.filter(o => ['DRAFT','SUBMITTED','APPROVED','SENT_TO_SUPPLIER'].includes(o.status)).length
   const totalValue    = orders.filter(o => o.status !== 'CLOSED').reduce((s, o) => s + o.totalAmount, 0)
@@ -411,9 +421,9 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <tr><td colSpan={7} className="px-5 py-12 text-center text-[13px] text-gray-400">No purchase orders found</td></tr>
-              ) : filtered.map(po => {
+              ) : paginated.map(po => {
                 const cfg = PO_STATUS_CONFIG[po.status]
                 return (
                   <tr key={po.id} className="border-b border-gray-50 hover:bg-gray-50/40 transition-colors cursor-pointer"
@@ -458,6 +468,8 @@ export default function PurchaseOrdersPage() {
           </table>
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} showing={paginated.length} total={filtered.length} />
 
       {selectedPO && <PODetailModal po={selectedPO} onClose={() => setSelectedPO(null)}/>}
       {showNewPO && <NewPOModal onClose={() => setShowNewPO(false)}/>}

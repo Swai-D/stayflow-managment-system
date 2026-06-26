@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useStoreTransactions, useCreateTransaction, useStoreItems } from '@/hooks/useStore'
 import { formatTZS } from '@/lib/formatters'
 import { TRANSACTION_TYPE_CONFIG, type TransactionType } from '@/types/store'
 import { Search, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Pagination from '@/components/ui/Pagination'
 
 const TYPE_FILTERS = ['All', 'STOCK_IN', 'STOCK_OUT', 'ADJUSTMENT', 'WASTAGE']
 const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
@@ -115,6 +116,8 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [showModal, setShowModal] = useState(false)
+  const [page, setPage] = useState(1)
+  const limit = 10
   const [now] = useState(() => Date.now())
 
   if (isLoading) {
@@ -140,6 +143,13 @@ export default function TransactionsPage() {
     const matchType = typeFilter === 'All' || tx.type === typeFilter
     return matchSearch && matchType
   })
+
+  const totalPages = Math.ceil(filtered.length / limit)
+  const paginated = filtered.slice((page - 1) * limit, page * limit)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, typeFilter])
 
   // Summary stats
   const totalIn  = transactions.filter(t => t.type === 'STOCK_IN').reduce((s, t) => s + (t.quantity * (t.unitCost ?? 0)), 0)
@@ -209,9 +219,9 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <tr><td colSpan={8} className="px-5 py-12 text-center text-[13px] text-gray-400">No transactions found</td></tr>
-              ) : filtered.map(tx => {
+              ) : paginated.map(tx => {
                 const cfg = TRANSACTION_TYPE_CONFIG[tx.type]
                 const isOut = tx.type === 'STOCK_OUT' || tx.type === 'WASTAGE'
                 return (
@@ -254,6 +264,8 @@ export default function TransactionsPage() {
           </table>
         </div>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} showing={paginated.length} total={filtered.length} />
 
       {showModal && <NewTransactionModal onClose={() => setShowModal(false)}/>}
     </div>
