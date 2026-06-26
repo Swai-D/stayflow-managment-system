@@ -429,7 +429,7 @@ INSTRUCTIONS:
 6. If occupancy < 50%, prioritize marketing/pricing.
 7. If RevPAR is low, suggest promotions or upsells.
 
-RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation, just valid JSON):
+RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation, just valid JSON). Do not include any text before or after the JSON array:
 [
   {
     "type": "success|danger|warning|info",
@@ -441,24 +441,53 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
   }
 
   private async callLLM(prompt: string): Promise<BusinessAdvice[]> {
-    const provider = process.env.AI_PROVIDER || 'openrouter'
-    const apiKey = process.env.AI_API_KEY
+    const primaryProvider = (process.env.AI_PROVIDER || 'openrouter') as 'openrouter' | 'grok' | 'gemini'
+    const primaryKey = process.env.AI_API_KEY
 
-    if (!apiKey) {
-      throw new Error('AI_API_KEY not configured')
+    const providers: { name: string; call: () => Promise<BusinessAdvice[]> }[] = []
+
+    if (primaryKey) {
+      providers.push({ name: primaryProvider, call: () => this.callProvider(primaryProvider, prompt, primaryKey) })
     }
 
-    try {
-      if (provider === 'gemini') {
-        return this.callGemini(prompt, apiKey)
-      } else if (provider === 'grok') {
-        return this.callGrok(prompt, apiKey)
-      } else {
-        return this.callOpenRouter(prompt, apiKey)
+    // Fallback order depends on the primary provider
+    const fallbackOrder: ('openrouter' | 'grok' | 'gemini')[] =
+      primaryProvider === 'openrouter' ? ['grok', 'gemini'] :
+      primaryProvider === 'grok' ? ['gemini', 'openrouter'] :
+      ['openrouter', 'grok']
+
+    for (const p of fallbackOrder) {
+      const key = p === 'openrouter' ? process.env.OPENROUTER_API_KEY : p === 'grok' ? process.env.GROK_API_KEY : process.env.GEMINI_API_KEY
+      if (key && !providers.some(pp => pp.name === p)) {
+        providers.push({ name: p, call: () => this.callProvider(p, prompt, key) })
       }
-    } catch (error: any) {
-      console.error('LLM call failed:', error.message)
-      throw error
+    }
+
+    if (providers.length === 0) {
+      throw new Error('No AI API keys configured. Set AI_API_KEY or provider-specific keys (OPENROUTER_API_KEY, GROK_API_KEY, GEMINI_API_KEY).')
+    }
+
+    let lastError: any
+    for (const provider of providers) {
+      try {
+        console.log(`[Advisor] Trying provider: ${provider.name}`)
+        const result = await provider.call()
+        console.log(`[Advisor] Provider ${provider.name} succeeded`)
+        return result
+      } catch (err: any) {
+        console.error(`[Advisor] Provider ${provider.name} failed:`, err.message)
+        lastError = err
+      }
+    }
+
+    throw new Error(`All AI providers failed. Last error: ${lastError?.message || 'Unknown'}`)
+  }
+
+  private callProvider(provider: 'openrouter' | 'grok' | 'gemini', prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+    switch (provider) {
+      case 'openrouter': return this.callOpenRouter(prompt, apiKey)
+      case 'grok': return this.callGrok(prompt, apiKey)
+      case 'gemini': return this.callGemini(prompt, apiKey)
     }
   }
 
@@ -483,12 +512,12 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
           'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
           'X-Title': 'Buffalo Business Advisor'
         },
-        timeout: 30000
+        timeout: 15000
       }
     )
 
     const content = res.data.choices?.[0]?.message?.content || ''
-    return this.parseAdvice(content)
+    return this.parseJSONAdvice(content)
   }
 
   private async callGemini(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
@@ -505,12 +534,12 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
       },
       {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 30000
+        timeout: 15000
       }
     )
 
     const content = res.data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    return this.parseAdvice(content)
+    return this.parseJSONAdvice(content)
   }
 
   private async callGrok(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
@@ -532,41 +561,52 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 30000
+        timeout: 15000
       }
     )
 
     const content = res.data.choices?.[0]?.message?.content || ''
-    return this.parseAdvice(content)
+    return this.parseJSONAdvice(content)
   }
 
-  private parseAdvice(content: string): BusinessAdvice[] {
-    try {
-      // Try to extract JSON from markdown code blocks
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/(\[[\s\S]*\])/)
-      const jsonStr = jsonMatch ? jsonMatch[1] : content
-      const parsed = JSON.parse(jsonStr.trim())
+  private parseJSONAdvice(content: string): BusinessAdvice[] {
+    let cleaned = content.trim()
 
-      if (!Array.isArray(parsed)) {
-        throw new Error('Parsed advice is not an array')
-      }
-
-      return parsed.map((item: any) => ({
-        type: ['success', 'danger', 'warning', 'info'].includes(item.type) ? item.type : 'info',
-        title: String(item.title || 'Ushauri'),
-        message: String(item.message || ''),
-        priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium'
-      }))
-    } catch (error) {
-      console.error('Failed to parse LLM advice:', content)
-      // Fallback: return a generic insight
-      return [{
-        type: 'info',
-        title: 'Ushauri wa Kibiashara',
-        message: 'Mfumo wa ushauri ulishindwa kuchakata majibu. Tafadhali jaribu tena baadae.',
-        priority: 'medium'
-      }]
+    // Extract JSON from markdown code block
+    const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/)
+    if (codeBlockMatch) {
+      cleaned = codeBlockMatch[1].trim()
     }
+
+    // If content still has extra text, find the first JSON array
+    if (!cleaned.startsWith('[')) {
+      const arrayMatch = cleaned.match(/(\[[\s\S]*\])/)
+      if (arrayMatch) {
+        cleaned = arrayMatch[1].trim()
+      }
+    }
+
+    const parsed = JSON.parse(cleaned)
+
+    if (!Array.isArray(parsed)) {
+      throw new Error('Parsed advice is not an array')
+    }
+
+    return parsed.map((item: any) => ({
+      type: ['success', 'danger', 'warning', 'info'].includes(item.type) ? item.type : 'info',
+      title: String(item.title || 'Ushauri'),
+      message: String(item.message || ''),
+      priority: ['high', 'medium', 'low'].includes(item.priority) ? item.priority : 'medium'
+    }))
+  }
+
+  private fallbackAdvice(): BusinessAdvice[] {
+    return [{
+      type: 'info',
+      title: 'Ushauri wa Kibiashara',
+      message: 'Mfumo wa ushauri ulishindwa kuchakata majibu. Tafadhali jaribu tena baadae.',
+      priority: 'medium'
+    }]
   }
 }
 
