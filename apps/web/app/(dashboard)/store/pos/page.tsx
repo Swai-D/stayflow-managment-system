@@ -9,10 +9,11 @@ import { type Booking } from '@/types/booking'
 import {
   Search, Plus, Minus, X, ChevronDown, CheckCircle,
   Receipt, Users, Trash2, ShoppingBag, UtensilsCrossed, Loader2,
-  Mail, Printer
+  Mail, Printer, Package
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 // ── Cart Item type ────────────────────────────────────────────────────────────
 interface CartItem { item: StoreItem; qty: number }
@@ -110,15 +111,21 @@ function ItemCard({ item, qty, onAdd, onRemove }: {
   item: StoreItem; qty: number; onAdd: () => void; onRemove: () => void
 }) {
   const CATEGORY_ICONS: Record<string, string> = {
-    'Bar Stock': '🍺', 'Beverages': '🥤', 'Food': '🍽️'
+    'Bar Stock': '🍺', 'Beverages': '🥤', 'Food': '🍽️', 'Dry Foods': '🥫',
+    'Fresh Produce': '🥬', 'Condiments': '🧂', 'Linen & Towels': '🛏️',
+    'Bathroom Amenities': '🧴', 'Cleaning Supplies': '🧽', 'Kitchen Equipment': '🔪',
+    'Stationery': '📎'
   }
   const icon = CATEGORY_ICONS[item.subCategory] ?? '📦'
 
   return (
     <div className={cn(
       'bg-white border-2 rounded-xl p-3.5 cursor-pointer transition-all select-none',
-      qty > 0 ? 'border-[#2563EB] shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow-sm'
-    )} onClick={onAdd}>
+      qty > 0 ? 'border-[#2563EB] shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow-sm',
+      (!item.sellingPrice || item.currentStock <= 0) && 'opacity-50 cursor-not-allowed'
+    )} onClick={() => {
+      if (item.sellingPrice && item.currentStock > 0) onAdd()
+    }}>
       <div className="flex items-start justify-between gap-2 mb-2.5">
         <span className="text-[22px]">{icon}</span>
         {qty > 0 && (
@@ -136,10 +143,14 @@ function ItemCard({ item, qty, onAdd, onRemove }: {
         )}
       </div>
       <p className="text-[12.5px] font-semibold text-gray-900 leading-tight mb-1">{item.name}</p>
-      <p className="text-[13px] font-bold text-[#2563EB]">{formatTZS(item.sellingPrice!)}</p>
-      {item.currentStock < 10 && (
+      <p className="text-[13px] font-bold text-[#2563EB]">
+        {item.sellingPrice ? formatTZS(item.sellingPrice) : <span className="text-gray-400 font-medium">No price</span>}
+      </p>
+      {item.currentStock === 0 ? (
+        <p className="text-[10px] text-red-500 mt-0.5 font-medium">Out of stock</p>
+      ) : item.currentStock < 10 ? (
         <p className="text-[10px] text-amber-600 mt-0.5 font-medium">Only {item.currentStock} left</p>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -434,17 +445,42 @@ export default function POSPage() {
 
         {/* Item grid */}
         <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filtered.map(item => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                qty={getQty(item.id)}
-                onAdd={() => addToCart(item)}
-                onRemove={() => removeFromCart(item)}
-              />
-            ))}
-          </div>
+          {itemsLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 size={28} className="animate-spin text-gray-300"/>
+            </div>
+          ) : posItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-6">
+              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                <Package size={28} className="text-gray-300"/>
+              </div>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-1">No sellable items</h3>
+              <p className="text-[12px] text-gray-500 max-w-[280px] mb-4">
+                Items here are pulled from Store. Go to Store → Items, add an F&B item, and enable &ldquo;Show in POS&rdquo;.
+              </p>
+              <Link href="/store/items">
+                <button className="px-4 py-2 bg-[#2563EB] text-white rounded-xl text-[12px] font-bold hover:bg-[#1D4ED8] transition-colors">
+                  Go to Store Items
+                </button>
+              </Link>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center px-6">
+              <p className="text-[13px] font-semibold text-gray-400">No items match your search</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filtered.map(item => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  qty={getQty(item.id)}
+                  onAdd={() => addToCart(item)}
+                  onRemove={() => removeFromCart(item)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
