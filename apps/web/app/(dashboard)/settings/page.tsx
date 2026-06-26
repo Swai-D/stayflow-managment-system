@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import { useUpdateProfile } from '@/hooks/useAuth'
+import ConfirmModal from '@/components/shared/ConfirmModal'
 
 type SettingsTab = 'profile' | 'hotel' | 'staff' | 'finance' | 'booking' | 'audit'
 
@@ -396,8 +397,10 @@ function HotelSettingsView() {
 function StaffManagementView() {
   const { data: staff, isLoading } = useStaff()
   const { mutate: createStaff, isPending: isCreating } = useCreateStaff()
-  const { mutate: deleteStaff } = useDeleteStaff()
+  const { mutate: deleteStaff, isPending: isDeletingStaff } = useDeleteStaff()
   const [isAdding, setIsAdding] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [staffToDelete, setStaffToDelete] = useState<{ id: string; name: string } | null>(null)
 
   const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -410,10 +413,21 @@ function StaffManagementView() {
     })
   }
 
-  const handleDelete = (id: string, name: string) => {
-    if (confirm(`Je, una uhakika unataka kuondoa ufikiaji kwa ${name}?`)) {
-      deleteStaff(id, { onSuccess: () => toast.success('Staff removed') })
-    }
+  const askDelete = (id: string, name: string) => {
+    setStaffToDelete({ id, name })
+    setConfirmOpen(true)
+  }
+
+  const handleDelete = () => {
+    if (!staffToDelete) return
+    deleteStaff(staffToDelete.id, {
+      onSuccess: () => {
+        toast.success('Staff removed successfully')
+        setConfirmOpen(false)
+        setStaffToDelete(null)
+      },
+      onError: () => toast.error('Failed to remove staff')
+    })
   }
 
   if (isLoading) return <LoadingPlaceholder />
@@ -436,6 +450,21 @@ function StaffManagementView() {
           {isAdding ? 'Cancel' : 'Invite Staff'}
         </button>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Remove Staff Access"
+        description={staffToDelete ? `Are you sure you want to remove access for ${staffToDelete.name}? This action cannot be undone.` : ''}
+        confirmText="Remove Access"
+        cancelText="Keep Staff"
+        variant="danger"
+        isPending={isDeletingStaff}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setStaffToDelete(null)
+        }}
+      />
 
       {isAdding && (
         <div className="p-8 bg-blue-50/50 border-b border-blue-100 animate-in slide-in-from-top duration-300">
@@ -495,7 +524,7 @@ function StaffManagementView() {
                 </td>
                 <td className="px-8 py-5 text-right">
                    <button 
-                     onClick={() => handleDelete(u.id, u.fullName)} 
+                     onClick={() => askDelete(u.id, u.fullName)} 
                      className="w-9 h-9 rounded-xl flex items-center justify-center text-[#9ca3af] hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                    >
                       <Trash2 size={16} />

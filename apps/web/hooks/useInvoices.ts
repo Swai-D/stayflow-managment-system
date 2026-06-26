@@ -16,7 +16,7 @@ export function useInvoices(filters?: {
   if (filters?.page) params.append('page', String(filters.page))
   if (filters?.limit) params.append('limit', String(filters.limit))
 
-  return useQuery<{ data: Invoice[]; meta: any }>({
+  return useQuery<{ data: Invoice[]; meta: { total: number; totalPages: number; page: number; limit: number } }>({
     queryKey: ['invoices', filters],
     queryFn: async () => {
       const res = await api.get(`/invoices?${params}`)
@@ -79,6 +79,25 @@ export function useRecordInvoicePayment() {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
     }
   })
+}
+
+export async function getInvoicePdfBlobUrl(id: string) {
+  const res = await api.get(`/invoices/${id}/pdf`, { responseType: 'blob' })
+  const blob = new Blob([res.data], { type: 'application/pdf' })
+  return window.URL.createObjectURL(blob)
+}
+
+export async function downloadInvoicePdf(id: string, invoiceNumber?: string) {
+  const res = await api.get(`/invoices/${id}/pdf`, { responseType: 'blob' })
+  const blob = new Blob([res.data], { type: 'application/pdf' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${invoiceNumber || 'invoice'}.pdf`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
 }
 
 export function useDeleteInvoice() {

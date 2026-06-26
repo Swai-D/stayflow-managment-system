@@ -2,7 +2,7 @@ import { Router } from 'express'
 import {
   getBookings, getBooking, createBooking, updateBooking,
   cancelBooking, checkIn, checkOut, checkAvailability, getBookingStats,
-  confirmPayment
+  confirmPayment, getTodayCheckouts, extendStay
 } from '../controllers/bookings.controller'
 import { authenticate } from '../middleware/authenticate'
 import { authorize } from '../middleware/authorize'
@@ -73,8 +73,14 @@ const cancelSchema = z.object({
   reason: z.string().optional()
 })
 
+const extendSchema = z.object({
+  extraNights: z.number().min(1),
+  reason: z.string().optional()
+})
+
 router.get('/',            getBookings)
 router.get('/stats',       getBookingStats)
+router.get('/checkouts/today', getTodayCheckouts)
 router.get('/availability',checkAvailability)
 router.get('/:id',         getBooking)
 router.post('/',           validate(createBookingSchema), createBooking)
@@ -82,6 +88,7 @@ router.patch('/:id',       updateBooking)
 router.delete('/:id',      authorize('admin', 'receptionist'), validate(cancelSchema), cancelBooking)
 router.post('/:id/check-in',  checkIn)
 router.post('/:id/check-out', checkOut)
+router.post('/:id/extend',    validate(extendSchema), extendStay)
 router.post('/:id/confirm-payment', confirmPayment)
 
 export default router

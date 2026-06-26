@@ -27,8 +27,8 @@ const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 
 function KPICard({ label, value, subtext, icon: Icon, iconBg, isLoading, trend }: any) {
   return (
-    <div className="bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.07)] p-[16px] flex flex-col justify-between hover:shadow-md transition-shadow font-sans h-full">
-      <div className={cn('w-[32px] h-[32px] rounded-[8px] flex items-center justify-center mb-[10px] text-white shadow-sm', iconBg)}>
+    <div className="bg-white rounded-xl shadow-card p-[16px] flex flex-col justify-between hover:shadow-md transition-all duration-150 font-sans h-full">
+      <div className={cn('w-[32px] h-[32px] rounded-lg flex items-center justify-center mb-[10px] text-white shadow-sm', iconBg)}>
         <Icon size={18} />
       </div>
       <div>
@@ -57,7 +57,7 @@ function KPICard({ label, value, subtext, icon: Icon, iconBg, isLoading, trend }
 
 function SectionCard({ title, subtitle, children, action }: any) {
   return (
-    <div className="bg-white rounded-[12px] shadow-[0_1px_3px_rgba(0,0,0,0.07)] p-[20px] font-sans h-full flex flex-col">
+    <div className="bg-white rounded-xl shadow-card p-[20px] font-sans h-full flex flex-col hover:shadow-md transition-all duration-150">
       <div className="flex items-start justify-between mb-4">
         <div>
           <p className="text-[15px] font-bold text-[#111827] tracking-tight">{title}</p>

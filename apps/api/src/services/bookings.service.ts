@@ -508,6 +508,72 @@ export class BookingsService {
     })
   }
 
+  // ─── Extend stay ──────────────────────────────────────
+  async extendStay(bookingId: string, hotelId: string, extraNights: number, reason?: string) {
+    if (!extraNights || extraNights < 1) {
+      throw ApiError.badRequest('Idadi ya usiku wa ziada inahitajika (angalau 1)')
+    }
+
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId, hotelId },
+      include: { room: true, guest: true, company: true }
+    })
+    if (!booking) throw ApiError.notFound('Booking haikupatikana')
+
+    if (booking.status !== 'checked_in' && booking.status !== 'late_checkout') {
+      throw ApiError.badRequest('Haiwezekani kuongeza siku — booking sio checked_in au late_checkout')
+    }
+
+    const currentCheckOut = new Date(booking.checkOut)
+    const newCheckOut = new Date(currentCheckOut)
+    newCheckOut.setDate(newCheckOut.getDate() + extraNights)
+
+    // Check room availability for extended dates (excluding this booking)
+    const isAvailable = await availabilityService.isAvailable({
+      roomId: booking.roomId,
+      checkIn: currentCheckOut,
+      checkOut: newCheckOut,
+      excludeBookingId: bookingId
+    })
+    if (!isAvailable) {
+      throw ApiError.conflict('Chumba hakipatikani kwa siku za ziada. Tafadhali chagua chumba kingine au siku nyingine.')
+    }
+
+    const pricePerNight = Number(booking.room?.pricePerNight || 0)
+    const extraRoomTotal = pricePerNight * extraNights
+    const newTotalAmount = Number(booking.totalAmount) + extraRoomTotal
+    const newBalanceDue = newTotalAmount - Number(booking.paidAmount)
+
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          checkOut: newCheckOut,
+          roomTotal: { increment: extraRoomTotal },
+          totalAmount: newTotalAmount,
+          balanceDue: newBalanceDue,
+          status: booking.status === 'late_checkout' ? 'checked_in' : booking.status,
+          updatedAt: new Date()
+        }
+      })
+
+      await tx.room.update({
+        where: { id: booking.roomId },
+        data: { status: 'occupied', updatedAt: new Date() }
+      })
+
+      await auditService.log({
+        userId: booking.createdById,
+        action: 'booking.extend',
+        entity: 'booking',
+        entityId: bookingId,
+        changes: { extraNights, reason, oldCheckOut: currentCheckOut.toISOString() }
+      })
+
+      return updated
+    })
+  }
+
   // ─── Get today's stats ────────────────────────────────
   async getTodayStats(hotelId: string) {
     const today = new Date(); today.setHours(0, 0, 0, 0)

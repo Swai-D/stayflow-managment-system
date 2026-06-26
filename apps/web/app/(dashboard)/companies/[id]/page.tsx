@@ -1,13 +1,14 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useGenerateCompanyInvoice, useRecordInvoicePayment } from '@/hooks/useInvoices'
+import { useGenerateCompanyInvoice, useRecordInvoicePayment, downloadInvoicePdf, getInvoicePdfBlobUrl } from '@/hooks/useInvoices'
+import { CompanyInvoice } from '@/types/company'
 import { useCompany as useCompanyDetails } from '@/hooks/useCompanies'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import {
   ArrowLeft, Building2, Phone, Mail, MapPin, FileText,
-  CreditCard, CheckCircle, Plus, Download
+  CreditCard, CheckCircle, Download, Eye, X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
@@ -29,6 +30,10 @@ export default function CompanyDetailPage() {
   const [selectedBookings, setSelectedBookings] = useState<string[]>([])
   const [paymentAmount, setPaymentAmount] = useState('')
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewNumber, setPreviewNumber] = useState<string>('')
 
   if (isLoading) {
     return <div className="p-10 text-center text-gray-400">Loading company...</div>
@@ -59,8 +64,40 @@ export default function CompanyDetailPage() {
         toast.success('Invoice ya kampuni imeundwa')
         setSelectedBookings([])
       },
-      onError: (err: any) => toast.error(err?.response?.data?.error?.message || 'Imeshindwa kuunda invoice')
+      onError: (err: unknown) => {
+        const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        toast.error(message || 'Imeshindwa kuunda invoice')
+      }
     })
+  }
+
+  const handleDownloadInvoice = async (inv: CompanyInvoice) => {
+    toast.info(`Preparing download for ${inv.invoiceNumber}...`)
+    try {
+      await downloadInvoicePdf(inv.id, inv.invoiceNumber)
+      toast.success('Invoice download started')
+    } catch {
+      toast.error('Failed to download invoice PDF')
+    }
+  }
+
+  const handlePreviewInvoice = async (inv: CompanyInvoice) => {
+    toast.info(`Opening preview for ${inv.invoiceNumber}...`)
+    try {
+      const url = await getInvoicePdfBlobUrl(inv.id)
+      setPreviewUrl(url)
+      setPreviewNumber(inv.invoiceNumber)
+      setPreviewOpen(true)
+      toast.success('Invoice preview ready')
+    } catch {
+      toast.error('Failed to open invoice preview')
+    }
+  }
+
+  const closePreview = () => {
+    if (previewUrl) window.URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPreviewOpen(false)
   }
 
   const handleRecordPayment = () => {
@@ -74,7 +111,10 @@ export default function CompanyDetailPage() {
         setPaymentAmount('')
         setSelectedInvoiceId(null)
       },
-      onError: (err: any) => toast.error(err?.response?.data?.error?.message || 'Imeshindwa kurekodi malipo')
+      onError: (err: unknown) => {
+        const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        toast.error(message || 'Imeshindwa kurekodi malipo')
+      }
     })
   }
 
@@ -165,15 +205,20 @@ export default function CompanyDetailPage() {
                         >
                           <CreditCard size={14} />
                         </button>
-                        <a
-                          href={`${process.env.NEXT_PUBLIC_API_URL}/invoices/${inv.id}/pdf`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          onClick={() => handlePreviewInvoice(inv)}
+                          className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"
+                          title="Preview PDF"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadInvoice(inv)}
                           className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"
                           title="Download PDF"
                         >
                           <Download size={14} />
-                        </a>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -210,6 +255,42 @@ export default function CompanyDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Preview Modal */}
+      {previewOpen && previewUrl && (
+        <div className="fixed inset-0 z-[160] flex flex-col bg-white animate-in fade-in duration-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 bg-white">
+            <div>
+              <h3 className="text-base font-bold text-[#111827]">Invoice Preview</h3>
+              <p className="text-[12px] text-[#9ca3af] font-medium font-mono">{previewNumber}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = previewUrl as string
+                  link.setAttribute('download', `${previewNumber}.pdf`)
+                  link.click()
+                  toast.success('Download started')
+                }}
+                className="flex items-center gap-2 h-10 px-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-[12px] font-bold transition-all"
+              >
+                <Download size={14} />
+                Download
+              </button>
+              <button
+                onClick={closePreview}
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-border text-[#6b7280] hover:bg-gray-50 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 bg-[#f3f4f6]">
+            <iframe src={previewUrl} title="Invoice Preview" className="w-full h-full" />
+          </div>
+        </div>
+      )}
 
       {/* Bookings */}
       <div className="bg-white rounded-xl shadow-card p-5 border border-border/20">

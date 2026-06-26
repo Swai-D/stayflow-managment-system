@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useCompanies, useCreateCompany, useUpdateCompany, useDeleteCompany } from '@/hooks/useCompanies'
 import { Company, CompanyFormData } from '@/types/company'
-import { cn } from '@/lib/utils'
-import { Search, Plus, Building2, Phone, Mail, MapPin, Trash2, Edit2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Plus, Building2, Phone, Mail, MapPin, Trash2, Edit2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import ConfirmModal from '@/components/shared/ConfirmModal'
 
 const emptyForm: CompanyFormData = {
   name: '',
@@ -27,7 +27,10 @@ export default function CompaniesPage() {
   const { data: companies = [], isLoading } = useCompanies(search)
   const { mutate: createCompany, isPending: creating } = useCreateCompany()
   const { mutate: updateCompany, isPending: updating } = useUpdateCompany()
-  const { mutate: deleteCompany } = useDeleteCompany()
+  const { mutate: deleteCompany, isPending: isDeleting } = useDeleteCompany()
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [companyToDelete, setCompanyToDelete] = useState<string | null>(null)
 
   const openCreate = () => {
     setEditingCompany(null)
@@ -73,7 +76,10 @@ export default function CompaniesPage() {
           toast.success('Kampuni imesasishwa')
           closeModal()
         },
-        onError: (err: any) => toast.error(err?.response?.data?.error?.message || 'Imeshindwa kusasisha')
+        onError: (err: unknown) => {
+          const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+          toast.error(message || 'Imeshindwa kusasisha')
+        }
       })
     } else {
       createCompany(payload, {
@@ -81,16 +87,31 @@ export default function CompaniesPage() {
           toast.success('Kampuni imesajiliwa')
           closeModal()
         },
-        onError: (err: any) => toast.error(err?.response?.data?.error?.message || 'Imeshindwa kusajili')
+        onError: (err: unknown) => {
+          const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+          toast.error(message || 'Imeshindwa kusajili')
+        }
       })
     }
   }
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Are you sure you want to delete this company?')) return
-    deleteCompany(id, {
-      onSuccess: () => toast.success('Kampuni imefutwa'),
-      onError: () => toast.error('Imeshindwa kufuta kampuni')
+  const askDelete = (id: string) => {
+    setCompanyToDelete(id)
+    setConfirmOpen(true)
+  }
+
+  const handleDelete = () => {
+    if (!companyToDelete) return
+    deleteCompany(companyToDelete, {
+      onSuccess: () => {
+        toast.success('Company deleted successfully')
+        setConfirmOpen(false)
+        setCompanyToDelete(null)
+      },
+      onError: (err: unknown) => {
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        toast.error(message || 'Failed to delete company')
+      }
     })
   }
 
@@ -149,7 +170,7 @@ export default function CompaniesPage() {
                     <button onClick={() => openEdit(company)} className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg">
                       <Edit2 size={14} />
                     </button>
-                    <button onClick={() => handleDelete(company.id)} className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg">
+                    <button onClick={() => askDelete(company.id)} className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -185,9 +206,25 @@ export default function CompaniesPage() {
             ))}
       </div>
 
+      {/* Delete Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Delete Company"
+        description="Are you sure you want to delete this company? This will remove the company record and cannot be undone."
+        confirmText="Delete Company"
+        cancelText="Keep Company"
+        variant="danger"
+        isPending={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setCompanyToDelete(null)
+        }}
+      />
+
       {!isLoading && companies.length === 0 && (
         <div className="text-center py-20 text-[#9ca3af] text-[13px] font-medium">
-          No companies found. Click "Add Company" to register one.
+          No companies found. Click &ldquo;Add Company&rdquo; to register one.
         </div>
       )}
 

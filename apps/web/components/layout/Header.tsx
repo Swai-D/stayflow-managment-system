@@ -20,6 +20,7 @@ const titleMap: Record<string, string> = {
   '/guests': 'Guests',
   '/rooms': 'Room Status',
   '/housekeeping': 'Housekeeping',
+  '/checkouts': 'Checkout Management',
   '/accounting/expenses': 'Expense Tracking',
   '/accounting/revenue': 'Revenue Management',
   '/settings': 'Settings',
@@ -70,28 +71,28 @@ function SearchResultItem({ result, selected, onSelect }: {
       onClick={() => onSelect(result)}
       className={cn(
         'flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer',
-        selected ? 'bg-[#EFF6FF]' : 'hover:bg-gray-50'
+        selected ? 'bg-[#EFF6FF]' : 'hover:bg-[#f9fafb]'
       )}
     >
       <div className={cn(
         'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-        result.type === 'booking' ? 'bg-blue-50 text-blue-600' :
-        result.type === 'guest' ? 'bg-green-50 text-green-600' :
-        result.type === 'room' ? 'bg-purple-50 text-purple-600' :
-        result.type === 'supplier' ? 'bg-amber-50 text-amber-600' :
-        'bg-gray-100 text-gray-600'
+        result.type === 'booking' ? 'bg-[#EFF6FF] text-[#2563EB]' :
+        result.type === 'guest' ? 'bg-[#dcfce7] text-[#16a34a]' :
+        result.type === 'room' ? 'bg-[#ede9fe] text-[#7c3aed]' :
+        result.type === 'supplier' ? 'bg-[#fef3c7] text-[#d97706]' :
+        'bg-[#f3f4f6] text-[#6b7280]'
       )}>
         <Icon size={15} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-gray-900 truncate">{result.title}</p>
+        <p className="text-[13px] font-semibold text-[#111827] truncate">{result.title}</p>
         {result.subtitle && (
-          <p className="text-[11px] text-gray-500 truncate">{result.subtitle}</p>
+          <p className="text-[11px] text-[#9ca3af] truncate">{result.subtitle}</p>
         )}
       </div>
       <div className="text-right flex-shrink-0">
-        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{TYPE_LABELS[result.type]}</span>
-        {result.meta && <p className="text-[11px] text-gray-500 truncate max-w-[100px]">{result.meta}</p>}
+        <span className="text-[10px] font-medium text-[#9ca3af] uppercase tracking-wider">{TYPE_LABELS[result.type]}</span>
+        {result.meta && <p className="text-[11px] text-[#9ca3af] truncate max-w-[100px]">{result.meta}</p>}
       </div>
     </Link>
   )
@@ -146,23 +147,23 @@ function SearchDropdown({ query, open, onClose }: {
   return (
     <div
       ref={listRef}
-      className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden"
+      className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#e5e7eb] rounded-xl shadow-md z-50 overflow-hidden"
     >
       {isLoading && (
-        <div className="flex items-center justify-center gap-2 py-6 text-gray-400">
+        <div className="flex items-center justify-center gap-2 py-6 text-[#9ca3af]">
           <Loader2 size={16} className="animate-spin" />
           <span className="text-[12px]">Searching...</span>
         </div>
       )}
 
       {showHint && (
-        <div className="px-4 py-5 text-center text-[12px] text-gray-400">
+        <div className="px-4 py-5 text-center text-[12px] text-[#9ca3af]">
           Type at least 2 characters to search across guests, rooms, reservations, items, and suppliers
         </div>
       )}
 
       {showEmpty && (
-        <div className="px-4 py-5 text-center text-[12px] text-gray-400">
+        <div className="px-4 py-5 text-center text-[12px] text-[#9ca3af]">
           No results found for "{debouncedQuery}"
         </div>
       )}
@@ -181,12 +182,12 @@ function SearchDropdown({ query, open, onClose }: {
       )}
 
       {!isLoading && results.length > 0 && (
-        <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-400 flex items-center justify-between">
+        <div className="px-4 py-2 bg-[#f9fafb] border-t border-[#f3f4f6] text-[10px] text-[#9ca3af] flex items-center justify-between">
           <span>{results.length} result{results.length > 1 ? 's' : ''}</span>
           <span className="flex items-center gap-1">
-            <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[9px]">↑↓</kbd>
+            <kbd className="px-1.5 py-0.5 bg-white border border-[#e5e7eb] rounded text-[9px]">↑↓</kbd>
             <span>to navigate</span>
-            <kbd className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-[9px] ml-1">↵</kbd>
+            <kbd className="px-1.5 py-0.5 bg-white border border-[#e5e7eb] rounded text-[9px] ml-1">↵</kbd>
             <span>to open</span>
           </span>
         </div>
@@ -206,7 +207,6 @@ export default function Header() {
   const pageTitle = titleMap[pathname] || 'Buffalo Reservation'
   const dateStr = format(new Date(), "EEE, dd MMMM")
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -223,7 +223,7 @@ export default function Header() {
       <div className="flex items-center gap-4 min-w-0">
         <button
           onClick={toggleSidebar}
-          className="lg:hidden w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-[8px] text-[#6b7280] transition-all flex-shrink-0"
+          className="lg:hidden w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-lg text-[#6b7280] transition-colors flex-shrink-0"
         >
           <Menu size={18} />
         </button>
@@ -237,8 +237,8 @@ export default function Header() {
       >
         <div
           className={cn(
-            'flex items-center gap-2 w-full h-[38px] bg-white border rounded-[8px] px-3 transition-all',
-            searchOpen ? 'border-[#2563EB] ring-2 ring-blue-100' : 'border-[#e5e7eb] hover:border-gray-300'
+            'flex items-center gap-2 w-full h-[38px] bg-white border rounded-lg px-3 transition-all',
+            searchOpen ? 'border-[#2563EB] ring-2 ring-[#dbeafe]' : 'border-[#e5e7eb] hover:border-[#d1d5db]'
           )}
         >
           <Search size={15} className="text-[#9ca3af] flex-shrink-0" />
@@ -253,7 +253,7 @@ export default function Header() {
             onFocus={() => setSearchOpen(true)}
             onClick={() => setSearchOpen(true)}
             placeholder="Search guests, rooms, reservations, items..."
-            className="flex-1 bg-transparent text-[13px] text-gray-700 placeholder:text-[#9ca3af] outline-none min-w-0"
+            className="flex-1 bg-transparent text-[13px] text-[#374151] placeholder:text-[#9ca3af] outline-none min-w-0"
           />
           {query ? (
             <button
@@ -261,7 +261,7 @@ export default function Header() {
                 setQuery('')
                 inputRef.current?.focus()
               }}
-              className="text-[#9ca3af] hover:text-gray-600"
+              className="text-[#9ca3af] hover:text-[#6b7280]"
             >
               <X size={13} />
             </button>
@@ -280,18 +280,18 @@ export default function Header() {
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
         {/* Dark Mode Toggle */}
-        <button className="w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-[8px] text-[#6b7280] hover:bg-gray-50 transition-colors">
+        <button className="w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-lg text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
           <Moon size={15} />
         </button>
 
         {/* Notifications */}
-        <button className="relative w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-[8px] text-[#6b7280] hover:bg-gray-50 transition-colors">
+        <button className="relative w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-lg text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
           <Bell size={15} />
           <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-[#ef4444] rounded-full border border-white" />
         </button>
 
         {/* Date Display */}
-        <div className="hidden sm:flex items-center gap-2 bg-white border border-[#e5e7eb] rounded-[8px] h-[34px] px-3">
+        <div className="hidden sm:flex items-center gap-2 bg-white border border-[#e5e7eb] rounded-lg h-[34px] px-3">
           <Calendar size={13} className="text-[#6b7280] flex-shrink-0" />
           <span className="text-[12px] font-medium text-[#6b7280] whitespace-nowrap">{dateStr}</span>
         </div>

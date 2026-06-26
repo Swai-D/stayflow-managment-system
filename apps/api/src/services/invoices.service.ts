@@ -103,11 +103,15 @@ export class InvoicesService {
           }
         },
         company: {
+          select: { id: true, name: true, address: true, phone: true, email: true, tinNumber: true }
+        },
+        invoiceBookings: {
           include: {
-            bookings: {
+            booking: {
               include: {
                 guest: { select: { fullName: true } },
-                room: { select: { roomNumber: true, type: true } }
+                room: { select: { roomNumber: true, type: true } },
+                roomCharges: { include: { items: true } }
               }
             }
           }
@@ -181,7 +185,7 @@ export class InvoicesService {
 
     const bookings = await prisma.booking.findMany({
       where: { id: { in: bookingIds }, hotelId, companyId, status: { not: 'cancelled' } },
-      include: { guest: true, room: true }
+      include: { guest: true, room: true, roomCharges: { include: { items: true } } }
     })
 
     if (bookings.length === 0) throw ApiError.badRequest('Hakuna booking sahihi za kampuni hii')
@@ -202,10 +206,24 @@ export class InvoicesService {
         totalAmount,
         paidAmount,
         notes: notes || `Company invoice for ${bookings.length} booking(s)`,
-        status: paidAmount >= totalAmount ? 'paid' : 'draft'
+        status: paidAmount >= totalAmount ? 'paid' : 'draft',
+        invoiceBookings: {
+          create: bookings.map(b => ({ bookingId: b.id }))
+        }
       },
       include: {
-        company: { select: { name: true } }
+        company: { select: { id: true, name: true, address: true, phone: true, email: true, tinNumber: true } },
+        invoiceBookings: {
+          include: {
+            booking: {
+              include: {
+                guest: { select: { fullName: true } },
+                room: { select: { roomNumber: true, type: true } },
+                roomCharges: { include: { items: true } }
+              }
+            }
+          }
+        }
       }
     })
   }

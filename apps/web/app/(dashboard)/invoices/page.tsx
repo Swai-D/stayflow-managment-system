@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useInvoices, useDeleteInvoice } from '@/hooks/useInvoices'
+import { useInvoices, useDeleteInvoice, downloadInvoicePdf, getInvoicePdfBlobUrl } from '@/hooks/useInvoices'
 import { formatDate, formatTZS } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-import { Search, ChevronLeft, ChevronRight, FileText, Trash2, Download } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Trash2, Download, Eye, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { InvoiceType } from '@/types/invoice'
+import { Invoice, InvoiceType } from '@/types/invoice'
+import ConfirmModal from '@/components/shared/ConfirmModal'
 
 const STATUS_STYLES: Record<string, string> = {
   draft:    'bg-gray-100 text-gray-600',
@@ -33,17 +34,67 @@ export default function InvoicesPage() {
     limit: 15
   })
 
-  const { mutate: deleteInvoice } = useDeleteInvoice()
+  const { mutate: deleteInvoice, isPending: isDeleting } = useDeleteInvoice()
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [invoiceToCancel, setInvoiceToCancel] = useState<string | null>(null)
+
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewNumber, setPreviewNumber] = useState<string>('')
 
   const invoices = data?.data || []
   const meta = data?.meta || { total: 0, totalPages: 1 }
 
-  const handleDelete = (id: string) => {
-    if (!confirm('Are you sure you want to cancel this invoice?')) return
-    deleteInvoice(id, {
-      onSuccess: () => toast.success('Invoice imefutwa'),
-      onError: () => toast.error('Imeshindwa kufuta invoice')
+  const askDelete = (id: string) => {
+    setInvoiceToCancel(id)
+    setConfirmOpen(true)
+  }
+
+  const handleDelete = () => {
+    if (!invoiceToCancel) return
+    deleteInvoice(invoiceToCancel, {
+      onSuccess: () => {
+        toast.success('Invoice cancelled successfully')
+        setConfirmOpen(false)
+        setInvoiceToCancel(null)
+      },
+      onError: (err: unknown) => {
+        const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        toast.error(message || 'Failed to cancel invoice')
+      }
     })
+  }
+
+  const handleDownload = async (invoice: Invoice) => {
+    toast.info(`Preparing download for ${invoice.invoiceNumber}...`)
+    try {
+      await downloadInvoicePdf(invoice.id, invoice.invoiceNumber)
+      toast.success('Invoice download started')
+    } catch {
+      toast.error('Failed to download invoice PDF')
+    }
+  }
+
+  const handlePreview = async (invoice: Invoice) => {
+    toast.info(`Opening preview for ${invoice.invoiceNumber}...`)
+    try {
+      const url = await getInvoicePdfBlobUrl(invoice.id)
+      setPreviewUrl(url)
+      setPreviewNumber(invoice.invoiceNumber)
+      setPreviewOpen(true)
+      toast.success('Invoice preview ready')
+    } catch {
+      toast.error('Failed to open invoice preview')
+    }
+  }
+
+  const closePreview = () => {
+    if (previewUrl) {
+      window.URL.revokeObjectURL(previewUrl)
+    }
+    setPreviewUrl(null)
+    setPreviewOpen(false)
   }
 
   return (
@@ -145,17 +196,22 @@ export default function InvoicesPage() {
                       </td>
                       <td className="p-[14px_16px]">
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <a
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/invoices/${invoice.id}/pdf`}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            onClick={() => handlePreview(invoice)}
+                            className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"
+                            title="Preview PDF"
+                          >
+                            <Eye size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleDownload(invoice)}
                             className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg"
                             title="Download PDF"
                           >
                             <Download size={14} />
-                          </a>
+                          </button>
                           <button
-                            onClick={() => handleDelete(invoice.id)}
+                            onClick={() => askDelete(invoice.id)}
                             className="p-1.5 hover:bg-red-50 text-red-600 rounded-lg"
                             title="Cancel Invoice"
                           >
@@ -198,6 +254,62 @@ export default function InvoicesPage() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Invoice Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmOpen}
+        title="Cancel Invoice"
+        description="Are you sure you want to cancel this invoice? This action cannot be undone and the invoice will be marked as cancelled."
+        confirmText="Cancel Invoice"
+        cancelText="Keep Invoice"
+        variant="danger"
+        isPending={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmOpen(false)
+          setInvoiceToCancel(null)
+        }}
+      />
+
+      {/* Preview Modal */}
+      {previewOpen && previewUrl && (
+        <div className="fixed inset-0 z-[160] flex flex-col bg-white animate-in fade-in duration-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/50 bg-white">
+            <div>
+              <h3 className="text-base font-bold text-[#111827]">Invoice Preview</h3>
+              <p className="text-[12px] text-[#9ca3af] font-medium font-mono">{previewNumber}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = previewUrl as string
+                  link.setAttribute('download', `${previewNumber}.pdf`)
+                  link.click()
+                  toast.success('Download started')
+                }}
+                className="flex items-center gap-2 h-10 px-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-[12px] font-bold transition-all"
+              >
+                <Download size={14} />
+                Download
+              </button>
+              <button
+                onClick={closePreview}
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-border text-[#6b7280] hover:bg-gray-50 transition-all"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 bg-[#f3f4f6]">
+            <iframe
+              src={previewUrl}
+              title="Invoice Preview"
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

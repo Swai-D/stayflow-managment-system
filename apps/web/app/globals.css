@@ -39,7 +39,7 @@
 }
 
 :root {
-  /* Template Variables */
+  /* Template exact colors */
   --blue-dark: #1a2b4a;
   --blue-mid: #2563eb;
   --blue-light: #dbeafe;
@@ -49,6 +49,7 @@
   --orange: #f97316;
   --yellow: #eab308;
   --sand: #fef3c7;
+  --sand-dark: #f5e6c8;
   --text-primary: #111827;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
@@ -95,6 +96,14 @@
   .thin-scrollbar::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 4px;
+  }
+
+  .hover-lift {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 4px 12px rgba(37,99,235,0.08);
   }
 }
 

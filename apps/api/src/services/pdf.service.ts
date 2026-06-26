@@ -429,19 +429,52 @@ export class PdfService {
       doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
       doc.text(`Thank you for choosing ${hotel.name || 'us'}. We look forward to your stay.`, margin, footerY, { align: 'center', width: contentWidth })
       doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
-      doc.text(process.env.POWERED_BY || 'Powered by Odessa Lab', margin, footerY + 20, { align: 'center', width: contentWidth })
+      doc.text(process.env.POWERED_BY || 'Powered by Odessa Lab Technologies', margin, footerY + 20, { align: 'center', width: contentWidth })
     })
   }
 
   async generateCompanyInvoicePdf(invoice: any): Promise<Buffer> {
-    const { hotel, company, amount, totalAmount, paidAmount, invoiceNumber, createdAt, notes } = invoice
+    const { hotel, company, amount, totalAmount, paidAmount, invoiceNumber, createdAt, notes, invoiceBookings } = invoice
 
-    const bookings = company?.bookings || []
-    const rows = bookings.map((b: any) => ({
-      desc: `Accommodation — ${b.guest?.fullName || 'Guest'} (${b.room?.roomNumber || '-'})`,
-      qty: `${Math.max(1, Math.ceil((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / (1000 * 60 * 60 * 24)))} nights`,
-      amount: Number(b.totalAmount)
-    }))
+    const bookings = invoiceBookings?.map((ib: any) => ib.booking) || company?.bookings || []
+    const rows: { desc: string; sub?: string; qty: string; amount: number }[] = []
+
+    bookings.forEach((b: any) => {
+      const nights = Math.max(1, Math.ceil((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / (1000 * 60 * 60 * 24)))
+      const guestName = b.guest?.fullName || 'Guest'
+      const roomInfo = `${b.room?.roomNumber || '-'} · ${b.room?.type || '-'}`
+
+      // Accommodation line
+      rows.push({
+        desc: `Accommodation — ${roomInfo}`,
+        sub: `Guest: ${guestName}`,
+        qty: `${nights} nights`,
+        amount: Number(b.roomTotal || 0)
+      })
+
+      // Add-ons
+      const addons = b.addons || []
+      addons.forEach((a: any) => {
+        rows.push({
+          desc: `  Add-on — ${a.addon?.name || a.name || 'Extra service'}`,
+          qty: `${a.quantity || 1}`,
+          amount: Number(a.subtotal || a.totalAmount || 0)
+        })
+      })
+
+      // POS room charges
+      const roomCharges = b.roomCharges || []
+      roomCharges.forEach((charge: any) => {
+        const items = charge.items || []
+        items.forEach((item: any) => {
+          rows.push({
+            desc: `  ${item.itemName} — ${guestName} (${roomInfo})`,
+            qty: `${item.quantity}`,
+            amount: Number(item.totalPrice)
+          })
+        })
+      })
+    })
 
     return this.buildBuffer(doc => {
       const pageWidth = doc.page.width
@@ -450,92 +483,151 @@ export class PdfService {
       const rightX = pageWidth - margin
       let y = margin
 
-      doc.font('Helvetica-Bold').fontSize(26).fillColor('#2563EB')
-      doc.text((hotel.name || 'Hotel').toUpperCase(), margin, y)
-      y += 30
+      // ── Header ───────────────────────────────────────────────────────────────
+      doc.font('Helvetica-Bold').fontSize(26).fillColor('#E67E22')
+      const hotelName = (hotel.name || 'Hotel').toUpperCase()
+      doc.text(hotelName, margin, y)
+      const hotelNameHeight = doc.heightOfString(hotelName, { width: contentWidth * 0.6 })
+      y += hotelNameHeight + 4
 
-      doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
-      doc.text(hotel.address || '', margin, y)
+      doc.font('Helvetica-Oblique').fontSize(11).fillColor('#7F8C8D')
+      doc.text('Comfort in every stay', margin, y)
+      y += 16
+
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text(hotel.address || 'Moshi, Tanzania', margin, y)
       y += 14
-      doc.text(`${hotel.phone || ''} | ${hotel.email || ''}`, margin, y)
-      y += 30
+      doc.text(`${hotel.phone || '+255765068295'} | ${hotel.email || ''}`, margin, y)
+      y += 22
 
-      doc.font('Helvetica-Bold').fontSize(24).fillColor('#111827')
-      const title = 'COMPANY INVOICE'
-      const titleWidth = doc.widthOfString(title)
-      doc.text(title, rightX - titleWidth, margin)
+      // Right side invoice meta
+      const metaY = margin + 4
+      doc.font('Helvetica-Bold').fontSize(24).fillColor('#2C3E50')
+      const titleText = 'COMPANY INVOICE'
+      const titleWidth = doc.widthOfString(titleText)
+      doc.text(titleText, rightX - titleWidth, metaY)
 
-      doc.font('Helvetica').fontSize(11).fillColor('#6B7280')
+      doc.font('Helvetica').fontSize(11).fillColor('#7F8C8D')
       const refText = `#${invoiceNumber}`
       const refWidth = doc.widthOfString(refText)
-      doc.text(refText, rightX - refWidth, margin + 32)
+      doc.text(refText, rightX - refWidth, metaY + 38)
 
       const dateText = format(new Date(createdAt || Date.now()), 'MMMM dd, yyyy')
       const dateWidth = doc.widthOfString(dateText)
-      doc.text(dateText, rightX - dateWidth, margin + 50)
+      doc.text(dateText, rightX - dateWidth, metaY + 56)
 
-      doc.moveTo(margin, y).lineTo(rightX, y).lineWidth(2).stroke('#2563EB')
-      y += 24
+      // Orange divider line
+      const lineY = Math.max(y, metaY + 90)
+      doc.moveTo(margin, lineY).lineTo(rightX, lineY).lineWidth(3).stroke('#E67E22')
+      y = lineY + 30
 
-      doc.font('Helvetica-Bold').fontSize(11).fillColor('#6B7280')
-      doc.text('BILL TO', margin, y)
-      y += 16
-      doc.font('Helvetica-Bold').fontSize(13).fillColor('#111827')
-      doc.text(company.name, margin, y)
-      y += 18
-      doc.font('Helvetica').fontSize(10).fillColor('#4B5563')
-      if (company.address) { doc.text(company.address, margin, y); y += 14 }
-      if (company.phone) { doc.text(`Phone: ${company.phone}`, margin, y); y += 14 }
-      if (company.email) { doc.text(`Email: ${company.email}`, margin, y); y += 14 }
-      if (company.tinNumber) { doc.text(`TIN: ${company.tinNumber}`, margin, y); y += 14 }
-      y += 16
+      // ── Bill To & Invoice Details boxes ──────────────────────────────────────
+      const boxHeight = 96
+      const boxWidth = (contentWidth - 20) / 2
 
-      if (notes) {
-        doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
-        doc.text(`Notes: ${notes}`, margin, y, { width: contentWidth })
-        y += 24
+      // Bill to
+      doc.rect(margin, y, boxWidth, boxHeight).fill('#F8F9FA')
+      doc.fillColor('#7F8C8D').font('Helvetica-Bold').fontSize(10)
+      doc.text('BILL TO', margin + 14, y + 12)
+      doc.fillColor('#2C3E50').font('Helvetica-Bold').fontSize(12)
+      doc.text(company.name, margin + 14, y + 34)
+      doc.font('Helvetica').fontSize(10).fillColor('#555555')
+      let billY = y + 52
+      if (company.tinNumber) {
+        doc.text(`TIN: ${company.tinNumber}`, margin + 14, billY)
+        billY += 16
       }
+      doc.text(company.email || '', margin + 14, billY)
+      billY += 16
+      doc.text(company.phone || '', margin + 14, billY)
 
-      const colDesc = contentWidth * 0.55
-      const colQty = contentWidth * 0.20
-      const colAmount = contentWidth * 0.25
+      // Invoice details
+      doc.rect(margin + boxWidth + 20, y, boxWidth, boxHeight).fill('#F8F9FA')
+      doc.fillColor('#7F8C8D').font('Helvetica-Bold').fontSize(10)
+      doc.text('INVOICE DETAILS', margin + boxWidth + 34, y + 12)
+      doc.fillColor('#2C3E50').font('Helvetica-Bold').fontSize(11)
+      doc.text(`Ref: ${invoiceNumber}`, margin + boxWidth + 34, y + 34)
+      doc.text(`Date: ${format(new Date(createdAt || Date.now()), 'MMM dd, yyyy')}`, margin + boxWidth + 34, y + 52)
+      doc.text(`Bookings: ${bookings.length}`, margin + boxWidth + 34, y + 70)
+
+      y += boxHeight + 28
+
+      // ── Items table ──────────────────────────────────────────────────────────
+      const colDesc = contentWidth * 0.45
+      const colQty = contentWidth * 0.15
+      const colRate = contentWidth * 0.20
+      const colAmount = contentWidth * 0.20
+
       const tableTop = y
-      doc.rect(margin, tableTop, contentWidth, 32).fill('#F3F4F6')
-      doc.fillColor('#374151').font('Helvetica-Bold').fontSize(10)
-      doc.text('DESCRIPTION', margin + 12, tableTop + 10)
-      doc.text('QTY', margin + colDesc + 12, tableTop + 10, { width: colQty, align: 'center' })
-      doc.text('AMOUNT', margin + colDesc + colQty + 12, tableTop + 10, { width: colAmount - 12, align: 'right' })
+      doc.rect(margin, tableTop, contentWidth, 36).fill('#2C3E50')
+      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10)
+      doc.text('DESCRIPTION', margin + 12, tableTop + 12)
+      doc.text('QTY', margin + colDesc + 12, tableTop + 12, { width: colQty, align: 'center' })
+      doc.text('RATE', margin + colDesc + colQty + 12, tableTop + 12, { width: colRate, align: 'right' })
+      doc.text('AMOUNT', margin + colDesc + colQty + colRate + 12, tableTop + 12, { width: colAmount - 12, align: 'right' })
 
-      y = tableTop + 32
-      rows.forEach((row: any) => {
-        doc.font('Helvetica').fontSize(10).fillColor('#111827')
-        doc.text(row.desc, margin + 12, y + 8, { width: colDesc - 24 })
-        doc.text(row.qty, margin + colDesc + 12, y + 8, { width: colQty, align: 'center' })
-        doc.text(this.formatInvoiceMoney(row.amount), margin + colDesc + colQty + 12, y + 8, { width: colAmount - 12, align: 'right' })
-        doc.moveTo(margin, y + 28).lineTo(rightX, y + 28).stroke('#F3F4F6')
-        y += 34
+      y = tableTop + 36 + 10
+      rows.forEach(row => {
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#2C3E50')
+        doc.text(row.desc, margin + 12, y, { width: colDesc - 24 })
+        const descHeight = doc.heightOfString(row.desc, { width: colDesc - 24 })
+        let rowHeight = Math.max(28, descHeight + 8)
+
+        if (row.sub) {
+          doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
+          doc.text(row.sub, margin + 12, y + descHeight + 4)
+          rowHeight = Math.max(rowHeight, descHeight + 20)
+        }
+
+        doc.font('Helvetica').fontSize(10).fillColor('#333333')
+        doc.text(row.qty, margin + colDesc + 12, y, { width: colQty, align: 'center' })
+        const unitRate = row.amount / (parseFloat(row.qty) || 1)
+        doc.text(this.formatInvoiceMoney(unitRate), margin + colDesc + colQty + 12, y, { width: colRate - 12, align: 'right' })
+        doc.text(this.formatInvoiceMoney(row.amount), margin + colDesc + colQty + colRate + 12, y, { width: colAmount - 12, align: 'right' })
+
+        doc.moveTo(margin, y + rowHeight).lineTo(rightX, y + rowHeight).lineWidth(0.5).stroke('#E5E7EB')
+        y += rowHeight + 8
       })
 
-      y += 20
-      const totalsWidth = 220
-      const totalsX = rightX - totalsWidth
-      doc.rect(totalsX, y, totalsWidth, 120).fill('#F8F9FA')
+      y += 24
+
+      // ── Policies & Totals ────────────────────────────────────────────────────
+      const totalsBoxWidth = 220
+      const totalsBoxHeight = 126
+
+      // Policies (left)
+      doc.font('Helvetica-Bold').fontSize(12).fillColor('#2C3E50')
+      doc.text('Policies', margin, y)
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text('• 50% deposit required for confirmation.', margin, y + 22)
+      doc.text('• Full cancellation allowed 30 days before arrival.', margin, y + 38)
+      if (notes) {
+        doc.font('Helvetica-Oblique').fontSize(9).fillColor('#7F8C8D')
+        doc.text(`Notes: ${notes}`, margin, y + 58, { width: contentWidth - totalsBoxWidth - 40 })
+      }
+
+      // Totals box (right)
+      const totalsBoxX = rightX - totalsBoxWidth
+      doc.rect(totalsBoxX, y, totalsBoxWidth, totalsBoxHeight).fill('#F8F9FA')
       let ty = y + 16
       const addTotalLine = (label: string, value: string, bold = false) => {
-        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#111827' : '#6B7280')
-        doc.text(label, totalsX + 16, ty)
-        doc.text(value, totalsX + 100, ty, { width: totalsWidth - 120, align: 'right' })
+        doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10).fillColor(bold ? '#2C3E50' : '#7F8C8D')
+        doc.text(label, totalsBoxX + 16, ty)
+        doc.text(value, totalsBoxX + 100, ty, { width: totalsBoxWidth - 120, align: 'right' })
         ty += bold ? 28 : 22
       }
-      addTotalLine('Total', this.formatInvoiceMoney(totalAmount))
-      addTotalLine('Paid', this.formatInvoiceMoney(paidAmount))
-      doc.moveTo(totalsX + 16, ty - 8).lineTo(totalsX + totalsWidth - 16, ty - 8).stroke('#D1D5DB')
-      addTotalLine('DUE', this.formatInvoiceMoney(amount), true)
+      addTotalLine('Subtotal', this.formatInvoiceMoney(totalAmount))
+      addTotalLine('Amount Paid', this.formatInvoiceMoney(paidAmount))
+      doc.moveTo(totalsBoxX + 16, ty - 8).lineTo(totalsBoxX + totalsBoxWidth - 16, ty - 8).lineWidth(1).stroke('#D1D5DB')
+      addTotalLine('TOTAL DUE', this.formatInvoiceMoney(amount), true)
 
-      y += 140
+      y += Math.max(totalsBoxHeight, 60) + 24
+
+      // ── Footer ───────────────────────────────────────────────────────────────
       const footerY = doc.page.height - margin - 40
-      doc.font('Helvetica').fontSize(10).fillColor('#6B7280')
-      doc.text(`Thank you for choosing ${hotel.name || 'us'}.`, margin, footerY, { align: 'center', width: contentWidth })
+      doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
+      doc.text(`Thank you for choosing ${hotel.name || 'us'}. We look forward to your stay.`, margin, footerY, { align: 'center', width: contentWidth })
+      doc.font('Helvetica').fontSize(9).fillColor('#7F8C8D')
     })
   }
 

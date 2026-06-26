@@ -15,6 +15,7 @@ import { webhookService } from '../services/webhook.service'
 import { AuthRequest } from '../middleware/authenticate'
 import { getSystemHotelId } from '../utils/systemHotel'
 import { PrismaClient, PaymentMethod } from '@prisma/client'
+import { startOfDay, endOfDay } from 'date-fns'
 
 const prisma = new PrismaClient()
 
@@ -42,6 +43,90 @@ export const getBookingStats = asyncHandler(async (req: AuthRequest, res: Respon
   const hotelId = await getSystemHotelId()
   const stats = await bookingsService.getTodayStats(hotelId)
   res.json(new ApiResponse(stats))
+})
+
+export const getTodayCheckouts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const today = startOfDay(new Date())
+  const tomorrow = endOfDay(today)
+  const yesterday = startOfDay(new Date(Date.now() - 86400000))
+
+  const [
+    dueToday,
+    overdue,
+    checkedOutToday,
+    pendingInvoices
+  ] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        hotelId,
+        status: 'checked_in',
+        checkOut: { gte: today, lte: tomorrow }
+      },
+      include: {
+        guest: { select: { id: true, fullName: true, phone: true, email: true } },
+        room: { select: { id: true, roomNumber: true, type: true } },
+        company: { select: { id: true, name: true } },
+        payments: true,
+        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+      },
+      orderBy: { checkOut: 'asc' }
+    }),
+    prisma.booking.findMany({
+      where: {
+        hotelId,
+        status: { in: ['checked_in', 'late_checkout'] },
+        checkOut: { lt: today }
+      },
+      include: {
+        guest: { select: { id: true, fullName: true, phone: true, email: true } },
+        room: { select: { id: true, roomNumber: true, type: true } },
+        company: { select: { id: true, name: true } },
+        payments: true,
+        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+      },
+      orderBy: { checkOut: 'asc' }
+    }),
+    prisma.booking.findMany({
+      where: {
+        hotelId,
+        status: 'checked_out',
+        actualCheckOut: { gte: today, lte: tomorrow }
+      },
+      include: {
+        guest: { select: { id: true, fullName: true, phone: true, email: true } },
+        room: { select: { id: true, roomNumber: true, type: true } },
+        company: { select: { id: true, name: true } },
+        payments: true,
+        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+      },
+      orderBy: { actualCheckOut: 'desc' }
+    }),
+    prisma.invoice.count({
+      where: {
+        hotelId,
+        status: { in: ['sent', 'draft'] },
+        booking: {
+          status: { in: ['checked_out', 'late_checkout'] },
+          actualCheckOut: { gte: yesterday }
+        }
+      }
+    })
+  ])
+
+  const summary = {
+    dueTodayCount: dueToday.length,
+    overdueCount: overdue.length,
+    checkedOutTodayCount: checkedOutToday.length,
+    pendingInvoiceCount: pendingInvoices
+  }
+
+  res.json(new ApiResponse({
+    summary,
+    dueToday,
+    overdue,
+    checkedOutToday
+  }))
 })
 
 export const checkAvailability = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -246,6 +331,19 @@ export const updateBooking = asyncHandler(async (req: AuthRequest, res: Response
   res.json(new ApiResponse(booking, 'Booking imesasishwa'))
 })
 
+export const extendStay = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const { extraNights, reason } = req.body
+  const booking = await bookingsService.extendStay(
+    req.params.id,
+    hotelId,
+    Number(extraNights),
+    reason
+  )
+  webhookService.dispatch(hotelId, 'booking.updated', booking).catch(console.error)
+  res.json(new ApiResponse(booking, `Siku ${extraNights} zimeongezwa kwa booking`))
+})
+
 export const cancelBooking = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { reason } = req.body
   const hotelId = await getSystemHotelId()
@@ -286,7 +384,12 @@ export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => 
         totalAmount: Number(booking.totalAmount),
         notes: `Invoice generated on check-out for ${booking.bookingRef}`
       })
-      invoice = await invoicesService.updateInvoice(createdInvoice.id, hotelId, { status: 'paid', paidAmount: Number(booking.totalAmount), paidAt: new Date() })
+      const balanceDue = Number(booking.balanceDue)
+      invoice = await invoicesService.updateInvoice(createdInvoice.id, hotelId, {
+        status: balanceDue <= 0 ? 'paid' : 'sent',
+        paidAmount: balanceDue <= 0 ? Number(booking.totalAmount) : Number(booking.paidAmount),
+        paidAt: balanceDue <= 0 ? new Date() : undefined
+      })
     } else {
       invoice = existingInvoice
     }

@@ -26,6 +26,7 @@ const NAV_GROUPS = [
       { label:'Guests',         href:'/guests',               icon:Users },
       { label:'Rooms',          href:'/rooms',                icon:DoorOpen },
       { label:'Housekeeping',   href:'/housekeeping',         icon:Sparkles },
+      { label:'Checkouts',      href:'/checkouts',            icon:DoorOpen },
     ]
   },
   {
@@ -90,42 +91,42 @@ export default function Sidebar() {
       )}
 
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-[220px] bg-white border-r border-gray-100 flex flex-col flex-shrink-0 transition-transform duration-300",
-        "lg:relative lg:translate-x-0",
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed inset-y-0 left-0 z-50 w-[240px] bg-white rounded-2xl shadow-card flex flex-col flex-shrink-0 transition-transform duration-300",
+        "lg:static lg:ml-4 lg:my-4 lg:h-[calc(100vh-32px)]",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
 
         {/* Logo */}
-        <div className="flex items-center gap-2 px-5 h-[56px] border-b border-gray-100 flex-shrink-0">
-          <div className="w-7 h-7 bg-[#1a2b4a] rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1L1.5 4.5v7L8 15l6.5-3.5v-7L8 1z" fill="white" opacity="0.9"/>
-              <path d="M8 5L4.5 7v4L8 13l3.5-2V7L8 5z" fill="#1a2b4a"/>
+        <div className="flex items-center gap-2 px-5 h-[60px] border-b border-[#f3f4f6] flex-shrink-0">
+          <div className="w-8 h-8 bg-[#1a2b4a] rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1L1.5 4.5v7L8 15l6.5-3.5v-7L8 1z" fill="white" opacity="0.95"/>
+              <path d="M8 5L4.5 7v4L8 13l3.5-2V7L8 5z" fill="white" opacity="0.4"/>
             </svg>
           </div>
-          <span className="text-[15px] font-bold text-gray-900">
+          <span className="text-[15px] font-bold text-[#111827]">
             Buffalo<span className="text-[#2563EB]"> MS</span>
           </span>
         </div>
 
         {/* User */}
-        <div className="px-4 py-3.5 border-b border-gray-100 flex-shrink-0">
+        <div className="px-4 py-4 border-b border-[#f3f4f6] flex-shrink-0">
           <div
             onClick={() => router.push('/settings?tab=profile')}
-            className="flex items-center gap-2.5 cursor-pointer hover:bg-gray-50 rounded-lg p-1 -m-1 transition-colors"
+            className="flex items-center gap-2.5 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-1.5 -m-1.5 transition-colors"
             title="Go to My Profile"
           >
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#2563EB] font-semibold text-[11px] flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#c7d2fe] flex items-center justify-center text-[#1a2b4a] font-semibold text-[11px] flex-shrink-0">
               {user?.avatarUrl
-                ? <img src={user.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover"/>
+                ? <img src={user.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover"/>
                 : getInitials(user?.fullName ?? 'U')
               }
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] font-semibold text-gray-900 truncate leading-tight">{user?.fullName ?? 'Admin'}</p>
-              <p className="text-[10.5px] text-gray-400 capitalize leading-tight">{user?.role ?? 'admin'}</p>
+              <p className="text-[13px] font-semibold text-[#111827] truncate leading-tight">{user?.fullName ?? 'Admin'}</p>
+              <p className="text-[11px] text-[#9ca3af] capitalize leading-tight">{user?.role ?? 'admin'}</p>
             </div>
-            <ChevronDown size={12} className="text-gray-400 flex-shrink-0"/>
+            <ChevronDown size={12} className="text-[#9ca3af] flex-shrink-0"/>
           </div>
         </div>
 
@@ -135,14 +136,13 @@ export default function Sidebar() {
             <div key={group.key} className="mb-1">
               <button onClick={() => toggle(group.key)}
                 className="w-full flex items-center justify-between px-2 pt-2 pb-1.5">
-                <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-[0.08em]">
+                <span className="text-[9.5px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em]">
                   {group.label}
                 </span>
-                <ChevronDown size={10} className={cn('text-gray-300 transition-transform', !isOpen(group.key) && '-rotate-90')}/>
+                <ChevronDown size={10} className={cn('text-[#d1d5db] transition-transform', !isOpen(group.key) && '-rotate-90')}/>
               </button>
 
               {isOpen(group.key) && group.items.map(item => {
-                // Active: exact match OR starts with href (for nested store pages)
                 const isActive = pathname === item.href ||
                   (item.href !== '/store' && pathname.startsWith(item.href + '/')) ||
                   (item.href === '/store' && pathname === '/store')
@@ -151,15 +151,15 @@ export default function Sidebar() {
                   <Link key={item.href} href={item.href}
                     onClick={closeSidebar}
                     className={cn(
-                      'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-colors',
+                      'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150',
                       isActive
                         ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 font-medium'
+                        : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'
                     )}>
-                    <Icon size={14} className={cn('flex-shrink-0', isActive ? 'text-[#2563EB]' : 'text-gray-400')}/>
+                    <Icon size={14} className={cn('flex-shrink-0', isActive ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
                     <span className="flex-1 truncate">{item.label}</span>
                     {'badge' in item && item.badge && (
-                      <span className="bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 flex-shrink-0">
+                      <span className="bg-[#ef4444] text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 flex-shrink-0">
                         {item.badge}
                       </span>
                     )}
@@ -171,25 +171,25 @@ export default function Sidebar() {
 
           {/* System option */}
           <div className="flex items-center justify-between px-2 pt-3 pb-1.5">
-            <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-[0.08em]">SYSTEM OPTION</span>
-            <ChevronDown size={10} className="text-gray-300"/>
+            <span className="text-[9.5px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em]">SYSTEM OPTION</span>
+            <ChevronDown size={10} className="text-[#d1d5db]"/>
           </div>
         </nav>
 
         {/* Bottom */}
-        <div className="px-3 pb-4 pt-2 border-t border-gray-100 flex-shrink-0 space-y-0.5">
+        <div className="px-3 pb-4 pt-2 border-t border-[#f3f4f6] flex-shrink-0 space-y-0.5">
           <Link href="/settings"
             onClick={closeSidebar}
             className={cn(
-              'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] transition-colors font-medium',
-              pathname === '/settings' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-gray-600 hover:bg-gray-50'
+              'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] transition-all duration-150 font-medium',
+              pathname === '/settings' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6b7280] hover:bg-[#f3f4f6]'
             )}>
-            <Settings size={14} className="text-gray-400 flex-shrink-0"/>
+            <Settings size={14} className="text-[#9ca3af] flex-shrink-0"/>
             Settings
           </Link>
           <button onClick={() => logout()}
-            className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] text-gray-600 hover:bg-gray-50 transition-colors font-medium">
-            <LogOut size={14} className="text-gray-400 flex-shrink-0"/>
+            className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-all duration-150 font-medium">
+            <LogOut size={14} className="text-[#9ca3af] flex-shrink-0"/>
             Log out
           </button>
         </div>

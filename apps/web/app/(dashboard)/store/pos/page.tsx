@@ -40,8 +40,20 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
               <span className="text-[11px] text-[#2563EB] bg-white px-2 py-0.5 rounded-full font-medium border border-blue-200">
                 {value.room.type}
               </span>
+              {value.company ? (
+                <span className="text-[10px] text-white bg-[#2563EB] px-2 py-0.5 rounded-full font-medium">
+                  Company
+                </span>
+              ) : (
+                <span className="text-[10px] text-[#6B7280] bg-gray-100 px-2 py-0.5 rounded-full font-medium">
+                  Individual
+                </span>
+              )}
             </div>
             <p className="text-[12px] text-gray-600 mt-0.5 font-medium">{value.guest.fullName}</p>
+            {value.company && (
+              <p className="text-[11px] text-[#2563EB] font-medium">{value.company.name}</p>
+            )}
             <p className="text-[10px] text-gray-400">Ref: {value.bookingRef}</p>
           </div>
         ) : (
@@ -74,8 +86,11 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-gray-900">{b.guest.fullName}</p>
+                {b.company ? (
+                  <p className="text-[10px] text-[#2563EB] font-medium">{b.company.name}</p>
+                ) : null}
                 <p className="text-[10px] text-gray-400">
-                  Room {b.room.roomNumber} · {b.room.type} · {b.bookingRef}
+                  Room {b.room.roomNumber} · {b.room.type} · {b.bookingType === 'company' ? 'Company' : 'Individual'} · {b.bookingRef}
                 </p>
               </div>
               <div className="text-right flex-shrink-0">
@@ -154,10 +169,19 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
             <div className="w-10 h-10 rounded-xl bg-[#2563EB] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-[13px]">{booking.room.roomNumber}</span>
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[13px] font-bold text-gray-900">{booking.guest.fullName}</p>
+              {booking.company ? (
+                <p className="text-[11px] text-[#2563EB] font-medium truncate">{booking.company.name}</p>
+              ) : null}
               <p className="text-[11px] text-[#2563EB] font-medium">Room {booking.room.roomNumber} · {booking.room.type}</p>
             </div>
+            <span className={cn(
+              'text-[10px] font-bold px-2 py-1 rounded-full',
+              booking.company ? 'bg-[#2563EB] text-white' : 'bg-white text-[#6B7280] border border-gray-200'
+            )}>
+              {booking.company ? 'Company' : 'Individual'}
+            </span>
           </div>
 
           {/* Items */}
@@ -228,6 +252,10 @@ function SuccessScreen({ booking, total, onReset, onSendFolio, onPrintFolio, sen
       <p className="text-[14px] text-gray-500 mb-1">
         <span className="font-semibold text-[#2563EB]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
       </p>
+      <p className="text-[13px] text-gray-900 font-medium mb-1">{booking.guest.fullName}</p>
+      {booking.company && (
+        <p className="text-[12px] text-[#2563EB] font-medium mb-1">{booking.company.name}</p>
+      )}
       <p className="text-[13px] text-gray-400 mb-6">{recipientName} · {booking.bookingRef}</p>
 
       <div className="flex flex-col gap-2 w-full max-w-[280px] mb-4">
@@ -338,8 +366,9 @@ export default function POSPage() {
       onSuccess: (data) => {
         toast.success(data?.message || 'Folio imetumwa kwa email')
       },
-      onError: (err: any) => {
-        toast.error(err?.response?.data?.error?.message || 'Imeshindwa kutuma folio')
+      onError: (err: unknown) => {
+        const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+        toast.error(message || 'Imeshindwa kutuma folio')
       }
     })
   }
@@ -350,8 +379,9 @@ export default function POSPage() {
       const res = await api.get(`/pos/invoice/${selectedBooking.id}/pdf`, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
       window.open(url, '_blank')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.error?.message || 'Imeshindwa kupata folio')
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message
+      toast.error(message || 'Imeshindwa kupata folio')
     }
   }
 

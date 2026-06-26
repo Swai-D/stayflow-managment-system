@@ -18,8 +18,9 @@ export class POSService {
   async getActiveBookings(hotelId: string) {
     return prisma.booking.findMany({
       where: { hotelId, status: 'checked_in' },
-      include: { 
-        guest: { select: { fullName: true, phone: true } },
+      include: {
+        guest: { select: { id: true, fullName: true, phone: true, email: true } },
+        company: { select: { id: true, name: true, phone: true, email: true } },
         room: { select: { roomNumber: true, type: true } }
       },
       orderBy: { room: { roomNumber: 'asc' } }

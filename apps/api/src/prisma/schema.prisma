@@ -388,6 +388,7 @@ model Booking {
   serviceRequests   ServiceRequest[]
   extensionRequests ExtensionRequest[]
   invoices          Invoice[]
+  invoiceBookings   InvoiceBooking[]
   guests            BookingGuest[]
 
   @@map("bookings")
@@ -842,10 +843,25 @@ model Invoice {
   hotel   Hotel    @relation(fields: [hotelId], references: [id])
   booking Booking? @relation(fields: [bookingId], references: [id])
   company Company? @relation(fields: [companyId], references: [id])
+  invoiceBookings InvoiceBooking[]
 
   @@index([hotelId, type])
   @@index([hotelId, status])
   @@map("invoices")
+}
+
+model InvoiceBooking {
+  id        String  @id @default(uuid())
+  invoiceId String
+  bookingId String
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@unique([invoiceId, bookingId])
+  @@index([invoiceId])
+  @@index([bookingId])
+  @@map("invoice_bookings")
 }
 
 // ─── DEVELOPER / API INTEGRATION ─────────────────────

@@ -34,6 +34,17 @@ export function useRegisteredGuests(search?: string) {
   })
 }
 
+export function useGuestStats() {
+  return useQuery({
+    queryKey: ['guest-stats'],
+    queryFn: async () => {
+      const res = await api.get('/guests/stats')
+      return res.data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useUpdateGuest() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -44,6 +55,7 @@ export function useUpdateGuest() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['guests'] })
       queryClient.invalidateQueries({ queryKey: ['guests', data.id] })
+      queryClient.invalidateQueries({ queryKey: ['guest-stats'] })
     }
   })
 }

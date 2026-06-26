@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getGuests, getGuest, createGuest, updateGuest, getRegisteredGuests } from '../controllers/guests.controller'
+import { getGuests, getGuest, createGuest, updateGuest, getRegisteredGuests, getGuestStats } from '../controllers/guests.controller'
 import { authenticate } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
 import { z } from 'zod'
@@ -18,6 +18,7 @@ const guestSchema = z.object({
 })
 
 router.get('/', getGuests)
+router.get('/stats', getGuestStats)
 router.get('/registered', getRegisteredGuests)
 router.get('/:id', getGuest)
 router.post('/', validate(guestSchema), createGuest)
