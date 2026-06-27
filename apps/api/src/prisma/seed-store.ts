@@ -122,7 +122,7 @@ async function main() {
     {
       id: 'po-003',
       poNumber: 'PO-2025-003',
-      status: 'DRAFT',
+      status: 'PENDING',
       supplierId: 'sup-001',
       totalAmount: 140000,
       notes: 'Urgent — items below minimum stock',
@@ -155,7 +155,7 @@ async function main() {
     {
       id: 'po-001',
       poNumber: 'PO-2025-001',
-      status: 'SENT_TO_SUPPLIER',
+      status: 'PENDING',
       supplierId: 'sup-003',
       totalAmount: 340000,
       notes: 'Monthly linen restock',

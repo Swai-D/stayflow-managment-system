@@ -1,8 +1,35 @@
-import { PrismaClient, PaymentMethod, PaymentStatus, BookingStatus, BookingSource, BookingType, ChargeStatus, InvoiceStatus, InvoiceType, HousekeepingStatus, ExpenseCategory, NotificationType, NotificationChannel } from '@prisma/client'
+import {
+  PrismaClient,
+  PaymentMethod,
+  PaymentStatus,
+  BookingStatus,
+  BookingSource,
+  BookingType,
+  ChargeStatus,
+  InvoiceStatus,
+  InvoiceType,
+  HousekeepingStatus,
+  ExpenseCategory,
+  NotificationType,
+  NotificationChannel,
+  POStatus,
+  TransactionType,
+  StoreCategory,
+  StockUnit,
+  RoomStatus,
+  RoomType,
+  AddonCategory,
+  IdType,
+  ServiceRequestType,
+  ServiceRequestStatus,
+  ExtensionRequestStatus,
+  RoomServiceOrderStatus,
+  GuestAccountStatus,
+} from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import * as fs from 'fs'
 import * as path from 'path'
-import { generateBookingRef, generateInvoiceNumber } from '../utils/generateRef'
+import { generateBookingRef, generateInvoiceNumber, generateReceiptNumber } from '../utils/generateRef'
 
 const prisma = new PrismaClient()
 
@@ -34,45 +61,115 @@ function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+function randomFloat(min: number, max: number, decimals = 2) {
+  const val = Math.random() * (max - min) + min
+  return Number(val.toFixed(decimals))
+}
+
 function pickOne<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function pickSome<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5)
+  return shuffled.slice(0, count)
 }
 
 function randomDate(start: Date, end: Date) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
 }
 
+function dateKey(d: Date) {
+  return startOfDay(d).toISOString().split('T')[0]
+}
+
+function chance(percent: number) {
+  return Math.random() < percent
+}
+
+// In-memory store stock ledger so we can seed transactions and keep currentStock consistent
+const stockState = new Map<string, number>()
+const stockCost = new Map<string, number>()
+const storeItemMap = new Map<string, any>()
+
+async function adjustStock(
+  itemId: string,
+  delta: number,
+  type: TransactionType,
+  reference: string,
+  notes: string,
+  performedById: string
+) {
+  const current = stockState.get(itemId) ?? 0
+  const absDelta = Math.abs(delta)
+  let next = current
+  if (type === 'STOCK_IN' || (type === 'ADJUSTMENT' && delta > 0)) {
+    next = current + absDelta
+  } else if (type === 'STOCK_OUT' || type === 'WASTAGE') {
+    next = current - absDelta
+  } else if (type === 'ADJUSTMENT') {
+    next = current + delta
+  }
+
+  if ((type === 'STOCK_OUT' || type === 'WASTAGE') && next < 0) {
+    console.warn(`   ⚠️ Insufficient stock for ${itemId}; skipping ${type}`)
+    return null
+  }
+
+  await prisma.storeItem.update({ where: { id: itemId }, data: { currentStock: next } })
+  const tx = await prisma.storeTransaction.create({
+    data: {
+      itemId,
+      type,
+      quantity: absDelta,
+      unitCost: stockCost.get(itemId) ?? 0,
+      balanceBefore: current,
+      balanceAfter: next,
+      reference,
+      notes,
+      performedById,
+    },
+  })
+  stockState.set(itemId, next)
+  return tx
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 async function main() {
   console.log('🌱 Seeding FULL StayFlow dataset...')
 
-  // 1. Hotel + users
   const hotel = await seedHotelAndUsers()
   const admin = await prisma.user.findFirstOrThrow({ where: { email: 'admin@buffalo-hotel.co.tz' } })
   const receptionist = await prisma.user.findFirstOrThrow({ where: { email: 'reception@buffalo-hotel.co.tz' } })
   const housekeepingUser = await prisma.user.findFirstOrThrow({ where: { email: 'housekeeping@buffalo-hotel.co.tz' } })
+  const waiter = await prisma.user.findFirstOrThrow({ where: { email: 'waiter@buffalo-hotel.co.tz' } })
 
-  // 2. Clean all existing data (keep hotel/users)
   await cleanAllData()
 
-  // 3. Seed lookup data
   const rooms = await seedRooms(hotel.id)
   const addons = await seedAddonServices()
   const suppliers = await seedSuppliers(hotel.id)
   const storeItems = await seedStoreItems(hotel.id, suppliers)
+
+  // Keep an in-memory ledger of stock levels
+  for (const item of storeItems) {
+    stockState.set(item.id, item.currentStock)
+    stockCost.set(item.id, item.unitCost)
+  }
+
   await seedPurchaseOrders(hotel.id, admin.id, storeItems, suppliers)
-  await seedStoreTransactions(admin.id, storeItems)
+  await seedStoreTransactions(admin.id)
   await seedExpenses(hotel.id, admin.id)
 
-  // 4. Seed guests & companies
   const guests = await seedGuests()
   const companies = await seedCompanies(hotel.id)
 
-  // 5. Seed bookings with related data
   await seedBookingsAndRelated({
     hotelId: hotel.id,
     adminId: admin.id,
     receptionistId: receptionist.id,
+    housekeepingUserId: housekeepingUser.id,
+    waiterId: waiter.id,
     rooms,
     addons,
     storeItems,
@@ -80,12 +177,11 @@ async function main() {
     companies,
   })
 
-  // 6. Seed housekeeping logs
+  await seedExtraRequests(hotel.id)
   await seedHousekeepingLogs(housekeepingUser.id, rooms)
 
   console.log('\n🎉 Full seeding completed!')
   console.log('   Login: admin@buffalo-hotel.co.tz / Admin@2026!')
-  console.log('   Every dashboard section now has sample data to test.')
 }
 
 // ─── Seeders ─────────────────────────────────────────────────────────────────
@@ -127,7 +223,7 @@ async function seedHotelAndUsers() {
         { name: 'Airtel Money', number: '0689 123 456', network: 'Airtel' },
         { name: 'Mixx by Yas (Tigo Pesa)', number: '0655 123 456', network: 'Tigo' },
       ] as any,
-    }
+    },
   })
   console.log('✅ Hotel:', hotel.name)
 
@@ -150,11 +246,10 @@ async function seedHotelAndUsers() {
         passwordHash,
         role: u.role as any,
         isActive: true,
-      }
+      },
     })
-    console.log('✅ User:', u.email)
   }
-
+  console.log(`✅ ${users.length} users created`)
   return hotel
 }
 
@@ -164,6 +259,7 @@ async function cleanAllData() {
   await prisma.serviceRequest.deleteMany()
   await prisma.extensionRequest.deleteMany()
   await prisma.guestAccount.deleteMany()
+  await prisma.invoiceBooking.deleteMany()
   await prisma.receipt.deleteMany()
   await prisma.payment.deleteMany()
   await prisma.invoice.deleteMany()
@@ -195,9 +291,8 @@ async function seedRooms(hotelId: string) {
   )
   const rows: any[] = roomsData.sheets['HOTEL STOCK'].rows
 
-  function normalizeRoomType(type: string): string {
+  function normalizeRoomType(type: string): RoomType {
     const t = type.trim().toLowerCase()
-    if (t === 'standard') return 'standard'
     if (t === 'deluxe') return 'deluxe'
     if (t === 'twin') return 'twin'
     if (t === 'tripple' || t === 'triple') return 'triple'
@@ -235,7 +330,7 @@ async function seedRooms(hotelId: string) {
         beds,
         capacity,
         amenities: ['WiFi', 'AC', 'TV'],
-      }
+      },
     })
     created.push(room)
   }
@@ -245,12 +340,12 @@ async function seedRooms(hotelId: string) {
 
 async function seedAddonServices() {
   const addons = [
-    { name: 'Chakula cha Asubuhi (Ziada)', nameEn: 'Extra Breakfast', price: 15000, category: 'food' as const },
-    { name: 'Chakula cha Mchana', nameEn: 'Lunch', price: 20000, category: 'food' as const },
-    { name: 'Chakula cha Jioni', nameEn: 'Dinner', price: 25000, category: 'food' as const },
-    { name: 'Kinywaji (Bar)', nameEn: 'Beverage (Bar)', price: 5000, category: 'beverage' as const },
-    { name: 'Usafiri wa Uwanja wa Ndege', nameEn: 'Airport Transfer', price: 50000, category: 'transport' as const },
-    { name: 'Dobi (Laundry)', nameEn: 'Laundry Service', price: 10000, category: 'laundry' as const },
+    { name: 'Chakula cha Asubuhi (Ziada)', nameEn: 'Extra Breakfast', price: 15000, category: 'food' as AddonCategory },
+    { name: 'Chakula cha Mchana', nameEn: 'Lunch', price: 20000, category: 'food' as AddonCategory },
+    { name: 'Chakula cha Jioni', nameEn: 'Dinner', price: 25000, category: 'food' as AddonCategory },
+    { name: 'Kinywaji (Bar)', nameEn: 'Beverage (Bar)', price: 5000, category: 'beverage' as AddonCategory },
+    { name: 'Usafiri wa Uwanja wa Ndege', nameEn: 'Airport Transfer', price: 50000, category: 'transport' as AddonCategory },
+    { name: 'Dobi (Laundry)', nameEn: 'Laundry Service', price: 10000, category: 'laundry' as AddonCategory },
   ]
   const created = []
   for (const addon of addons) {
@@ -268,6 +363,7 @@ async function seedSuppliers(hotelId: string) {
     { name: 'Karibu Textiles', phone: '+255712000003', email: 'karibu.textiles@gmail.com', address: 'Industrial Area', paymentTerms: 'Cash on delivery', notes: 'Linen supplier' },
     { name: 'Safari Distributors', phone: '+255712000004', email: 'orders@safaridist.co.tz', address: 'Moshi', paymentTerms: '7 days net', notes: 'Soft drinks & water' },
     { name: 'Jumbo Foods', phone: '+255712000005', email: 'sales@jumbofoods.co.tz', address: 'Arusha', paymentTerms: '30 days net', notes: 'Dry foods & kitchen supplies' },
+    { name: 'Kilimanjaro Fresh Produce', phone: '+255712000006', email: 'fresh@kiliproduce.co.tz', address: 'Moshi', paymentTerms: 'Cash on delivery', notes: 'Vegetables & fruits' },
   ]
 
   const created = []
@@ -280,7 +376,7 @@ async function seedSuppliers(hotelId: string) {
 }
 
 async function seedStoreItems(hotelId: string, suppliers: any[]) {
-  const findSupplier = (name: string) => suppliers.find(s => s.name.includes(name))?.id
+  const findSupplier = (name: string) => suppliers.find((s) => s.name.includes(name))?.id
 
   const itemsData = [
     // Bar Stock
@@ -303,6 +399,7 @@ async function seedStoreItems(hotelId: string, suppliers: any[]) {
     { name: 'Rice (25kg bag)', sku: 'FB-014', category: 'FB', subCategory: 'Dry Foods', unit: 'KG', currentStock: 75, minimumStock: 25, maximumStock: 200, unitCost: 2200, sellingPrice: null, isSellable: false, supplierName: 'Jumbo Foods' },
     { name: 'Cooking Oil (20L)', sku: 'FB-015', category: 'FB', subCategory: 'Dry Foods', unit: 'LTR', currentStock: 40, minimumStock: 20, maximumStock: 100, unitCost: 4500, sellingPrice: null, isSellable: false, supplierName: 'Jumbo Foods' },
     { name: 'Sugar (50kg)', sku: 'FB-016', category: 'FB', subCategory: 'Dry Foods', unit: 'KG', currentStock: 50, minimumStock: 20, maximumStock: 100, unitCost: 1800, sellingPrice: null, isSellable: false, supplierName: 'Jumbo Foods' },
+    { name: 'Fresh Vegetables Pack', sku: 'FB-017', category: 'FB', subCategory: 'Dry Foods', unit: 'PCS', currentStock: 15, minimumStock: 10, maximumStock: 40, unitCost: 5000, sellingPrice: null, isSellable: false, supplierName: 'Kilimanjaro Fresh Produce' },
     // Hotel
     { name: 'Bath Towel (Large)', sku: 'HT-001', category: 'HOTEL', subCategory: 'Linen & Towels', unit: 'PCS', currentStock: 20, minimumStock: 16, maximumStock: 40, unitCost: 8000, sellingPrice: null, isSellable: false, supplierName: 'Karibu Textiles' },
     { name: 'Bed Sheet (King)', sku: 'HT-002', category: 'HOTEL', subCategory: 'Linen & Towels', unit: 'PCS', currentStock: 12, minimumStock: 8, maximumStock: 24, unitCost: 15000, sellingPrice: null, isSellable: false, supplierName: 'Karibu Textiles' },
@@ -311,6 +408,7 @@ async function seedStoreItems(hotelId: string, suppliers: any[]) {
     { name: 'Toilet Paper (roll)', sku: 'HT-005', category: 'HOTEL', subCategory: 'Bathroom Amenities', unit: 'ROLL', currentStock: 30, minimumStock: 24, maximumStock: 100, unitCost: 500, sellingPrice: null, isSellable: false, supplierName: 'Morogoro General Supplies' },
     { name: 'Garbage Bags (roll)', sku: 'HT-006', category: 'HOTEL', subCategory: 'Cleaning Supplies', unit: 'ROLL', currentStock: 5, minimumStock: 6, maximumStock: 24, unitCost: 2000, sellingPrice: null, isSellable: false, supplierName: 'Morogoro General Supplies' },
     { name: 'Floor Detergent (5L)', sku: 'HT-007', category: 'HOTEL', subCategory: 'Cleaning Supplies', unit: 'LTR', currentStock: 4, minimumStock: 5, maximumStock: 20, unitCost: 3500, sellingPrice: null, isSellable: false, supplierName: 'Morogoro General Supplies' },
+    { name: 'Air Freshener', sku: 'HT-008', category: 'HOTEL', subCategory: 'Cleaning Supplies', unit: 'PCS', currentStock: 10, minimumStock: 8, maximumStock: 30, unitCost: 2500, sellingPrice: null, isSellable: false, supplierName: 'Morogoro General Supplies' },
   ]
 
   const created = []
@@ -332,66 +430,97 @@ async function seedStoreItems(hotelId: string, suppliers: any[]) {
         isSellable: item.isSellable,
         isActive: true,
         supplierId,
-      }
+      },
     })
     created.push(createdItem)
+    storeItemMap.set(createdItem.id, createdItem)
   }
   console.log(`✅ ${created.length} store items created`)
   return created
 }
 
 async function seedPurchaseOrders(hotelId: string, adminId: string, storeItems: any[], suppliers: any[]) {
-  const findItem = (sku: string) => storeItems.find(i => i.sku === sku)!
+  const findItem = (sku: string) => storeItems.find((i) => i.sku === sku)!
+  const findSupplier = (name: string) => suppliers.find((s) => s.name.includes(name))!.id
 
   const posData = [
     {
       poNumber: 'PO-2026-001',
-      status: 'RECEIVED',
-      supplierId: suppliers.find(s => s.name.includes('Tanzania Breweries'))!.id,
-      totalAmount: 86400,
+      status: 'RECEIVED' as POStatus,
+      supplierId: findSupplier('Tanzania Breweries'),
+      totalAmount: 201600,
       notes: 'Monthly bar stock delivery',
-      expectedDelivery: addDays(new Date(), -10),
-      receivedAt: addDays(new Date(), -9),
+      expectedDelivery: addDays(new Date(), -15),
+      receivedAt: addDays(new Date(), -14),
       items: [
         { itemId: findItem('FB-001').id, quantityOrdered: 48, quantityReceived: 48, unitCost: 1800, totalCost: 86400 },
-      ]
+        { itemId: findItem('FB-002').id, quantityOrdered: 36, quantityReceived: 36, unitCost: 1800, totalCost: 64800 },
+        { itemId: findItem('FB-003').id, quantityOrdered: 24, quantityReceived: 24, unitCost: 1900, totalCost: 45600 },
+      ],
     },
     {
       poNumber: 'PO-2026-002',
-      status: 'SENT_TO_SUPPLIER',
-      supplierId: suppliers.find(s => s.name.includes('Karibu Textiles'))!.id,
+      status: 'PENDING' as POStatus,
+      supplierId: findSupplier('Karibu Textiles'),
       totalAmount: 340000,
       notes: 'Quarterly linen restock',
       expectedDelivery: addDays(new Date(), 3),
+      receivedAt: null,
       items: [
         { itemId: findItem('HT-001').id, quantityOrdered: 20, quantityReceived: 0, unitCost: 8000, totalCost: 160000 },
         { itemId: findItem('HT-002').id, quantityOrdered: 12, quantityReceived: 0, unitCost: 15000, totalCost: 180000 },
-      ]
+      ],
     },
     {
       poNumber: 'PO-2026-003',
-      status: 'DRAFT',
-      supplierId: suppliers.find(s => s.name.includes('Morogoro General'))!.id,
+      status: 'PENDING' as POStatus,
+      supplierId: findSupplier('Morogoro General'),
       totalAmount: 110000,
       notes: 'Urgent — amenities below minimum stock',
       expectedDelivery: addDays(new Date(), 2),
+      receivedAt: null,
       items: [
         { itemId: findItem('HT-003').id, quantityOrdered: 60, quantityReceived: 0, unitCost: 1200, totalCost: 72000 },
         { itemId: findItem('HT-004').id, quantityOrdered: 40, quantityReceived: 0, unitCost: 800, totalCost: 32000 },
         { itemId: findItem('HT-006').id, quantityOrdered: 3, quantityReceived: 0, unitCost: 2000, totalCost: 6000 },
-      ]
+      ],
     },
     {
       poNumber: 'PO-2026-004',
-      status: 'APPROVED',
-      supplierId: suppliers.find(s => s.name.includes('Safari Distributors'))!.id,
+      status: 'CLOSED' as POStatus,
+      supplierId: findSupplier('Safari Distributors'),
       totalAmount: 72000,
       notes: 'Soft drinks weekly order',
-      expectedDelivery: addDays(new Date(), 1),
+      expectedDelivery: addDays(new Date(), -5),
+      receivedAt: addDays(new Date(), -4),
       items: [
-        { itemId: findItem('FB-005').id, quantityOrdered: 60, quantityReceived: 0, unitCost: 600, totalCost: 36000 },
-        { itemId: findItem('FB-006').id, quantityOrdered: 90, quantityReceived: 0, unitCost: 400, totalCost: 36000 },
-      ]
+        { itemId: findItem('FB-005').id, quantityOrdered: 60, quantityReceived: 60, unitCost: 600, totalCost: 36000 },
+        { itemId: findItem('FB-006').id, quantityOrdered: 90, quantityReceived: 90, unitCost: 400, totalCost: 36000 },
+      ],
+    },
+    {
+      poNumber: 'PO-2026-005',
+      status: 'RECEIVED' as POStatus,
+      supplierId: findSupplier('Jumbo Foods'),
+      totalAmount: 95500,
+      notes: 'Dry foods delivery',
+      expectedDelivery: addDays(new Date(), -10),
+      receivedAt: addDays(new Date(), -9),
+      items: [
+        { itemId: findItem('FB-014').id, quantityOrdered: 25, quantityReceived: 25, unitCost: 2200, totalCost: 55000 },
+        { itemId: findItem('FB-015').id, quantityOrdered: 5, quantityReceived: 5, unitCost: 4500, totalCost: 22500 },
+        { itemId: findItem('FB-016').id, quantityOrdered: 10, quantityReceived: 10, unitCost: 1800, totalCost: 18000 },
+      ],
+    },
+    {
+      poNumber: 'PO-2026-006',
+      status: 'PENDING' as POStatus,
+      supplierId: findSupplier('Kilimanjaro Fresh Produce'),
+      totalAmount: 75000,
+      notes: 'Weekly vegetables & fruits',
+      expectedDelivery: addDays(new Date(), 1),
+      receivedAt: null,
+      items: [{ itemId: findItem('FB-017').id, quantityOrdered: 15, quantityReceived: 0, unitCost: 5000, totalCost: 75000 }],
     },
   ]
 
@@ -400,7 +529,7 @@ async function seedPurchaseOrders(hotelId: string, adminId: string, storeItems: 
       data: {
         hotelId,
         poNumber: po.poNumber,
-        status: po.status as any,
+        status: po.status,
         supplierId: po.supplierId,
         totalAmount: po.totalAmount,
         notes: po.notes,
@@ -408,7 +537,7 @@ async function seedPurchaseOrders(hotelId: string, adminId: string, storeItems: 
         receivedAt: po.receivedAt,
         createdById: adminId,
         items: {
-          create: po.items.map(i => ({
+          create: po.items.map((i) => ({
             itemId: i.itemId,
             quantityOrdered: i.quantityOrdered,
             quantityReceived: i.quantityReceived,
@@ -416,97 +545,125 @@ async function seedPurchaseOrders(hotelId: string, adminId: string, storeItems: 
             totalCost: i.totalCost,
           })),
         },
-      }
+      },
     })
+
   }
   console.log(`✅ ${posData.length} purchase orders created`)
 }
 
-async function seedStoreTransactions(adminId: string, storeItems: any[]) {
-  const findItem = (sku: string) => storeItems.find(i => i.sku === sku)!
-  const txs = [
-    { itemId: findItem('FB-001').id, type: 'STOCK_IN', quantity: 48, unitCost: 1800, balanceBefore: 0, balanceAfter: 48, reference: 'PO-2026-001', notes: 'Delivery received from TBL' },
-    { itemId: findItem('FB-002').id, type: 'STOCK_IN', quantity: 36, unitCost: 1800, balanceBefore: 0, balanceAfter: 36, reference: 'PO-2026-001', notes: 'Delivery received from TBL' },
-    { itemId: findItem('FB-005').id, type: 'STOCK_IN', quantity: 60, unitCost: 600, balanceBefore: 0, balanceAfter: 60, reference: 'PO-2026-004', notes: 'Soft drinks delivery' },
-    { itemId: findItem('FB-006').id, type: 'STOCK_IN', quantity: 40, unitCost: 400, balanceBefore: 0, balanceAfter: 40, reference: 'PO-2026-004', notes: 'Water delivery' },
-    { itemId: findItem('FB-001').id, type: 'STOCK_OUT', quantity: 4, unitCost: 1800, balanceBefore: 48, balanceAfter: 44, reference: 'Room 101', notes: 'Guest room charge' },
-    { itemId: findItem('FB-009').id, type: 'STOCK_OUT', quantity: 2, unitCost: 3000, balanceBefore: 99, balanceAfter: 97, reference: 'Kitchen', notes: 'Breakfast served' },
-    { itemId: findItem('HT-003').id, type: 'STOCK_OUT', quantity: 4, unitCost: 1200, balanceBefore: 12, balanceAfter: 8, reference: 'Housekeeping', notes: 'Room replenishment' },
-    { itemId: findItem('HT-005').id, type: 'STOCK_OUT', quantity: 12, unitCost: 500, balanceBefore: 42, balanceAfter: 30, reference: 'Housekeeping', notes: 'Room replenishment' },
-    { itemId: findItem('FB-007').id, type: 'WASTAGE', quantity: 2, unitCost: 1500, balanceBefore: 22, balanceAfter: 20, reference: undefined, notes: 'Expired — not sold' },
-    { itemId: findItem('HT-001').id, type: 'ADJUSTMENT', quantity: 20, unitCost: 8000, balanceBefore: 0, balanceAfter: 20, reference: 'Stock count', notes: 'Stock count correction' },
-  ]
+async function seedStoreTransactions(adminId: string) {
+  const allIds = Array.from(stockState.keys())
+  const fbItems = allIds.filter((id) => storeItemMap.get(id)?.category === 'FB')
+  const amenityItems = allIds.filter((id) => {
+    const item = storeItemMap.get(id)
+    return item?.category === 'HOTEL' && item?.subCategory?.includes('Bathroom')
+  })
 
-  for (const tx of txs) {
-    await prisma.storeTransaction.create({
-      data: {
-        itemId: tx.itemId,
-        type: tx.type as any,
-        quantity: tx.quantity,
-        unitCost: tx.unitCost,
-        balanceBefore: tx.balanceBefore,
-        balanceAfter: tx.balanceAfter,
-        reference: tx.reference,
-        notes: tx.notes,
-        performedById: adminId,
-      }
-    })
+  let txCount = 0
+  // Random F&B stock-outs tied to room service over the last 30 days
+  for (let i = 0; i < 45; i++) {
+    const itemId = pickOne(fbItems)
+    const qty = randomInt(1, 4)
+    const room = randomInt(101, 130)
+    const tx = await adjustStock(itemId, qty, 'STOCK_OUT', `Room ${room}`, `Room charge / room service`, adminId)
+    if (tx) txCount++
   }
-  console.log(`✅ ${txs.length} store transactions created`)
+
+  // Housekeeping consumption of amenities
+  for (let i = 0; i < 30; i++) {
+    const itemId = pickOne(amenityItems)
+    const qty = randomInt(1, 5)
+    const room = randomInt(101, 130)
+    const tx = await adjustStock(itemId, qty, 'STOCK_OUT', `Room ${room}`, `Housekeeping consumption`, adminId)
+    if (tx) txCount++
+  }
+
+  // Some wastage and adjustments
+  const wastageTargets = allIds.filter((id) => storeItemMap.get(id)?.category === 'FB')
+  for (let i = 0; i < 6; i++) {
+    const itemId = pickOne(wastageTargets)
+    const qty = randomInt(1, 3)
+    await adjustStock(itemId, qty, 'WASTAGE', 'WASTAGE-ADJ', 'Expired / damaged stock', adminId)
+    txCount++
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const itemId = pickOne(allIds)
+    const qty = randomInt(1, 5) * (chance(0.5) ? 1 : -1)
+    await adjustStock(itemId, qty, 'ADJUSTMENT', 'Stock count', 'Physical stock count adjustment', adminId)
+    txCount++
+  }
+
+  console.log(`✅ ${txCount} additional store transactions created`)
 }
 
 async function seedExpenses(hotelId: string, adminId: string) {
-  const expenses = [
-    { amount: 450000, category: 'salary', description: 'Monthly staff salaries', date: addDays(new Date(), -5) },
-    { amount: 120000, category: 'utilities', description: 'Electricity bill', date: addDays(new Date(), -10) },
-    { amount: 85000, category: 'utilities', description: 'Water bill', date: addDays(new Date(), -12) },
-    { amount: 65000, category: 'maintenance', description: 'AC repair Room 203', date: addDays(new Date(), -3) },
-    { amount: 220000, category: 'supplies', description: 'Monthly housekeeping supplies', date: addDays(new Date(), -7) },
-    { amount: 150000, category: 'marketing', description: 'Social media campaign', date: addDays(new Date(), -15) },
-    { amount: 35000, category: 'other', description: 'Office stationery', date: addDays(new Date(), -2) },
-    { amount: 180000, category: 'supplies', description: 'Kitchen restock', date: addDays(new Date(), -8) },
-  ]
+  const today = new Date()
+  const categories: ExpenseCategory[] = ['salary', 'utilities', 'maintenance', 'supplies', 'marketing', 'other']
+  const descriptions: Record<ExpenseCategory, string[]> = {
+    salary: ['Monthly staff salaries', 'Overtime payment', 'Night-shift allowance', 'Casual labour wages'],
+    utilities: ['Electricity bill', 'Water bill', 'Internet & phone', 'Luku tokens', 'Generator fuel'],
+    maintenance: ['AC repair', 'Plumbing repair', 'Carpentry work', 'Painting touch-up', 'Lift service'],
+    supplies: ['Housekeeping supplies', 'Kitchen restock', 'Office stationery', 'Toiletries restock', 'Linen replacement'],
+    marketing: ['Social media campaign', 'Google ads', 'Brochure printing', 'Travel agent commission', 'Website maintenance'],
+    other: ['Bank charges', 'Licence renewal', 'Staff transport', 'Guest refund', 'Miscellaneous'],
+  }
 
-  for (const e of expenses) {
-    await prisma.expense.create({
+  const created = []
+  for (let i = 0; i < 80; i++) {
+    const category = pickOne(categories)
+    const date = randomDate(addDays(today, -90), today)
+    const amount = randomInt(20000, 600000)
+    const expense = await prisma.expense.create({
       data: {
         hotelId,
         userId: adminId,
-        amount: e.amount,
-        category: e.category as any,
-        description: e.description,
-        date: e.date,
-      }
+        amount,
+        category,
+        description: pickOne(descriptions[category]),
+        date,
+      },
     })
+    created.push(expense)
   }
-  console.log(`✅ ${expenses.length} expenses created`)
+  console.log(`✅ ${created.length} expenses created`)
 }
 
 async function seedGuests() {
-  const guestsData = [
-    { fullName: 'Juma Saidi', email: 'juma.saidi@email.co.tz', phone: '+255745000001', idType: 'national_id', idNumber: '19900101-00001-00', nationality: 'Tanzanian' },
-    { fullName: 'Amina Hassan', email: 'amina.hassan@email.co.tz', phone: '+255745000002', idType: 'national_id', idNumber: '19910202-00002-00', nationality: 'Tanzanian' },
-    { fullName: 'John Smith', email: 'john.smith@email.com', phone: '+255745000003', idType: 'passport', idNumber: 'A12345678', nationality: 'British' },
-    { fullName: 'Marie Dubois', email: 'marie.dubois@email.fr', phone: '+255745000004', idType: 'passport', idNumber: 'FR99887766', nationality: 'French' },
-    { fullName: 'Peter Müller', email: 'peter.mueller@email.de', phone: '+255745000005', idType: 'passport', idNumber: 'DE11223344', nationality: 'German' },
-    { fullName: 'Grace Mwangi', email: 'grace.mwangi@email.co.tz', phone: '+255745000006', idType: 'national_id', idNumber: '19880303-00003-00', nationality: 'Tanzanian' },
-    { fullName: 'David Kimaro', email: 'david.kimaro@email.co.tz', phone: '+255745000007', idType: 'national_id', idNumber: '19920404-00004-00', nationality: 'Tanzanian' },
-    { fullName: 'Sarah Johnson', email: 'sarah.j@email.com', phone: '+255745000008', idType: 'passport', idNumber: 'US55443322', nationality: 'American' },
-    { fullName: 'Emily Chen', email: 'emily.chen@email.cn', phone: '+255745000009', idType: 'passport', idNumber: 'CN66554433', nationality: 'Chinese' },
-    { fullName: 'Michael Brown', email: 'm.brown@email.au', phone: '+255745000010', idType: 'passport', idNumber: 'AU77665544', nationality: 'Australian' },
-    { fullName: 'Fatima Omar', email: 'fatima.omar@email.co.tz', phone: '+255745000011', idType: 'national_id', idNumber: '19950505-00005-00', nationality: 'Tanzanian' },
-    { fullName: 'James Wilson', email: 'james.wilson@email.uk', phone: '+255745000012', idType: 'passport', idNumber: 'UK88776655', nationality: 'British' },
-    { fullName: 'Lucy Anderson', email: 'lucy.a@email.ca', phone: '+255745000013', idType: 'passport', idNumber: 'CA99887766', nationality: 'Canadian' },
-    { fullName: 'Robert Taylor', email: 'robert.taylor@email.us', phone: '+255745000014', idType: 'passport', idNumber: 'US11223344', nationality: 'American' },
-    { fullName: 'Halima Rajab', email: 'halima.rajab@email.co.tz', phone: '+255745000015', idType: 'national_id', idNumber: '19960606-00006-00', nationality: 'Tanzanian' },
-    { fullName: 'Carlos Mendez', email: 'carlos.m@email.es', phone: '+255745000016', idType: 'passport', idNumber: 'ES22334455', nationality: 'Spanish' },
-    { fullName: 'Yuki Tanaka', email: 'yuki.tanaka@email.jp', phone: '+255745000017', idType: 'passport', idNumber: 'JP33445566', nationality: 'Japanese' },
-    { fullName: 'Ibrahim Musa', email: 'ibrahim.musa@email.co.tz', phone: '+255745000018', idType: 'national_id', idNumber: '19970707-00007-00', nationality: 'Tanzanian' },
+  const firstNames = [
+    'Juma', 'Amina', 'John', 'Marie', 'Peter', 'Grace', 'David', 'Sarah', 'Emily', 'Michael',
+    'Fatima', 'James', 'Lucy', 'Robert', 'Halima', 'Carlos', 'Yuki', 'Ibrahim', 'Nadia', 'William',
+    'Esther', 'Daniel', 'Joyce', 'Thomas', 'Sophia', 'Ali', 'Hannah', 'Joseph', 'Ruth', 'Kevin',
+    'Mariam', 'Eric', 'Christine', 'Francis', 'Asha', 'Mark', 'Lilian', 'Paul', 'Zainab', 'George',
+    'Victoria', 'Hassan', 'Janet', 'Edward', 'Rose', 'Samwel', 'Cecilia', 'Patrick', 'Agnes', 'Steven',
+  ]
+  const lastNames = [
+    'Saidi', 'Hassan', 'Smith', 'Dubois', 'Müller', 'Mwangi', 'Kimaro', 'Johnson', 'Chen', 'Brown',
+    'Omar', 'Wilson', 'Anderson', 'Taylor', 'Rajab', 'Mendez', 'Tanaka', 'Musa', 'Juma', 'White',
+    'Mollel', 'Ndosi', 'Kapinga', 'Lyimo', 'Mwakasege', 'Shoo', 'Mushi', 'Magessa', 'Kweka', 'Rwegasira',
+    'Joseph', 'Minja', 'Sumari', 'Mtui', 'Kisambu', 'Kessy', 'Massawe', 'Mrosso', 'Nkinda', 'Mallya',
   ]
 
+  const nationalities = ['Tanzanian', 'British', 'American', 'German', 'French', 'Chinese', 'Australian', 'Canadian', 'Spanish', 'Japanese', 'Kenyan', 'Ugandan', 'South African', 'Rwandan']
+  const idTypes: IdType[] = ['national_id', 'passport', 'drivers_license']
+
   const created = []
-  for (const g of guestsData) {
-    const guest = await prisma.guest.create({ data: g as any })
+  for (let i = 0; i < 60; i++) {
+    const first = pickOne(firstNames)
+    const last = pickOne(lastNames)
+    const nationality = pickOne(nationalities)
+    const idType = nationality === 'Tanzanian' ? pickOne(['national_id', 'drivers_license']) : 'passport'
+    const guest = await prisma.guest.create({
+      data: {
+        fullName: `${first} ${last}`,
+        email: `${first.toLowerCase()}.${last.toLowerCase()}${i}@email.com`,
+        phone: `+2557${randomInt(10, 99)}${String(randomInt(100000, 999999))}`,
+        idType,
+        idNumber: idType === 'passport' ? `${pickOne(['A','B','C','D','E','F'])}${randomInt(1000000, 9999999)}` : `${randomInt(1970, 2005)}${String(randomInt(1, 12)).padStart(2,'0')}${String(randomInt(1,28)).padStart(2,'0')}-${String(randomInt(1, 99999)).padStart(5,'0')}-${randomInt(0, 99)}`,
+        nationality,
+      } as any,
+    })
     created.push(guest)
   }
   console.log(`✅ ${created.length} guests created`)
@@ -518,6 +675,8 @@ async function seedCompanies(hotelId: string) {
     { name: 'Kazi Huru Platform', email: 'finance@kazihuru.co.tz', phone: '+255745100001', address: 'Dar es Salaam', tinNumber: '101-234-567', contactPerson: 'Emmanuel Joseph', notes: 'Corporate retainer' },
     { name: 'Safari Trails Ltd', email: 'accounts@safaritrails.co.tz', phone: '+255745100002', address: 'Arusha', tinNumber: '102-345-678', contactPerson: 'Neema Mollel', notes: 'Tour operator partner' },
     { name: 'Tanzania Mining Co', email: 'procurement@tzmining.co.tz', phone: '+255745100003', address: 'Mwanza', tinNumber: '103-456-789', contactPerson: 'John Magesa', notes: 'Frequent business guest' },
+    { name: 'Moshi Adventure Group', email: 'reservations@moshiadventure.co.tz', phone: '+255745100004', address: 'Moshi', tinNumber: '104-567-890', contactPerson: 'Grace Lema', notes: 'Kilimanjaro trek bookings' },
+    { name: 'Northern Circuit Logistics', email: 'ops@northerncircuit.co.tz', phone: '+255745100005', address: 'Arusha', tinNumber: '105-678-901', contactPerson: 'Daniel Shoo', notes: 'Monthly room block' },
   ]
 
   const created = []
@@ -529,13 +688,16 @@ async function seedCompanies(hotelId: string) {
   return created
 }
 
+// Will be populated while seeding bookings and used by service requests
+let seededCheckedInBookings: any[] = []
+
+// Replaced by seedExtraRequests which creates service requests after guest accounts exist
 async function seedHousekeepingLogs(userId: string, rooms: any[]) {
-  const statuses = ['clean', 'dirty', 'cleaning', 'inspected'] as HousekeepingStatus[]
+  const statuses: HousekeepingStatus[] = ['clean', 'dirty', 'cleaning', 'inspected']
   const notes = ['Ready for guest', 'Checkout cleanup needed', 'In progress', 'Inspected and ready', 'Deep cleaning requested']
 
   for (const room of rooms) {
-    // 2-3 logs per room
-    const count = randomInt(2, 3)
+    const count = randomInt(2, 4)
     for (let i = 0; i < count; i++) {
       await prisma.housekeepingLog.create({
         data: {
@@ -543,8 +705,8 @@ async function seedHousekeepingLogs(userId: string, rooms: any[]) {
           updatedById: userId,
           status: pickOne(statuses),
           notes: pickOne(notes),
-          updatedAt: addDays(new Date(), -randomInt(0, 7)),
-        }
+          updatedAt: addDays(new Date(), -randomInt(0, 14)),
+        },
       })
     }
   }
@@ -555,6 +717,8 @@ interface BookingSeedContext {
   hotelId: string
   adminId: string
   receptionistId: string
+  housekeepingUserId: string
+  waiterId: string
   rooms: any[]
   addons: any[]
   storeItems: any[]
@@ -562,220 +726,423 @@ interface BookingSeedContext {
   companies: any[]
 }
 
+interface SeededBooking {
+  booking: any
+  guest: any
+  company: any | null
+  room: any
+  guestAccountId?: string
+}
+
 async function seedBookingsAndRelated(ctx: BookingSeedContext) {
   const today = startOfDay(new Date())
-  const sellableItems = ctx.storeItems.filter(i => i.isSellable)
+  const sellableItems = ctx.storeItems.filter((i) => i.isSellable)
+  const roomSchedules = new Map<string, Array<[Date, Date]>>()
+  const createdBookings: SeededBooking[] = []
 
-  // Booking configs: status, relative checkIn, relative checkOut, count, paid?, roomCharges?
-  const configs: Array<{ status: BookingStatus; checkInOffset: number; checkOutOffset: number; count: number; paid: boolean; roomCharges: boolean; source: BookingSource; types: BookingType[] }> = [
-    { status: 'pending', checkInOffset: 3, checkOutOffset: 5, count: 4, paid: false, roomCharges: false, source: 'online_self', types: ['individual'] },
-    { status: 'confirmed', checkInOffset: 1, checkOutOffset: 4, count: 4, paid: false, roomCharges: false, source: 'staff_entry', types: ['individual', 'company'] },
-    { status: 'checked_in', checkInOffset: -2, checkOutOffset: 2, count: 5, paid: false, roomCharges: true, source: 'walk_in', types: ['individual', 'company'] },
-    { status: 'checked_out', checkInOffset: -5, checkOutOffset: -3, count: 6, paid: true, roomCharges: true, source: 'staff_entry', types: ['individual', 'company'] },
-    { status: 'checked_out', checkInOffset: -10, checkOutOffset: -8, count: 4, paid: true, roomCharges: true, source: 'online_self', types: ['individual'] },
-    { status: 'cancelled', checkInOffset: 7, checkOutOffset: 9, count: 2, paid: false, roomCharges: false, source: 'online_self', types: ['individual'] },
-    { status: 'no_show', checkInOffset: -1, checkOutOffset: 1, count: 2, paid: false, roomCharges: false, source: 'online_self', types: ['individual'] },
-    { status: 'late_checkout', checkInOffset: -3, checkOutOffset: 0, count: 1, paid: false, roomCharges: true, source: 'walk_in', types: ['individual'] },
-  ]
+  function overlaps(roomId: string, checkIn: Date, checkOut: Date) {
+    const list = roomSchedules.get(roomId) || []
+    const in0 = startOfDay(checkIn).getTime()
+    const out0 = startOfDay(checkOut).getTime()
+    return list.some(([inD, outD]) => in0 < outD.getTime() && out0 > inD.getTime())
+  }
 
-  let bookingCount = 0
-  for (const cfg of configs) {
-    for (let i = 0; i < cfg.count; i++) {
-      const bookingType = pickOne(cfg.types)
-      const isCompany = bookingType === 'company'
-      const company = isCompany ? pickOne(ctx.companies) : null
-      const guest = isCompany ? pickOne(ctx.guests) : ctx.guests[(bookingCount + i) % ctx.guests.length]
-      const room = ctx.rooms[(bookingCount + i) % ctx.rooms.length]
-      const checkIn = addDays(today, cfg.checkInOffset)
-      const checkOut = addDays(today, cfg.checkOutOffset)
-      const nights = calculateNights(checkIn, checkOut)
-      const roomTotal = Number(room.pricePerNight) * nights
-      const addonTotal = 0
-      const totalAmount = roomTotal + addonTotal
+  function trackBooking(roomId: string, checkIn: Date, checkOut: Date) {
+    const list = roomSchedules.get(roomId) || []
+    list.push([startOfDay(checkIn), startOfDay(checkOut)])
+    roomSchedules.set(roomId, list)
+  }
 
-      const booking = await prisma.booking.create({
-        data: {
-          bookingRef: await generateBookingRef(),
-          hotelId: ctx.hotelId,
-          guestId: guest.id,
-          companyId: company?.id || null,
-          roomId: room.id,
-          createdById: ctx.receptionistId,
-          source: cfg.source,
-          status: cfg.status,
-          bookingType,
-          checkIn,
-          checkOut,
-          actualCheckIn: cfg.status === 'checked_in' || cfg.status === 'checked_out' || cfg.status === 'late_checkout' ? addHours(checkIn, 14 + randomInt(0, 4)) : null,
-          actualCheckOut: cfg.status === 'checked_out' ? addHours(checkOut, 11 + randomInt(0, 3)) : null,
-          adults: randomInt(1, Math.min(2, room.capacity)),
-          children: room.capacity > 2 ? randomInt(0, 1) : 0,
-          roomTotal,
-          addonsTotal: addonTotal,
-          totalAmount,
-          paidAmount: cfg.paid ? totalAmount : 0,
-          balanceDue: cfg.paid ? 0 : totalAmount,
-          specialRequests: pickOne(['Ground floor please', 'Extra pillow', 'Airport transfer', 'Quiet room', null]),
-          internalNotes: pickOne(['Repeat guest', 'VIP', 'Late arrival expected', null]),
-        }
+  function deriveStatus(checkIn: Date, checkOut: Date): BookingStatus {
+    const cin = startOfDay(checkIn).getTime()
+    const cout = startOfDay(checkOut).getTime()
+    const now = today.getTime()
+
+    if (cout < now) {
+      // Past stay
+      const r = Math.random()
+      if (r < 0.12) return 'cancelled'
+      if (r < 0.18) return 'no_show'
+      return 'checked_out'
+    }
+    if (cin <= now && cout > now) {
+      // Current stay
+      return Math.random() < 0.85 ? 'checked_in' : 'late_checkout'
+    }
+    // Future stay
+    return Math.random() < 0.65 ? 'confirmed' : 'pending'
+  }
+
+  const targetCount = 150
+  for (let i = 0; i < targetCount; i++) {
+    // Random dates across last 60 days and next 30 days
+    const checkIn = addDays(today, randomInt(-55, 28))
+    const nights = randomInt(1, 5)
+    const checkOut = addDays(checkIn, nights)
+    const status = deriveStatus(checkIn, checkOut)
+
+    let room = pickOne(ctx.rooms)
+    let attempts = 0
+    while (overlaps(room.id, checkIn, checkOut) && attempts < 25) {
+      room = pickOne(ctx.rooms)
+      attempts++
+    }
+    trackBooking(room.id, checkIn, checkOut)
+
+    const bookingType: BookingType = Math.random() < 0.15 ? 'company' : 'individual'
+    const company = bookingType === 'company' ? pickOne(ctx.companies) : null
+    const guest = pickOne(ctx.guests)
+    const source: BookingSource = pickOne(['online_self', 'staff_entry', 'walk_in'])
+
+    const roomTotal = Number(room.pricePerNight) * nights
+    const initialTotal = roomTotal
+
+    const booking = await prisma.booking.create({
+      data: {
+        bookingRef: await generateBookingRef(),
+        hotelId: ctx.hotelId,
+        guestId: guest.id,
+        companyId: company?.id || null,
+        roomId: room.id,
+        createdById: ctx.receptionistId,
+        source,
+        status,
+        bookingType,
+        checkIn,
+        checkOut,
+        actualCheckIn:
+          status === 'checked_in' || status === 'checked_out' || status === 'late_checkout'
+            ? addHours(checkIn, 14 + randomInt(0, 4))
+            : null,
+        actualCheckOut: status === 'checked_out' ? addHours(checkOut, 11 + randomInt(0, 3)) : null,
+        adults: randomInt(1, Math.min(2, room.capacity)),
+        children: room.capacity > 2 ? randomInt(0, 1) : 0,
+        roomTotal,
+        addonsTotal: 0,
+        totalAmount: initialTotal,
+        paidAmount: 0,
+        balanceDue: initialTotal,
+        specialRequests: pickOne(['Ground floor please', 'Extra pillow', 'Airport transfer', 'Quiet room', 'Late check-in', null]),
+        internalNotes: pickOne(['Repeat guest', 'VIP', 'Late arrival expected', 'Online promo', null]),
+      },
+    })
+
+    // Booking guests
+    const bookingGuests: any[] = [
+      {
+        bookingId: booking.id,
+        fullName: guest.fullName,
+        phone: guest.phone,
+        email: guest.email,
+        nationality: guest.nationality,
+        idType: guest.idType,
+        idNumber: guest.idNumber,
+        ageCategory: 'adult',
+        isPrimary: true,
+      },
+    ]
+    if (booking.adults + booking.children > 1) {
+      bookingGuests.push({
+        bookingId: booking.id,
+        fullName: `Companion ${guest.fullName.split(' ')[0]}`,
+        phone: guest.phone,
+        email: null,
+        nationality: guest.nationality,
+        idType: null,
+        idNumber: null,
+        ageCategory: booking.children > 0 ? 'child' : 'adult',
+        isPrimary: false,
       })
+    }
+    await prisma.bookingGuest.createMany({ data: bookingGuests as any })
 
-      // Booking guests (primary + optional child)
-      const bookingGuests = [
-        {
-          bookingId: booking.id,
-          fullName: guest.fullName,
-          phone: guest.phone,
-          email: guest.email,
-          nationality: guest.nationality,
-          idType: guest.idType,
-          idNumber: guest.idNumber,
-          ageCategory: 'adult',
-          isPrimary: true,
-        }
-      ]
-      if (booking.adults + booking.children > 1) {
-        bookingGuests.push({
-          bookingId: booking.id,
-          fullName: `Companion ${guest.fullName.split(' ')[0]}`,
-          phone: guest.phone,
-          email: null,
-          nationality: guest.nationality,
-          idType: null,
-          idNumber: null,
-          ageCategory: booking.children > 0 ? 'child' : 'adult',
-          isPrimary: false,
-        })
-      }
-      await prisma.bookingGuest.createMany({ data: bookingGuests as any })
+    // Update room status for active/current stays
+    if (status === 'checked_in' || status === 'late_checkout') {
+      await prisma.room.update({ where: { id: room.id }, data: { status: 'occupied' } })
+    } else if (status === 'checked_out') {
+      await prisma.room.update({ where: { id: room.id }, data: { status: 'dirty' } })
+    }
 
-      // Update room status based on booking status
-      if (cfg.status === 'checked_in' || cfg.status === 'late_checkout') {
-        await prisma.room.update({ where: { id: room.id }, data: { status: 'occupied' } })
-      } else if (cfg.status === 'checked_out') {
-        await prisma.room.update({ where: { id: room.id }, data: { status: 'dirty' } })
-      }
-
-      // Addons for some bookings
-      if (cfg.status !== 'pending' && cfg.status !== 'cancelled' && cfg.status !== 'no_show' && Math.random() > 0.5) {
-        const addon = pickOne(ctx.addons)
+    // Addons for applicable bookings
+    let addonsTotal = 0
+    if (!['pending', 'cancelled', 'no_show'].includes(status) && chance(0.65)) {
+      const selectedAddons = pickSome(ctx.addons, randomInt(1, 3))
+      for (const addon of selectedAddons) {
         const qty = randomInt(1, 2)
+        const subtotal = Number(addon.price) * qty
+        addonsTotal += subtotal
         await prisma.bookingAddon.create({
           data: {
             bookingId: booking.id,
             addonId: addon.id,
             quantity: qty,
             unitPrice: addon.price,
-            subtotal: Number(addon.price) * qty,
-          }
+            subtotal,
+          },
         })
       }
+    }
 
-      // Room charges for checked-in/out bookings
-      if (cfg.roomCharges && sellableItems.length > 0) {
-        const chargeCount = randomInt(1, 3)
-        for (let c = 0; c < chargeCount; c++) {
-          const item = pickOne(sellableItems)
-          const qty = randomInt(1, 3)
-          const unitPrice = item.sellingPrice
-          const totalPrice = unitPrice * qty
-          await prisma.roomCharge.create({
-            data: {
-              bookingId: booking.id,
-              totalAmount: totalPrice,
-              status: cfg.paid ? 'SETTLED' : 'OPEN',
-              notes: pickOne(['Bar charge', 'Restaurant charge', 'Minibar', 'Room service']),
-              postedById: ctx.receptionistId,
-              settledAt: cfg.paid ? addHours(checkOut, 12) : null,
-              items: {
-                create: {
-                  itemId: item.id,
-                  itemName: item.name,
-                  quantity: qty,
-                  unitPrice,
-                  totalPrice,
-                }
-              }
-            }
-          })
-          // Update booking totals
-          await prisma.booking.update({
-            where: { id: booking.id },
-            data: {
-              totalAmount: { increment: totalPrice },
-              balanceDue: { increment: cfg.paid ? 0 : totalPrice },
-              paidAmount: { increment: cfg.paid ? totalPrice : 0 },
-            }
-          })
-        }
-      }
+    // Room charges for in-house / completed stays
+    let chargesTotal = 0
+    if (['checked_in', 'checked_out', 'late_checkout'].includes(status) && sellableItems.length > 0 && chance(0.85)) {
+      const chargeCount = randomInt(1, 4)
+      for (let c = 0; c < chargeCount; c++) {
+        const item = pickOne(sellableItems)
+        const qty = randomInt(1, 3)
+        const unitPrice = Number(item.sellingPrice)
+        const totalPrice = unitPrice * qty
+        chargesTotal += totalPrice
 
-      // Payments for paid bookings
-      if (cfg.paid) {
-        const methods: PaymentMethod[] = ['cash', 'mpesa', 'bank_transfer', 'visa']
-        const finalTotal = (await prisma.booking.findUnique({ where: { id: booking.id } }))!.totalAmount
-        await prisma.payment.create({
+        await prisma.roomCharge.create({
           data: {
             bookingId: booking.id,
-            receivedById: ctx.receptionistId,
-            amount: finalTotal,
-            method: pickOne(methods),
-            status: 'completed',
-            paidAt: addHours(checkOut, 12),
-            notes: 'Full payment received',
-          }
+            totalAmount: totalPrice,
+            status: 'SETTLED' as ChargeStatus,
+            notes: pickOne(['Bar charge', 'Restaurant charge', 'Minibar', 'Room service', 'Kitchen order']),
+            postedById: ctx.waiterId,
+            settledAt: status === 'checked_out' ? addHours(checkOut, 12) : addHours(checkIn, 20 + c),
+            items: {
+              create: {
+                itemId: item.id,
+                itemName: item.name,
+                quantity: qty,
+                unitPrice,
+                totalPrice,
+              },
+            },
+          },
         })
 
-        // Invoice record
+        // Deduct stock
+        await adjustStock(item.id, qty, 'STOCK_OUT', `Room ${room.roomNumber}`, `Room charge for ${booking.bookingRef}`, ctx.waiterId)
+      }
+    }
+
+    // Update totals after addons & charges
+    if (addonsTotal > 0 || chargesTotal > 0) {
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: {
+          addonsTotal: { increment: addonsTotal },
+          totalAmount: { increment: addonsTotal + chargesTotal },
+          balanceDue: { increment: addonsTotal + chargesTotal },
+        },
+      })
+    }
+
+    // Payments
+    let paidAmount = 0
+    const finalBooking = await prisma.booking.findUnique({ where: { id: booking.id } })
+    const totalDue = Number(finalBooking!.totalAmount)
+
+    if (status === 'checked_out') {
+      if (chance(0.88)) {
+        paidAmount = totalDue
+      } else if (chance(0.7)) {
+        paidAmount = Math.floor(totalDue * randomFloat(0.5, 0.85, 2))
+      }
+    } else if (status === 'checked_in' || status === 'late_checkout') {
+      if (chance(0.55)) {
+        paidAmount = Math.floor(totalDue * randomFloat(0.25, 0.6, 2))
+      }
+    } else if (status === 'confirmed') {
+      if (chance(0.35)) {
+        paidAmount = Math.floor(totalDue * randomFloat(0.3, 0.5, 2))
+      }
+    }
+
+    if (paidAmount > 0) {
+      const methods: PaymentMethod[] = ['cash', 'mpesa', 'bank_transfer', 'visa']
+      const paidAt = status === 'checked_out' ? addHours(checkOut, 12) : addHours(checkIn, 10 + randomInt(0, 12))
+      const payment = await prisma.payment.create({
+        data: {
+          bookingId: booking.id,
+          receivedById: ctx.receptionistId,
+          amount: paidAmount,
+          method: pickOne(methods),
+          status: 'completed',
+          paidAt,
+          notes: paidAmount >= totalDue ? 'Full payment received' : 'Partial payment / deposit',
+        },
+      })
+
+      await prisma.receipt.create({
+        data: {
+          bookingId: booking.id,
+          paymentId: payment.id,
+          receiptNumber: await generateReceiptNumber(),
+          pdfUrl: 'https://buffalo-hotel.co.tz/receipts/sample.pdf',
+          issuedById: ctx.receptionistId,
+          issuedAt: paidAt,
+        },
+      })
+
+      await prisma.booking.update({
+        where: { id: booking.id },
+        data: { paidAmount: { increment: paidAmount }, balanceDue: { decrement: paidAmount } },
+      })
+
+      // Invoice only when fully paid
+      if (paidAmount >= totalDue) {
         const invoice = await prisma.invoice.create({
           data: {
             hotelId: ctx.hotelId,
             invoiceNumber: await generateInvoiceNumber(),
-            type: isCompany ? 'company' : 'individual',
+            type: company ? 'company' : 'individual',
             status: 'paid',
             bookingId: booking.id,
             companyId: company?.id || null,
-            amount: finalTotal,
-            totalAmount: finalTotal,
-            paidAmount: finalTotal,
-            notes: `Invoice generated on check-out for ${booking.bookingRef}`,
-            paidAt: addHours(checkOut, 12),
-          }
+            amount: totalDue,
+            totalAmount: totalDue,
+            paidAmount: totalDue,
+            notes: `Invoice for ${booking.bookingRef}`,
+            paidAt,
+          },
         })
-
-        // Notification
-        await prisma.notification.create({
-          data: {
-            bookingId: booking.id,
-            type: 'payment_receipt',
-            channel: 'email',
-            recipient: company?.email || guest.email || guest.phone,
-            subject: `Payment received for ${booking.bookingRef}`,
-            body: `Thank you for your payment. Invoice ${invoice.invoiceNumber} is attached.`,
-            status: 'pending',
-          }
+        await prisma.invoiceBooking.create({
+          data: { invoiceId: invoice.id, bookingId: booking.id },
         })
       }
 
-      // Reviews for checked-out guests
-      if (cfg.status === 'checked_out' && Math.random() > 0.6) {
-        await prisma.review.create({
-          data: {
-            bookingId: booking.id,
-            guestId: guest.id,
-            rating: randomInt(3, 5),
-            comment: pickOne(['Great stay!', 'Friendly staff', 'Clean rooms', 'Good breakfast', 'Would recommend']),
-            isApproved: true,
-            isPublished: true,
-          }
-        })
-      }
-
-      bookingCount++
+      await prisma.notification.create({
+        data: {
+          bookingId: booking.id,
+          type: 'payment_receipt',
+          channel: company ? 'email' : 'sms',
+          recipient: company?.email || guest.email || guest.phone,
+          subject: `Payment received for ${booking.bookingRef}`,
+          body: `Thank you for your payment. Receipt issued.`,
+          status: 'pending',
+        },
+      })
     }
+
+    // Notification for confirmed / checked in bookings
+    if (status === 'confirmed' || status === 'checked_in') {
+      await prisma.notification.create({
+        data: {
+          bookingId: booking.id,
+          type: status === 'checked_in' ? 'check_in_reminder' : 'booking_confirmation',
+          channel: 'email',
+          recipient: guest.email || guest.phone,
+          subject: `Booking ${booking.bookingRef}`,
+          body: `Your reservation at Buffalo Hotel is ${status}.`,
+          status: 'pending',
+        },
+      })
+    }
+
+    // Reviews for a subset of checked-out guests
+    if (status === 'checked_out' && chance(0.45)) {
+      await prisma.review.create({
+        data: {
+          bookingId: booking.id,
+          guestId: guest.id,
+          rating: randomInt(3, 5),
+          comment: pickOne(['Great stay!', 'Friendly staff', 'Clean rooms', 'Good breakfast', 'Would recommend', 'Nice location', 'Comfortable bed']),
+          isApproved: true,
+          isPublished: true,
+        },
+      })
+    }
+
+    // Guest account for current/in-house bookings (used by service requests)
+    let guestAccountId: string | undefined
+    if ((status === 'checked_in' || status === 'late_checkout') && chance(0.6)) {
+      const names = guest.fullName.split(' ')
+      const account = await prisma.guestAccount.create({
+        data: {
+          email: `${booking.bookingRef.toLowerCase()}@guest.buffalo-hotel.co.tz`,
+          firstName: names[0],
+          lastName: names.slice(1).join(' ') || 'Guest',
+          phone: guest.phone,
+          status: 'ACTIVE',
+          linkedBookingId: booking.id,
+        } as any,
+      })
+      guestAccountId = account.id
+    }
+
+    createdBookings.push({ booking, guest, company, room, guestAccountId })
   }
 
-  console.log(`✅ ${bookingCount} bookings created with guests, charges, payments & invoices`)
+  seededCheckedInBookings = createdBookings.filter(
+    (b) => (b.booking.status === 'checked_in' || b.booking.status === 'late_checkout') && b.guestAccountId
+  )
+
+  console.log(`✅ ${createdBookings.length} bookings created with guests, addons, charges, payments & invoices`)
+}
+
+async function seedExtraRequests(hotelId: string) {
+  const withAccounts = seededCheckedInBookings
+  if (withAccounts.length === 0) return
+
+  const serviceTypes: ServiceRequestType[] = ['laundry', 'taxi', 'tour', 'housekeeping', 'other']
+  const serviceStatuses: ServiceRequestStatus[] = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']
+  const rsStatuses: RoomServiceOrderStatus[] = ['PENDING', 'PREPARING', 'DELIVERED', 'CANCELLED']
+  const extensionStatuses: ExtensionRequestStatus[] = ['PENDING', 'APPROVED', 'REJECTED']
+
+  const sellableItems = Array.from(storeItemMap.values()).filter((i: any) => i.isSellable && i.sellingPrice)
+
+  // Service requests
+  const serviceTargets = pickSome(withAccounts, Math.min(25, withAccounts.length))
+  for (const entry of serviceTargets) {
+    await prisma.serviceRequest.create({
+      data: {
+        requestId: `SR-${randomInt(10000, 99999)}`,
+        guestAccountId: entry.guestAccountId!,
+        bookingId: entry.booking.id,
+        type: pickOne(serviceTypes),
+        payload: { notes: 'Guest requested via dashboard' } as any,
+        status: pickOne(serviceStatuses),
+      },
+    })
+  }
+  console.log(`✅ ${serviceTargets.length} service requests created`)
+
+  // Room service orders
+  const rsTargets = pickSome(withAccounts, Math.min(18, withAccounts.length))
+  for (const entry of rsTargets) {
+    const itemCount = randomInt(1, 3)
+    const items = []
+    let total = 0
+    for (let i = 0; i < itemCount; i++) {
+      const item = pickOne(sellableItems)
+      const qty = randomInt(1, 3)
+      const price = Math.round(Number(item.sellingPrice) / 100) * 100
+      total += price * qty
+      items.push({ name: item.name, quantity: qty, unitPrice: price, totalPrice: price * qty })
+    }
+    await prisma.roomServiceOrder.create({
+      data: {
+        orderId: `RSO-${randomInt(10000, 99999)}`,
+        guestAccountId: entry.guestAccountId!,
+        bookingId: entry.booking.id,
+        items: items as any,
+        totalAmount: total,
+        notes: pickOne(['Please deliver by 8pm', 'Extra cutlery', 'No onions', null]),
+        status: pickOne(rsStatuses),
+      },
+    })
+  }
+  console.log(`✅ ${rsTargets.length} room service orders created`)
+
+  // Extension requests
+  const extTargets = pickSome(withAccounts, Math.min(12, withAccounts.length))
+  for (const entry of extTargets) {
+    const extra = randomInt(1, 3)
+    await prisma.extensionRequest.create({
+      data: {
+        bookingId: entry.booking.id,
+        extraNights: extra,
+        requestedNewCheckout: addDays(entry.booking.checkOut, extra),
+        reason: pickOne(['Flight delayed', 'Tour extended', 'Guest prefers to stay longer', 'Business meeting']),
+        status: pickOne(extensionStatuses),
+      },
+    })
+  }
+  console.log(`✅ ${extTargets.length} extension requests created`)
 }
 
 main()
