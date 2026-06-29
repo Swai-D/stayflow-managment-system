@@ -26,6 +26,8 @@ export interface AdviceResponse {
 
 const MAX_DAILY_REFRESHES = 3
 
+type ProviderName = 'groq' | 'cerebras' | 'openrouter' | 'grok' | 'gemini'
+
 export class AdvisorService {
   private dayKey(date = new Date()) {
     return startOfDay(date).toISOString()
@@ -426,59 +428,79 @@ ${bookingSources.map(s => `- ${s.source}: ${s.bookings} bookings, TZS ${s.revenu
 INSTRUCTIONS:
 1. Identify the biggest opportunity or threat based on the numbers.
 2. Give 3-5 prioritized recommendations (high/medium/low priority).
-3. Each recommendation must have: title (short, bold), message (2-3 sentences with specific numbers), type (success/danger/warning/info), and priority (high/medium/low).
+3. Each recommendation must have: title (short, plain text), message (2-3 sentences with specific numbers), type (success/danger/warning/info), and priority (high/medium/low).
 4. Focus on things like: pricing strategy, occupancy, expense control, marketing channels, room upgrades, staff efficiency, online bookings, seasonal promotions.
 5. If profit is negative or expense ratio > 40%, prioritize cost control.
 6. If occupancy < 50%, prioritize marketing/pricing.
 7. If RevPAR is low, suggest promotions or upsells.
 
-RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation, just valid JSON). Do not include any text before or after the JSON array:
-[
-  {
-    "type": "success|danger|warning|info",
-    "title": "Short title",
-    "message": "Detailed recommendation with numbers",
-    "priority": "high|medium|low"
+RETURN STRICTLY AS VALID JSON in this exact format (no markdown, no explanation, no code blocks, just valid JSON). Do not include any text before or after the JSON. Wrap the array inside an object with an "advice" key:
+{
+  "advice": [
+    {
+      "type": "success|danger|warning|info",
+      "title": "Short title",
+      "message": "Detailed recommendation with numbers",
+      "priority": "high|medium|low"
+    }
+  ]
+}
+`
   }
-]`
+
+  private providerModel(provider: ProviderName): string {
+    switch (provider) {
+      case 'groq': return process.env.AI_MODEL_GROQ || 'llama-3.3-70b-versatile'
+      case 'cerebras': return process.env.AI_MODEL_CEREBRAS || 'gpt-oss-120b'
+      case 'gemini': return process.env.AI_MODEL_GEMINI || 'gemini-2.0-flash'
+      case 'openrouter': return process.env.AI_MODEL_OPENROUTER || 'meta-llama/llama-3.3-70b-instruct:free'
+      case 'grok': return process.env.AI_MODEL_GROK || 'grok-2-latest'
+    }
+  }
+
+  private providerKey(provider: ProviderName): string | undefined {
+    switch (provider) {
+      case 'groq': return process.env.GROQ_API_KEY
+      case 'cerebras': return process.env.CEREBRAS_API_KEY
+      case 'gemini': return process.env.GEMINI_API_KEY
+      case 'openrouter': return process.env.OPENROUTER_API_KEY
+      case 'grok': return process.env.GROK_API_KEY
+    }
   }
 
   private async callLLM(prompt: string): Promise<BusinessAdvice[]> {
-    const primaryProvider = (process.env.AI_PROVIDER || 'openrouter') as 'openrouter' | 'grok' | 'gemini'
-    const primaryKey = process.env.AI_API_KEY
+    const primaryProvider = (process.env.AI_PROVIDER || 'groq') as ProviderName
+    const primaryKey = process.env.AI_API_KEY || this.providerKey(primaryProvider)
 
-    const providers: { name: string; call: () => Promise<BusinessAdvice[]> }[] = []
+    const providers: { name: ProviderName; call: () => Promise<BusinessAdvice[]> }[] = []
 
     if (primaryKey) {
       providers.push({ name: primaryProvider, call: () => this.callProvider(primaryProvider, prompt, primaryKey) })
     }
 
-    // Fallback order depends on the primary provider
-    const fallbackOrder: ('openrouter' | 'grok' | 'gemini')[] =
-      primaryProvider === 'openrouter' ? ['grok', 'gemini'] :
-      primaryProvider === 'grok' ? ['gemini', 'openrouter'] :
-      ['openrouter', 'grok']
+    const fallbackOrder: ProviderName[] = ['groq', 'cerebras', 'gemini', 'openrouter', 'grok']
 
     for (const p of fallbackOrder) {
-      const key = p === 'openrouter' ? process.env.OPENROUTER_API_KEY : p === 'grok' ? process.env.GROK_API_KEY : process.env.GEMINI_API_KEY
+      const key = this.providerKey(p)
       if (key && !providers.some(pp => pp.name === p)) {
         providers.push({ name: p, call: () => this.callProvider(p, prompt, key) })
       }
     }
 
     if (providers.length === 0) {
-      throw new Error('No AI API keys configured. Set AI_API_KEY or provider-specific keys (OPENROUTER_API_KEY, GROK_API_KEY, GEMINI_API_KEY).')
+      throw new Error('No AI API keys configured. Set AI_API_KEY or provider-specific keys (GROQ_API_KEY, CEREBRAS_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, GROK_API_KEY).')
     }
 
     let lastError: any
     for (const provider of providers) {
       try {
-        console.log(`[Advisor] Trying provider: ${provider.name}`)
+        console.log(`[Advisor] Trying provider: ${provider.name} (${this.providerModel(provider.name)})`)
         const result = await provider.call()
         console.log(`[Advisor] Provider ${provider.name} succeeded`)
         return result
       } catch (err: any) {
-        console.error(`[Advisor] Provider ${provider.name} failed:`, err.message)
+        const details = err.response?.data ? JSON.stringify(err.response.data) : ''
+        console.error(`[Advisor] Provider ${provider.name} failed:`, err.message, details)
         lastError = err
       }
     }
@@ -486,36 +508,61 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
     throw new Error(`All AI providers failed. Last error: ${lastError?.message || 'Unknown'}`)
   }
 
-  private callProvider(provider: 'openrouter' | 'grok' | 'gemini', prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+  private callProvider(provider: ProviderName, prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
     switch (provider) {
+      case 'groq': return this.callGroq(prompt, apiKey)
+      case 'cerebras': return this.callCerebras(prompt, apiKey)
       case 'openrouter': return this.callOpenRouter(prompt, apiKey)
       case 'grok': return this.callGrok(prompt, apiKey)
       case 'gemini': return this.callGemini(prompt, apiKey)
     }
   }
 
-  private async callOpenRouter(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
-    const model = process.env.AI_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
+  private async callGroq(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+    return this.callOpenAICompatible('https://api.groq.com/openai/v1/chat/completions', this.providerModel('groq'), prompt, apiKey)
+  }
 
-    const res = await axios.post(
+  private async callCerebras(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+    return this.callOpenAICompatible('https://api.cerebras.ai/v1/chat/completions', this.providerModel('cerebras'), prompt, apiKey)
+  }
+
+  private async callOpenRouter(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+    return this.callOpenAICompatible(
       'https://openrouter.ai/api/v1/chat/completions',
+      this.providerModel('openrouter'),
+      prompt,
+      apiKey,
+      {
+        'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
+        'X-Title': 'Buffalo Business Advisor'
+      }
+    )
+  }
+
+  private async callGrok(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
+    return this.callOpenAICompatible('https://api.x.ai/v1/chat/completions', this.providerModel('grok'), prompt, apiKey)
+  }
+
+  private async callOpenAICompatible(url: string, model: string, prompt: string, apiKey: string, extraHeaders: Record<string, string> = {}): Promise<BusinessAdvice[]> {
+    const res = await axios.post(
+      url,
       {
         model,
         messages: [
-          { role: 'system', content: 'You are a hotel business advisor. Always return valid JSON arrays.' },
+          { role: 'system', content: 'You are a hotel business advisor. Always return valid JSON. Never use markdown, asterisks, or code blocks.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 1500
+        max_tokens: 1500,
+        response_format: { type: 'json_object' }
       },
       {
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': process.env.APP_URL || 'http://localhost:3000',
-          'X-Title': 'Buffalo Business Advisor'
+          ...extraHeaders
         },
-        timeout: 8000
+        timeout: 15000
       }
     )
 
@@ -524,11 +571,12 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
   }
 
   private async callGemini(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
-    const model = process.env.AI_MODEL || 'gemini-1.5-flash'
+    const model = this.providerModel('gemini')
 
     const res = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
+        systemInstruction: { parts: [{ text: 'You are a hotel business advisor. Always return valid JSON. Never use markdown, asterisks, or code blocks.' }] },
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
@@ -537,38 +585,11 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
       },
       {
         headers: { 'Content-Type': 'application/json' },
-        timeout: 8000
+        timeout: 15000
       }
     )
 
     const content = res.data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-    return this.parseJSONAdvice(content)
-  }
-
-  private async callGrok(prompt: string, apiKey: string): Promise<BusinessAdvice[]> {
-    const model = process.env.AI_MODEL || 'grok-2-latest'
-
-    const res = await axios.post(
-      'https://api.x.ai/v1/chat/completions',
-      {
-        model,
-        messages: [
-          { role: 'system', content: 'You are a hotel business advisor. Always return valid JSON arrays.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 8000
-      }
-    )
-
-    const content = res.data.choices?.[0]?.message?.content || ''
     return this.parseJSONAdvice(content)
   }
 
@@ -581,21 +602,26 @@ RETURN STRICTLY AS JSON ARRAY in this exact format (no markdown, no explanation,
       cleaned = codeBlockMatch[1].trim()
     }
 
-    // If content still has extra text, find the first JSON array
-    if (!cleaned.startsWith('[')) {
-      const arrayMatch = cleaned.match(/(\[[\s\S]*\])/)
-      if (arrayMatch) {
-        cleaned = arrayMatch[1].trim()
-      }
+    // Strip any leading/trailing non-JSON text
+    const jsonObjectMatch = cleaned.match(/\{[\s\S]*\}/)
+    const jsonArrayMatch = cleaned.match(/\[[\s\S]*\]/)
+
+    if (jsonObjectMatch) {
+      cleaned = jsonObjectMatch[0].trim()
+    } else if (jsonArrayMatch) {
+      cleaned = jsonArrayMatch[0].trim()
     }
 
     const parsed = JSON.parse(cleaned)
 
-    if (!Array.isArray(parsed)) {
+    // Accept either { advice: [...] } or a direct array
+    const advice = Array.isArray(parsed) ? parsed : parsed?.advice
+
+    if (!Array.isArray(advice)) {
       throw new Error('Parsed advice is not an array')
     }
 
-    return parsed.map((item: any) => ({
+    return advice.map((item: any) => ({
       type: ['success', 'danger', 'warning', 'info'].includes(item.type) ? item.type : 'info',
       title: String(item.title || 'Ushauri'),
       message: String(item.message || ''),
