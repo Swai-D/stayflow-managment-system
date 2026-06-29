@@ -26,6 +26,7 @@ import settingsRoutes from './routes/settings.routes'
 import guestPortalRoutes from './routes/guest.routes'
 import developerRoutes from './routes/developer.routes'
 import publicApiRoutes from './routes/public-api.routes'
+import staffRoutes from './routes/staff.routes'
 
 const app = express()
 
@@ -87,6 +88,7 @@ app.use('/api/v1/advisor', advisorRoutes)
 app.use('/api/v1/settings', settingsRoutes)
 app.use('/api/v1/developer', developerRoutes)
 app.use('/api/v1/ext', publicApiRoutes)
+app.use('/api/v1/staff', staffRoutes)
 app.use('/api/guest', guestPortalRoutes)
 
 // Error handler (must be last)

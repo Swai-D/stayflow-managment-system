@@ -185,6 +185,33 @@ enum ExtensionRequestStatus {
   REJECTED
 }
 
+enum ShiftStatus {
+  active
+  completed
+  absent
+}
+
+enum LeaveType {
+  annual
+  sick
+  emergency
+  maternity
+  unpaid
+}
+
+enum LeaveStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum PayrollStatus {
+  draft
+  approved
+  paid
+}
+
 enum BookingType {
   individual
   company
@@ -237,6 +264,7 @@ model Hotel {
   invoices  Invoice[]
   apiKeys   ApiKey[]
   webhooks  Webhook[]
+  staffProfiles StaffProfile[]
 
   @@map("hotels")
 }
@@ -267,6 +295,7 @@ model User {
   roomChargesPosted RoomCharge[]
   apiKeysCreated    ApiKey[]
   webhooksCreated   Webhook[]
+  staffProfile     StaffProfile?
 
   @@map("users")
 }
@@ -794,6 +823,108 @@ model ExtensionRequest {
 
   @@map("extension_requests")
 }
+
+// ─── STAFF MANAGEMENT ────────────────────────────────
+
+model StaffProfile {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  hotelId         String
+  employeeNo      String
+  position        String
+  department      String
+  employmentType  String    @default("full_time")
+  startDate       DateTime
+  basicSalary     Decimal   @db.Decimal(10, 2)
+  allowances      Json      @default("[]")
+  nssf            Boolean   @default(true)
+  wcf             Boolean   @default(true)
+  bankName        String?
+  bankAccount     String?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id])
+  hotel    Hotel           @relation(fields: [hotelId], references: [id])
+  shifts   Shift[]
+  leaves   LeaveRequest[]
+  payrolls PayrollRecord[]
+
+  @@map("staff_profiles")
+}
+
+model Shift {
+  id           String      @id @default(uuid())
+  staffId      String
+  hotelId      String
+  date         DateTime
+  clockIn      DateTime?
+  clockOut     DateTime?
+  scheduledIn  String      @default("08:00")
+  scheduledOut String      @default("17:00")
+  hoursWorked  Decimal?    @db.Decimal(5, 2)
+  status       ShiftStatus @default(active)
+  notes        String?
+  createdAt    DateTime    @default(now())
+
+  staff StaffProfile @relation(fields: [staffId], references: [id])
+
+  @@map("shifts")
+}
+
+model LeaveRequest {
+  id            String      @id @default(uuid())
+  staffId       String
+  hotelId       String
+  type          LeaveType
+  status        LeaveStatus @default(pending)
+  startDate     DateTime
+  endDate       DateTime
+  days          Int
+  reason        String
+  approvedById  String?
+  approvedAt    DateTime?
+  rejectionNote String?
+  createdAt     DateTime    @default(now())
+
+  staff StaffProfile @relation(fields: [staffId], references: [id])
+
+  @@map("leave_requests")
+}
+
+model PayrollRecord {
+  id              String        @id @default(uuid())
+  staffId         String
+  hotelId         String
+  month           Int
+  year            Int
+  basicSalary     Decimal       @db.Decimal(10, 2)
+  totalAllowances Decimal       @db.Decimal(10, 2) @default(0)
+  grossSalary     Decimal       @db.Decimal(10, 2)
+  nssfEmployee    Decimal       @db.Decimal(10, 2) @default(0)
+  nssfEmployer    Decimal       @db.Decimal(10, 2) @default(0)
+  wcf             Decimal       @db.Decimal(10, 2) @default(0)
+  payeTax         Decimal       @db.Decimal(10, 2) @default(0)
+  totalDeductions Decimal       @db.Decimal(10, 2)
+  netSalary       Decimal       @db.Decimal(10, 2)
+  daysWorked      Int           @default(26)
+  daysAbsent      Int           @default(0)
+  status          PayrollStatus @default(draft)
+  payslipUrl      String?
+  paidAt          DateTime?
+  paidById        String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  staff StaffProfile @relation(fields: [staffId], references: [id])
+
+  @@unique([staffId, month, year])
+  @@map("payroll_records")
+}
+
+// ─── COMPANIES & BILLING ─────────────────────────────
 
 model Company {
   id            String    @id @default(uuid())

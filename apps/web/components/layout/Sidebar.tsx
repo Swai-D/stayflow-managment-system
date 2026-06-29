@@ -9,7 +9,8 @@ import {
   Sparkles, Receipt, TrendingUp, Settings, LogOut,
   ChevronDown, LayoutGrid, Package, ArrowLeftRight,
   ShoppingCart, Truck, CreditCard, Banknote, FileText, Building2,
-  Code2, KeyRound, Webhook, ScrollText, Activity
+  Code2, KeyRound, Webhook, ScrollText, Activity,
+  Users2, Wallet
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -174,6 +175,34 @@ export default function Sidebar() {
             <span className="text-[9.5px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em]">SYSTEM OPTION</span>
             <ChevronDown size={10} className="text-[#d1d5db]"/>
           </div>
+
+          {(user?.role === 'admin' || user?.role === 'receptionist') && (
+            <Link href="/staff"
+              onClick={closeSidebar}
+              className={cn(
+                'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150 font-medium',
+                pathname === '/staff' || pathname.startsWith('/staff/')
+                  ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
+                  : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+              )}>
+              <Users2 size={14} className={cn('flex-shrink-0', pathname === '/staff' || pathname.startsWith('/staff/') ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
+              <span className="flex-1 truncate">Staff</span>
+            </Link>
+          )}
+
+          {user?.role === 'admin' && (
+            <Link href="/staff/payroll"
+              onClick={closeSidebar}
+              className={cn(
+                'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150 font-medium',
+                pathname === '/staff/payroll'
+                  ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
+                  : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+              )}>
+              <Wallet size={14} className={cn('flex-shrink-0', pathname === '/staff/payroll' ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
+              <span className="flex-1 truncate">Payroll</span>
+            </Link>
+          )}
         </nav>
 
         {/* Bottom */}

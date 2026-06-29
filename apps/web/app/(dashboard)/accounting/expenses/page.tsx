@@ -8,8 +8,10 @@ import {
   ArrowUpRight, ArrowDownRight, Wallet, Receipt, 
   Search, ChevronLeft, ChevronRight, X, Loader2,
   Calendar, MoreHorizontal, ShoppingCart, UtilityPole,
-  Wrench, Megaphone, Users, Briefcase
+  Wrench, Megaphone, Users, Briefcase, ArrowRight
 } from 'lucide-react'
+import Link from 'next/link'
+import { usePayrollSummary } from '@/hooks/useStaff'
 import { 
   PieChart as RePieChart, Pie, Cell, ResponsiveContainer, 
   Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid 
@@ -46,6 +48,7 @@ export default function ExpensesPage() {
     limit: 10
   })
   const { data: stats } = useExpenseStats()
+  const { data: payrollSummary } = usePayrollSummary()
   const { mutate: createExpense, isPending: isCreating } = useCreateExpense()
 
   const expenses = expensesData?.data || []
@@ -97,6 +100,22 @@ export default function ExpensesPage() {
               <Plus size={18} /> Record Expense
            </button>
         </div>
+      </div>
+
+      {/* ── Salary Expense ─────────────────────────────── */}
+      <div className="bg-white rounded-[32px] shadow-card border border-gray-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+            <Users size={24} />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#9ca3af]">Gharama za Mishahara</p>
+            <p className="text-[24px] font-bold text-[#111827] tracking-tight">{formatTZS(payrollSummary?.totalGross || 0)}</p>
+          </div>
+        </div>
+        <Link href="/staff/payroll" className="text-[12px] font-bold text-blue-600 hover:underline flex items-center gap-1">
+          Angalia Payroll <ArrowRight size={12} />
+        </Link>
       </div>
 
       {/* ── Dashboard Stats ─────────────────────────────── */}

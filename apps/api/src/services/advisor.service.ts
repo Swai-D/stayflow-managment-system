@@ -388,7 +388,7 @@ export class AdvisorService {
 
     return `You are Buffalo Business Advisor, an expert hotel management consultant with deep experience in East African hospitality, especially small-to-medium hotels and lodges in Tanzania.
 
-Your job is to analyze the hotel's real business data and provide 3-5 specific, actionable, high-quality business recommendations. Be direct, practical, and use simple Swahili/English mix suitable for a Tanzanian hotel owner or manager.
+Your job is to analyze the hotel's real business data and provide 3-5 specific, actionable, high-quality business recommendations. Be direct, practical, and write ALL advice in simple, natural Swahili (Kiswahili cha kawaida cha Tanzania). Avoid English words unless absolutely necessary (e.g., ADR, RevPAR).
 
 HOTEL INFORMATION:
 - Name: ${hotel?.name || 'Buffalo Hotel'}
@@ -429,10 +429,11 @@ INSTRUCTIONS:
 1. Identify the biggest opportunity or threat based on the numbers.
 2. Give 3-5 prioritized recommendations (high/medium/low priority).
 3. Each recommendation must have: title (short, plain text), message (2-3 sentences with specific numbers), type (success/danger/warning/info), and priority (high/medium/low).
-4. Focus on things like: pricing strategy, occupancy, expense control, marketing channels, room upgrades, staff efficiency, online bookings, seasonal promotions.
-5. If profit is negative or expense ratio > 40%, prioritize cost control.
-6. If occupancy < 50%, prioritize marketing/pricing.
-7. If RevPAR is low, suggest promotions or upsells.
+4. Write ALL titles and messages in simple, natural Swahili (Kiswahili cha kawaida cha Tanzania). Avoid English where possible.
+5. Focus on things like: pricing strategy, occupancy, expense control, marketing channels, room upgrades, staff efficiency, online bookings, seasonal promotions.
+6. If profit is negative or expense ratio > 40%, prioritize cost control.
+7. If occupancy < 50%, prioritize marketing/pricing.
+8. If RevPAR is low, suggest promotions or upsells.
 
 RETURN STRICTLY AS VALID JSON in this exact format (no markdown, no explanation, no code blocks, just valid JSON). Do not include any text before or after the JSON. Wrap the array inside an object with an "advice" key:
 {
@@ -549,7 +550,7 @@ RETURN STRICTLY AS VALID JSON in this exact format (no markdown, no explanation,
       {
         model,
         messages: [
-          { role: 'system', content: 'You are a hotel business advisor. Always return valid JSON. Never use markdown, asterisks, or code blocks.' },
+          { role: 'system', content: 'You are a hotel business advisor for a Tanzanian hotel. Always return valid JSON. Never use markdown, asterisks, or code blocks. Write all titles and messages in simple, natural Swahili (Kiswahili cha kawaida).' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
@@ -576,7 +577,7 @@ RETURN STRICTLY AS VALID JSON in this exact format (no markdown, no explanation,
     const res = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
-        systemInstruction: { parts: [{ text: 'You are a hotel business advisor. Always return valid JSON. Never use markdown, asterisks, or code blocks.' }] },
+        systemInstruction: { parts: [{ text: 'You are a hotel business advisor for a Tanzanian hotel. Always return valid JSON. Never use markdown, asterisks, or code blocks. Write all titles and messages in simple, natural Swahili (Kiswahili cha kawaida).' }] },
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature: 0.7,
