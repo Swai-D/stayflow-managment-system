@@ -73,10 +73,13 @@ export const getInvoicePdf = asyncHandler(async (req: AuthRequest, res: Response
   let pdfBuffer: Buffer
   if (invoice.type === 'company') {
     pdfBuffer = await pdfService.generateCompanyInvoicePdf(invoice)
-  } else if (invoice.bookingId) {
-    pdfBuffer = await pdfService.generateInvoice(invoice.bookingId)
   } else {
-    throw ApiError.badRequest('Invoice hii haina taarifa za kutosha kutengeneza PDF')
+    const linkedBookingId = invoice.invoiceBookings?.[0]?.bookingId
+    if (linkedBookingId) {
+      pdfBuffer = await pdfService.generateInvoice(linkedBookingId)
+    } else {
+      throw ApiError.badRequest('Invoice hii haina taarifa za kutosha kutengeneza PDF')
+    }
   }
 
   res.setHeader('Content-Type', 'application/pdf')

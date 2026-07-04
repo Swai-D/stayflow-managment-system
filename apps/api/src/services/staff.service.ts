@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, EmploymentType } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { ApiError } from '../utils/ApiError'
 import { calculateTanzaniaPayroll } from '../utils/tanzaniaPayroll'
@@ -34,7 +34,7 @@ export class StaffService {
     phone?: string
     position: string
     department: string
-    employmentType?: string
+    employmentType?: EmploymentType
     startDate: string
     basicSalary: number
     allowances?: Allowance[]
@@ -76,7 +76,7 @@ export class StaffService {
           employeeNo,
           position: data.position,
           department: data.department,
-          employmentType: data.employmentType || 'full_time',
+          employmentType: (data.employmentType as EmploymentType) || 'full_time',
           startDate: new Date(data.startDate),
           basicSalary: data.basicSalary,
           allowances: (data.allowances || []) as any,

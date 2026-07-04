@@ -171,7 +171,7 @@ export default function InvoicesPage() {
                       <td className="p-[14px_16px] text-[13px] font-bold text-[#111827]">
                         {invoice.type === 'company'
                           ? invoice.company?.name
-                          : invoice.booking?.guest?.fullName
+                          : invoice.invoiceBookings?.[0]?.booking?.guest?.fullName
                         }
                       </td>
                       <td className="p-[14px_16px] text-[13px] font-bold text-[#111827]">
@@ -181,7 +181,7 @@ export default function InvoicesPage() {
                         {formatTZS(invoice.paidAmount)}
                       </td>
                       <td className="p-[14px_16px] text-[12px] font-bold text-[#111827]">
-                        {formatTZS(invoice.totalAmount - invoice.paidAmount)}
+                        {formatTZS(Number(invoice.totalAmount) - Number(invoice.paidAmount))}
                       </td>
                       <td className="p-[14px_16px]">
                         <span className={cn(

@@ -4,6 +4,16 @@ import { generateInvoiceNumber } from '../utils/generateRef'
 
 const prisma = new PrismaClient()
 
+const invoiceBookingInclude = {
+  invoiceBookings: {
+    include: {
+      booking: {
+        select: { id: true, bookingRef: true, guest: { select: { fullName: true } } }
+      }
+    }
+  }
+}
+
 export class InvoicesService {
   async createInvoice(hotelId: string, data: {
     type: InvoiceType
@@ -29,17 +39,23 @@ export class InvoicesService {
         hotelId,
         invoiceNumber,
         type: data.type,
-        bookingId: data.bookingId || null,
         companyId: data.companyId || null,
         amount: data.amount,
         taxAmount: data.taxAmount || 0,
         totalAmount: data.totalAmount,
         paidAmount: 0,
         dueDate: data.dueDate || null,
-        notes: data.notes
+        notes: data.notes,
+        ...(data.bookingId
+          ? {
+              invoiceBookings: {
+                create: { bookingId: data.bookingId }
+              }
+            }
+          : {})
       },
       include: {
-        booking: { select: { bookingRef: true, guest: { select: { fullName: true } } } },
+        ...invoiceBookingInclude,
         company: { select: { name: true } }
       }
     })
@@ -63,8 +79,22 @@ export class InvoicesService {
         OR: [
           { invoiceNumber: { contains: search, mode: 'insensitive' } },
           { company: { name: { contains: search, mode: 'insensitive' } } },
-          { booking: { guest: { fullName: { contains: search, mode: 'insensitive' } } } },
-          { booking: { bookingRef: { contains: search, mode: 'insensitive' } } }
+          {
+            invoiceBookings: {
+              some: {
+                booking: {
+                  guest: { fullName: { contains: search, mode: 'insensitive' } }
+                }
+              }
+            }
+          },
+          {
+            invoiceBookings: {
+              some: {
+                booking: { bookingRef: { contains: search, mode: 'insensitive' } }
+              }
+            }
+          }
         ]
       })
     }
@@ -73,7 +103,7 @@ export class InvoicesService {
       prisma.invoice.findMany({
         where,
         include: {
-          booking: { select: { bookingRef: true, guest: { select: { fullName: true } } } },
+          ...invoiceBookingInclude,
           company: { select: { id: true, name: true } }
         },
         orderBy: { createdAt: 'desc' },
@@ -94,14 +124,6 @@ export class InvoicesService {
       where: { id, hotelId },
       include: {
         hotel: true,
-        booking: {
-          include: {
-            guest: true,
-            room: true,
-            payments: true,
-            roomCharges: { include: { items: true } }
-          }
-        },
         company: {
           select: { id: true, name: true, address: true, phone: true, email: true, tinNumber: true }
         },
@@ -109,8 +131,9 @@ export class InvoicesService {
           include: {
             booking: {
               include: {
-                guest: { select: { fullName: true } },
-                room: { select: { roomNumber: true, type: true } },
+                guest: true,
+                room: true,
+                payments: true,
                 roomCharges: { include: { items: true } }
               }
             }
@@ -141,7 +164,7 @@ export class InvoicesService {
       where: { id },
       data: { ...data, updatedAt: new Date() },
       include: {
-        booking: { select: { bookingRef: true, guest: { select: { fullName: true } } } },
+        ...invoiceBookingInclude,
         company: { select: { name: true } }
       }
     })
@@ -173,7 +196,7 @@ export class InvoicesService {
         paidAt: status === 'paid' ? new Date() : invoice.paidAt
       },
       include: {
-        booking: { select: { bookingRef: true, guest: { select: { fullName: true } } } },
+        ...invoiceBookingInclude,
         company: { select: { name: true } }
       }
     })
@@ -242,9 +265,12 @@ export async function syncInvoicesForBooking(
   const balanceDue = totalAmount - paidAmount
   const status: any = paidAmount >= totalAmount ? 'paid' : paidAmount > 0 ? 'sent' : 'draft'
 
-  // Individual invoices linked directly to the booking
+  // Individual invoices linked to the booking
   await tx.invoice.updateMany({
-    where: { bookingId: booking.id, type: 'individual' },
+    where: {
+      type: 'individual',
+      invoiceBookings: { some: { bookingId: booking.id } }
+    },
     data: {
       totalAmount,
       paidAmount,

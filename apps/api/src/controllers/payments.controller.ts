@@ -226,6 +226,8 @@ export const handleSnippeWebhook = asyncHandler(async (req: Request, res: Respon
         amount: amount,
         method: data.payment_type === 'card' ? 'visa' : 'mpesa', // map accordingly
         notes: `Snippe Ref: ${data.reference}`,
+        gatewayName: 'snippe',
+        gatewayRef: data.reference,
         status: 'completed'
       })
     }

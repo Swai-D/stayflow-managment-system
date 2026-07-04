@@ -110,7 +110,7 @@ router.get('/invoices', asyncHandler(async (req: ApiRequest, res) => {
     take: 100,
     orderBy: { createdAt: 'desc' },
     include: {
-      booking: { select: { bookingRef: true } },
+      invoiceBookings: { include: { booking: { select: { bookingRef: true } } } },
       company: { select: { name: true } },
     }
   })

@@ -198,66 +198,76 @@ export class BookingsService {
     const totalAmount = roomTotal + addonsTotal
     const bookingRef = await generateBookingRef()
 
-    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      const newBooking = await tx.booking.create({
-        data: {
-          bookingRef,
-          hotelId,
-          guestId: guestId!,
-          companyId: companyId || null,
-          roomId,
-          createdById,
-          source,
-          status: 'pending',
-          bookingType,
-          checkIn,
-          checkOut,
-          startTime,
-          endTime,
-          adults,
-          children,
-          specialRequests,
-          roomTotal,
-          addonsTotal,
-          totalAmount,
-          balanceDue: totalAmount,
-          paidAmount: 0,
-        },
-        include: {
-          guest: { select: { id: true, fullName: true, phone: true, email: true, idType: true, idNumber: true, nationality: true } },
-          company: { select: { id: true, name: true, phone: true, email: true } },
-          room: { select: { id: true, roomNumber: true, name: true, type: true } },
-          createdBy: { select: { id: true, fullName: true } },
+    let booking
+    try {
+      booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const newBooking = await tx.booking.create({
+          data: {
+            bookingRef,
+            hotelId,
+            guestId: guestId!,
+            companyId: companyId || null,
+            roomId,
+            createdById,
+            source,
+            status: 'pending',
+            bookingType,
+            checkIn,
+            checkOut,
+            startTime,
+            endTime,
+            adults,
+            children,
+            specialRequests,
+            roomTotal,
+            addonsTotal,
+            totalAmount,
+            balanceDue: totalAmount,
+            paidAmount: 0,
+          },
+          include: {
+            guest: { select: { id: true, fullName: true, phone: true, email: true, idType: true, idNumber: true, nationality: true } },
+            company: { select: { id: true, name: true, phone: true, email: true } },
+            room: { select: { id: true, roomNumber: true, name: true, type: true } },
+            createdBy: { select: { id: true, fullName: true } },
+          }
+        })
+
+        // Create detailed guest list if provided
+        if (guestList && guestList.length > 0) {
+          await tx.bookingGuest.createMany({
+            data: guestList.map((g, idx) => ({
+              bookingId: newBooking.id,
+              fullName: g.fullName,
+              phone: g.phone || null,
+              email: g.email || null,
+              nationality: g.nationality || null,
+              idType: g.idType || null,
+              idNumber: g.idNumber || null,
+              ageCategory: g.ageCategory,
+              isPrimary: idx === 0
+            }))
+          })
         }
+
+        if (addonDetails.length > 0) {
+          await tx.bookingAddon.createMany({
+            data: addonDetails.map(a => ({ ...a, bookingId: newBooking.id }))
+          })
+        }
+
+        await auditService.logBookingCreated(createdById, newBooking.id, bookingRef)
+
+        return newBooking
       })
-
-      // Create detailed guest list if provided
-      if (guestList && guestList.length > 0) {
-        await tx.bookingGuest.createMany({
-          data: guestList.map((g, idx) => ({
-            bookingId: newBooking.id,
-            fullName: g.fullName,
-            phone: g.phone || null,
-            email: g.email || null,
-            nationality: g.nationality || null,
-            idType: g.idType || null,
-            idNumber: g.idNumber || null,
-            ageCategory: g.ageCategory,
-            isPrimary: idx === 0
-          }))
-        })
+    } catch (err: any) {
+      const msg = err?.message || ''
+      const code = err?.code || err?.meta?.code || ''
+      if (code === '23P01' || msg.includes('no_overlapping_bookings') || msg.includes('exclusion constraint')) {
+        throw ApiError.conflict('Chumba kimechukuliwa kwa tarehe hizi. Tafadhali chagua chumba kingine au tarehe tofauti.')
       }
-
-      if (addonDetails.length > 0) {
-        await tx.bookingAddon.createMany({
-          data: addonDetails.map(a => ({ ...a, bookingId: newBooking.id }))
-        })
-      }
-
-      await auditService.logBookingCreated(createdById, newBooking.id, bookingRef)
-
-      return newBooking
-    })
+      throw err
+    }
 
     // Fetch full booking with registered guests
     const fullBooking = await prisma.booking.findUnique({
@@ -521,22 +531,17 @@ export class BookingsService {
         paidAmount,
         status: paidAmount >= totalAmount ? 'paid' : ('draft' as any),
         dueDate: booking.checkOut,
-        notes: `Invoice generated on check-in for booking ${booking.bookingRef}`
+        notes: `Invoice generated on check-in for booking ${booking.bookingRef}`,
+        invoiceBookings: {
+          create: { bookingId: booking.id }
+        }
       }
 
       if (invoiceType === 'company') {
         invoiceData.companyId = booking.companyId
-      } else {
-        invoiceData.bookingId = booking.id
       }
 
       const invoice = await tx.invoice.create({ data: invoiceData })
-
-      if (invoiceType === 'company' && booking.companyId) {
-        await tx.invoiceBooking.create({
-          data: { invoiceId: invoice.id, bookingId: booking.id }
-        })
-      }
 
       await auditService.log({
         userId: booking.createdById,

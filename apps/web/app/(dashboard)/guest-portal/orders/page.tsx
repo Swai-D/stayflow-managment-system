@@ -124,7 +124,7 @@ export default function GuestPortalOrdersPage() {
                     <div className="text-[12px] text-gray-600 max-w-[240px]">
                       {order.items.map((item, i) => (
                         <span key={i}>
-                          {item.name} × {item.quantity}{i < order.items.length - 1 ? ', ' : ''}
+                          {item.itemName} × {item.quantity}{i < order.items.length - 1 ? ', ' : ''}
                         </span>
                       ))}
                     </div>

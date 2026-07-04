@@ -291,7 +291,7 @@ export class StoreService {
         items: items.map(item => ({
           itemId: item.id,
           quantityOrdered: item.maximumStock - item.currentStock,
-          unitCost: item.unitCost
+          unitCost: Number(item.unitCost)
         }))
       })
       createdPOs.push(po)
@@ -335,7 +335,7 @@ export class StoreService {
         ...s,
         itemCount: s.items.length,
         totalOrders: s.purchaseOrders.length,
-        totalValue: s.purchaseOrders.reduce((sum, po) => sum + po.totalAmount, 0),
+        totalValue: s.purchaseOrders.reduce((sum, po) => sum + Number(po.totalAmount), 0),
         lastOrder
       }
     })
@@ -401,7 +401,7 @@ export class StoreService {
       },
       include: { item: { select: { category: true } } }
     })
-    const realMonthlySpend = stockInTransactions.reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+    const realMonthlySpend = stockInTransactions.reduce((sum, t) => sum + (t.quantity * Number(t.unitCost || 0)), 0)
 
     // Monthly spend trend (last 6 months) — real data
     const monthlyTrend: Array<{ month: string; fb: number; hotel: number }> = []
@@ -423,10 +423,10 @@ export class StoreService {
 
       const fb = monthTx
         .filter(t => t.item?.category === 'FB')
-        .reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+        .reduce((sum, t) => sum + (t.quantity * Number(t.unitCost || 0)), 0)
       const hotel = monthTx
         .filter(t => t.item?.category === 'HOTEL')
-        .reduce((sum, t) => sum + (t.quantity * (t.unitCost || 0)), 0)
+        .reduce((sum, t) => sum + (t.quantity * Number(t.unitCost || 0)), 0)
 
       monthlyTrend.push({ month: label, fb, hotel })
     }

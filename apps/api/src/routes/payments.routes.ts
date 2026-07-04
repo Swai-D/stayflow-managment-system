@@ -15,8 +15,8 @@ const recordPaymentSchema = z.object({
   amount: z.number().positive(),
   method: z.enum(['mpesa', 'tigo_pesa', 'airtel_money', 'halo_pesa', 'cash', 'bank_transfer', 'visa', 'mastercard']),
   notes: z.string().optional(),
-  mpesaRef: z.string().optional(),
-  bankRef: z.string().optional(),
+  gatewayName: z.string().optional(),
+  gatewayRef: z.string().optional(),
 })
 
 router.get('/', authenticate, requirePermission('payments:view'), getPayments)

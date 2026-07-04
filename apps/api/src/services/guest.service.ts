@@ -489,7 +489,7 @@ export class GuestService {
   async createRoomServiceOrder(
     guest: GuestTokenPayload,
     data: {
-      items: Array<{ itemId: number; name: string; quantity: number; unitPrice: number }>
+      items: Array<{ itemId?: string; name: string; quantity: number; unitPrice: number }>
       notes?: string
       totalAmount: number
     }
@@ -501,11 +501,20 @@ export class GuestService {
         orderId: await this.generateOrderId(),
         guestAccountId: guest.id,
         bookingId: booking.id,
-        items: data.items as any,
         totalAmount: data.totalAmount,
         notes: data.notes,
-        status: 'PENDING'
-      }
+        status: 'PENDING',
+        items: {
+          create: data.items.map(item => ({
+            itemId: item.itemId || null,
+            itemName: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.unitPrice * item.quantity
+          }))
+        }
+      },
+      include: { items: true }
     })
 
     // Post to room charge (Post To Room) so it appears in POS/folio
@@ -537,18 +546,18 @@ export class GuestService {
       totalPrice: number
     }> = []
 
-    for (const orderedItem of order.items as Array<{ name: string; quantity: number; unitPrice: number }>) {
+    for (const orderedItem of order.items as Array<{ itemName: string; quantity: number; unitPrice: number }>) {
       const storeItem = await prisma.storeItem.findFirst({
         where: {
           hotelId: booking.hotelId,
           isActive: true,
           isSellable: true,
-          name: { equals: orderedItem.name, mode: 'insensitive' }
+          name: { equals: orderedItem.itemName, mode: 'insensitive' }
         }
       })
 
       if (storeItem && storeItem.currentStock >= orderedItem.quantity) {
-        const unitPrice = storeItem.sellingPrice || orderedItem.unitPrice
+        const unitPrice = Number(storeItem.sellingPrice || orderedItem.unitPrice)
         const totalPrice = unitPrice * orderedItem.quantity
 
         chargeItems.push({
@@ -583,7 +592,7 @@ export class GuestService {
         const genericItem = await getOrCreateGenericStoreItem(booking.hotelId, postedById)
         chargeItems.push({
           itemId: genericItem.id,
-          itemName: orderedItem.name,
+          itemName: orderedItem.itemName,
           quantity: orderedItem.quantity,
           unitPrice: orderedItem.unitPrice,
           totalPrice: orderedItem.unitPrice * orderedItem.quantity
@@ -753,8 +762,9 @@ export class GuestService {
 
   private formatRoomServiceTitle(items: any) {
     if (!Array.isArray(items) || items.length === 0) return 'Room Service Order'
-    if (items.length === 1) return `${items[0].name} × ${items[0].quantity}`
-    return `${items[0].name} × ${items[0].quantity} + ${items.length - 1} more`
+    const name = items[0].itemName || items[0].name
+    if (items.length === 1) return `${name} × ${items[0].quantity}`
+    return `${name} × ${items[0].quantity} + ${items.length - 1} more`
   }
 
   private formatTime(date: Date) {

@@ -4,7 +4,7 @@ import api from '@/lib/api'
 export interface GuestPortalOrder {
   id: string
   orderId: string
-  items: Array<{ name: string; quantity: number; unitPrice: number }>
+  items: Array<{ itemName: string; quantity: number; unitPrice: number }>
   totalAmount: number
   notes?: string
   status: 'PENDING' | 'PREPARING' | 'DELIVERED' | 'CANCELLED'

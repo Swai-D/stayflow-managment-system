@@ -12,11 +12,11 @@ export class PaymentsService {
     method: PaymentMethod
     receivedById?: string
     notes?: string
-    mpesaRef?: string
-    bankRef?: string
+    gatewayName?: string
+    gatewayRef?: string
     status?: PaymentStatus
   }) {
-    const { bookingId, amount, method, receivedById, notes, mpesaRef, bankRef, status = 'completed' } = data    
+    const { bookingId, amount, method, receivedById, notes, gatewayName, gatewayRef, status = 'completed' } = data    
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId }
@@ -32,8 +32,8 @@ export class PaymentsService {
           method,
           receivedById,
           notes,
-          mpesaRef,
-          bankRef,
+          gatewayName,
+          gatewayRef,
           status,
           paidAt: status === 'completed' ? new Date() : null
         }

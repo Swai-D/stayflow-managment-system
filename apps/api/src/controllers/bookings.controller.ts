@@ -67,8 +67,7 @@ export const getTodayCheckouts = asyncHandler(async (req: AuthRequest, res: Resp
         guest: { select: { id: true, fullName: true, phone: true, email: true } },
         room: { select: { id: true, roomNumber: true, type: true } },
         company: { select: { id: true, name: true } },
-        payments: true,
-        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+        payments: true
       },
       orderBy: { checkOut: 'asc' }
     }),
@@ -82,8 +81,7 @@ export const getTodayCheckouts = asyncHandler(async (req: AuthRequest, res: Resp
         guest: { select: { id: true, fullName: true, phone: true, email: true } },
         room: { select: { id: true, roomNumber: true, type: true } },
         company: { select: { id: true, name: true } },
-        payments: true,
-        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+        payments: true
       },
       orderBy: { checkOut: 'asc' }
     }),
@@ -97,8 +95,7 @@ export const getTodayCheckouts = asyncHandler(async (req: AuthRequest, res: Resp
         guest: { select: { id: true, fullName: true, phone: true, email: true } },
         room: { select: { id: true, roomNumber: true, type: true } },
         company: { select: { id: true, name: true } },
-        payments: true,
-        invoices: { where: { status: { not: 'cancelled' } }, orderBy: { createdAt: 'desc' }, take: 1 }
+        payments: true
       },
       orderBy: { actualCheckOut: 'desc' }
     }),
@@ -106,9 +103,13 @@ export const getTodayCheckouts = asyncHandler(async (req: AuthRequest, res: Resp
       where: {
         hotelId,
         status: { in: ['sent', 'draft'] },
-        booking: {
-          status: { in: ['checked_out', 'late_checkout'] },
-          actualCheckOut: { gte: yesterday }
+        invoiceBookings: {
+          some: {
+            booking: {
+              status: { in: ['checked_out', 'late_checkout'] },
+              actualCheckOut: { gte: yesterday }
+            }
+          }
         }
       }
     })
@@ -247,7 +248,11 @@ export const confirmPayment = asyncHandler(async (req: AuthRequest, res: Respons
   let invoice = null
   try {
     const existingInvoice = await prisma.invoice.findFirst({
-      where: { bookingId: id, type: booking.bookingType === 'company' ? 'company' : 'individual', status: { not: 'cancelled' } }
+      where: {
+        type: booking.bookingType === 'company' ? 'company' : 'individual',
+        status: { not: 'cancelled' },
+        invoiceBookings: { some: { bookingId: id } }
+      }
     })
     if (!existingInvoice) {
       const createdInvoice = await invoicesService.createInvoice(hotelId, {
@@ -373,7 +378,11 @@ export const checkOut = asyncHandler(async (req: AuthRequest, res: Response) => 
   let invoice = null
   try {
     const existingInvoice = await prisma.invoice.findFirst({
-      where: { bookingId, type: booking.bookingType === 'company' ? 'company' : 'individual', status: { not: 'cancelled' } }
+      where: {
+        type: booking.bookingType === 'company' ? 'company' : 'individual',
+        status: { not: 'cancelled' },
+        invoiceBookings: { some: { bookingId } }
+      }
     })
     if (!existingInvoice) {
       const createdInvoice = await invoicesService.createInvoice(hotelId, {

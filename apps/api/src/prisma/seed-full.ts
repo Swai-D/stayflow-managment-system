@@ -1,5 +1,6 @@
 import {
   PrismaClient,
+  Prisma,
   PaymentMethod,
   PaymentStatus,
   BookingStatus,
@@ -89,7 +90,7 @@ function chance(percent: number) {
 
 // In-memory store stock ledger so we can seed transactions and keep currentStock consistent
 const stockState = new Map<string, number>()
-const stockCost = new Map<string, number>()
+const stockCost = new Map<string, Prisma.Decimal>()
 const storeItemMap = new Map<string, any>()
 
 async function adjustStock(
@@ -1068,7 +1069,8 @@ async function seedBookingsAndRelated(ctx: BookingSeedContext) {
             invoiceNumber: await generateInvoiceNumber(),
             type: company ? 'company' : 'individual',
             status: 'paid',
-            bookingId: booking.id,
+            // bookingId removed from Invoice — InvoiceBooking (created below)
+            // is now the only link between an invoice and its booking(s).
             companyId: company?.id || null,
             amount: totalDue,
             totalAmount: totalDue,
@@ -1182,24 +1184,28 @@ async function seedExtraRequests(hotelId: string) {
   const rsTargets = pickSome(withAccounts, Math.min(18, withAccounts.length))
   for (const entry of rsTargets) {
     const itemCount = randomInt(1, 3)
-    const items = []
+    // NOTE: RoomServiceOrder.items is now a real relation (RoomServiceOrderItem),
+    // not a Json blob — each line item references the StoreItem it came from.
+    const orderItems: { itemId: string; itemName: string; quantity: number; unitPrice: number; subtotal: number }[] = []
     let total = 0
     for (let i = 0; i < itemCount; i++) {
       const item = pickOne(sellableItems)
       const qty = randomInt(1, 3)
       const price = Math.round(Number(item.sellingPrice) / 100) * 100
       total += price * qty
-      items.push({ name: item.name, quantity: qty, unitPrice: price, totalPrice: price * qty })
+      orderItems.push({ itemId: item.id, itemName: item.name, quantity: qty, unitPrice: price, subtotal: price * qty })
     }
     await prisma.roomServiceOrder.create({
       data: {
         orderId: `RSO-${randomInt(10000, 99999)}`,
         guestAccountId: entry.guestAccountId!,
         bookingId: entry.booking.id,
-        items: items as any,
         totalAmount: total,
         notes: pickOne(['Please deliver by 8pm', 'Extra cutlery', 'No onions', null]),
         status: pickOne(rsStatuses),
+        items: {
+          create: orderItems,
+        },
       },
     })
   }

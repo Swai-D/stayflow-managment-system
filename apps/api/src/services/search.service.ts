@@ -108,46 +108,62 @@ export class SearchService {
         take: perType
       }),
 
-      // Staff by name, email, phone
-      prisma.staff.findMany({
+      // Staff by name, email, phone (via User relation)
+      prisma.staffProfile.findMany({
         where: {
           hotelId,
-          OR: [
-            { fullName: { contains: searchPattern, mode: 'insensitive' } },
-            { email: { contains: searchPattern, mode: 'insensitive' } },
-            { phone: { contains: searchPattern, mode: 'insensitive' } }
-          ]
+          user: {
+            OR: [
+              { fullName: { contains: searchPattern, mode: 'insensitive' } },
+              { email: { contains: searchPattern, mode: 'insensitive' } },
+              { phone: { contains: searchPattern, mode: 'insensitive' } }
+            ]
+          }
         },
-        orderBy: { fullName: 'asc' },
+        include: {
+          user: { select: { fullName: true, email: true, phone: true } }
+        },
+        orderBy: { user: { fullName: 'asc' } },
         take: perType
       }),
 
-      // Invoices by number or guest name
+      // Invoices by number, guest name, or company name
       prisma.invoice.findMany({
         where: {
           hotelId,
           OR: [
             { invoiceNumber: { contains: searchPattern, mode: 'insensitive' } },
-            { booking: { guest: { fullName: { contains: searchPattern, mode: 'insensitive' } } } },
+            {
+              invoiceBookings: {
+                some: {
+                  booking: {
+                    guest: { fullName: { contains: searchPattern, mode: 'insensitive' } }
+                  }
+                }
+              }
+            },
             { company: { name: { contains: searchPattern, mode: 'insensitive' } } }
           ]
         },
         include: {
-          booking: { select: { guest: { select: { fullName: true } } } },
+          invoiceBookings: {
+            include: {
+              booking: { select: { guest: { select: { fullName: true } } } }
+            }
+          },
           company: { select: { name: true } }
         },
         orderBy: { createdAt: 'desc' },
         take: perType
       }),
 
-      // Payments by reference or guest name
+      // Payments by gateway reference or guest name
       prisma.payment.findMany({
         where: {
-          hotelId,
+          booking: { hotelId },
           OR: [
-            { reference: { contains: searchPattern, mode: 'insensitive' } },
-            { booking: { guest: { fullName: { contains: searchPattern, mode: 'insensitive' } } } },
-            { method: { contains: searchPattern, mode: 'insensitive' } }
+            { gatewayRef: { contains: searchPattern, mode: 'insensitive' } },
+            { booking: { guest: { fullName: { contains: searchPattern, mode: 'insensitive' } } } }
           ]
         },
         include: {
@@ -157,15 +173,11 @@ export class SearchService {
         take: perType
       }),
 
-      // Expenses by description or category
+      // Expenses by description
       prisma.expense.findMany({
         where: {
           hotelId,
-          OR: [
-            { description: { contains: searchPattern, mode: 'insensitive' } },
-            { category: { contains: searchPattern, mode: 'insensitive' } },
-            { vendor: { contains: searchPattern, mode: 'insensitive' } }
-          ]
+          description: { contains: searchPattern, mode: 'insensitive' }
         },
         orderBy: { date: 'desc' },
         take: perType
@@ -187,7 +199,7 @@ export class SearchService {
     ])
 
     const results: SearchResult[] = [
-      ...bookings.map(b => ({
+      ...bookings.map((b: any) => ({
         id: b.id,
         title: `${b.bookingRef}`,
         subtitle: b.guest.fullName,
@@ -197,7 +209,7 @@ export class SearchService {
         meta: `Room ${b.room.roomNumber}`
       })),
 
-      ...guests.map(g => ({
+      ...guests.map((g: any) => ({
         id: g.id,
         title: g.fullName,
         subtitle: g.phone,
@@ -206,9 +218,9 @@ export class SearchService {
         meta: g.email || undefined
       })),
 
-      ...rooms.map(r => ({
+      ...rooms.map((r: any) => ({
         id: r.id,
-        title: `Room ${r.roomNumber}`,
+        title: `Room ${r.room.roomNumber}`,
         subtitle: r.name,
         type: 'room' as const,
         href: `/rooms`,
@@ -216,7 +228,7 @@ export class SearchService {
         meta: r.type
       })),
 
-      ...storeItems.map(i => ({
+      ...storeItems.map((i: any) => ({
         id: i.id,
         title: i.name,
         subtitle: i.subCategory,
@@ -226,7 +238,7 @@ export class SearchService {
         meta: `${i.currentStock} ${i.unit}`
       })),
 
-      ...suppliers.map(s => ({
+      ...suppliers.map((s: any) => ({
         id: s.id,
         title: s.name,
         subtitle: s.phone,
@@ -235,28 +247,28 @@ export class SearchService {
         meta: s.email || undefined
       })),
 
-      ...staff.map(s => ({
+      ...staff.map((s: any) => ({
         id: s.id,
-        title: s.fullName,
+        title: s.user.fullName,
         subtitle: s.position || s.department,
         type: 'staff' as const,
         href: `/staff`,
-        meta: s.phone || s.email
+        meta: s.user.phone || s.user.email
       })),
 
-      ...invoices.map(i => ({
+      ...invoices.map((i: any) => ({
         id: i.id,
         title: i.invoiceNumber,
-        subtitle: i.booking?.guest?.fullName || i.company?.name,
+        subtitle: i.invoiceBookings?.[0]?.booking?.guest?.fullName || i.company?.name,
         type: 'invoice' as const,
         href: `/invoices`,
         status: i.status,
         meta: `TZS ${Number(i.totalAmount).toLocaleString()}`
       })),
 
-      ...payments.map(p => ({
+      ...payments.map((p: any) => ({
         id: p.id,
-        title: p.reference || `Payment for ${p.booking?.bookingRef}`,
+        title: p.gatewayRef || `Payment for ${p.booking?.bookingRef}`,
         subtitle: p.booking?.guest?.fullName,
         type: 'payment' as const,
         href: `/payments`,
@@ -264,7 +276,7 @@ export class SearchService {
         meta: `${p.method} — TZS ${Number(p.amount).toLocaleString()}`
       })),
 
-      ...expenses.map(e => ({
+      ...expenses.map((e: any) => ({
         id: e.id,
         title: e.description,
         subtitle: e.category,
@@ -273,7 +285,7 @@ export class SearchService {
         meta: `TZS ${Number(e.amount).toLocaleString()}`
       })),
 
-      ...companies.map(c => ({
+      ...companies.map((c: any) => ({
         id: c.id,
         title: c.name,
         subtitle: c.tinNumber,

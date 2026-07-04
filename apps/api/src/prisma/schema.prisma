@@ -8,6 +8,8 @@ datasource db {
 }
 
 // ─── ENUMS ───────────────────────────────────────────
+// NOTE: UserRole enum removed — superseded by the Role model (RBAC),
+// which was already correctly added to the project.
 
 enum RoomType {
   standard
@@ -222,6 +224,22 @@ enum InvoiceStatus {
   cancelled
 }
 
+// NEW: replaces free-text ageCategory on BookingGuest.
+// Seed already only ever writes 'adult' | 'child', so this is a no-op
+// for existing data — just closes off invalid values going forward.
+enum AgeCategory {
+  adult
+  child
+}
+
+// NEW: replaces free-text employmentType on StaffProfile.
+enum EmploymentType {
+  full_time
+  part_time
+  contract
+  casual
+}
+
 // ─── MODELS ──────────────────────────────────────────
 
 model Hotel {
@@ -246,7 +264,9 @@ model Hotel {
   createdAt DateTime @default(now())
 
   users    User[]
+  roles    Role[]
   rooms    Room[]
+  roomRates RoomRate[]
   bookings Booking[]
   expenses Expense[]
   suppliers Supplier[]
@@ -297,7 +317,9 @@ model Role {
   isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  users       User[]
+
+  hotel Hotel  @relation(fields: [hotelId], references: [id])
+  users User[]
 
   @@unique([hotelId, name])
   @@map("roles")
@@ -332,6 +354,8 @@ model User {
   webhooksCreated   Webhook[]
   staffProfile     StaffProfile?
 
+  @@index([hotelId, isActive])
+  @@index([roleId])
   @@map("users")
 }
 
@@ -352,6 +376,11 @@ model Guest {
   bookings Booking[]
   reviews  Review[]
 
+  // Not a hard @@unique yet — real-world data likely has duplicates from
+  // walk-in re-entry. Run a dedupe pass (merge bookings/reviews onto one
+  // canonical Guest row) before adding @@unique([phone]).
+  @@index([phone])
+  @@index([email])
   @@map("guests")
 }
 
@@ -363,7 +392,7 @@ model Room {
   floor           Int        @default(1)
   type            RoomType
   status          RoomStatus @default(available)
-  pricePerNight   Decimal    @db.Decimal(10, 2)
+  pricePerNight   Decimal    @db.Decimal(10, 2) // current/default rate — see RoomRate for scheduled pricing
   pricePerHour    Decimal?   @db.Decimal(10, 2)
   specialRate     Decimal?   @db.Decimal(10, 2)
   fullBoardRate   Decimal?   @db.Decimal(10, 2)
@@ -378,16 +407,41 @@ model Room {
   qrCodeToken     String?    @unique
   qrCodeExpiresAt DateTime?
   isActive        Boolean    @default(true)
+  deletedAt       DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
   hotel            Hotel             @relation(fields: [hotelId], references: [id])
   bookings         Booking[]
+  rates            RoomRate[]
   housekeepingLogs HousekeepingLog[]
   guestAccounts    GuestAccount[]
 
   @@unique([hotelId, roomNumber])
+  @@index([hotelId, status])
   @@map("rooms")
+}
+
+// NEW (optional): scheduled/seasonal pricing, decoupled from
+// Room.pricePerNight. Not wired into seed data yet — safe to adopt
+// gradually. Booking.roomTotal is already snapshotted, so nothing here
+// affects historical bookings either way.
+model RoomRate {
+  id        String   @id @default(uuid())
+  hotelId   String
+  roomId    String
+  startDate DateTime
+  endDate   DateTime
+  price     Decimal  @db.Decimal(10, 2)
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  room  Room  @relation(fields: [roomId], references: [id])
+
+  @@index([roomId, startDate, endDate])
+  @@map("room_rates")
 }
 
 model Booking {
@@ -434,6 +488,7 @@ model Booking {
   efdQrCode     String?
   efdSyncedAt   DateTime?
 
+  deletedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -451,10 +506,19 @@ model Booking {
   roomServiceOrders RoomServiceOrder[]
   serviceRequests   ServiceRequest[]
   extensionRequests ExtensionRequest[]
-  invoices          Invoice[]
+  // invoices Invoice[] — REMOVED. Invoice no longer has a direct bookingId;
+  // an invoice's booking(s) are represented solely through InvoiceBooking.
   invoiceBookings   InvoiceBooking[]
   guests            BookingGuest[]
+  guestAccounts     GuestAccount[]     @relation("GuestAccountLinkedBooking")
 
+  // Composite indexes for the query shapes a PMS actually runs:
+  @@index([hotelId, status])
+  @@index([roomId, checkIn, checkOut])   // availability lookups
+  @@index([guestId])
+  @@index([hotelId, checkIn])            // arrivals dashboard
+  @@index([hotelId, checkOut])           // departures dashboard
+  @@index([status, checkIn])
   @@map("bookings")
 }
 
@@ -466,21 +530,25 @@ model Payment {
   method       PaymentMethod
   status       PaymentStatus @default(pending)
 
-  snippeRef    String?
-  pesapalRef    String?
-  mpesaRef     String?
-  phoneNumber  String?
-  bankRef      String?
+  // Consolidated gateway reference instead of one nullable column per
+  // provider. Old columns (snippeRef, pesapalRef, mpesaRef, bankRef) are
+  // unused in the current seed data, so this is safe to apply directly —
+  // backfill only needed if production data already has values there.
+  gatewayName String? // "snippe" | "pesapal" | "mpesa" | "bank" | ...
+  gatewayRef  String?
+  phoneNumber String?
 
   notes     String?
   paidAt    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  booking    Booking  @relation(fields: [bookingId], references: [id])
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict) // never lose payment history
   receivedBy User?    @relation("ReceivedBy", fields: [receivedById], references: [id])
   receipt    Receipt?
 
+  @@index([bookingId, status])
+  @@index([status, createdAt])
   @@map("payments")
 }
 
@@ -493,15 +561,16 @@ model Receipt {
   pdfUrl        String
   issuedAt      DateTime @default(now())
 
-  booking  Booking @relation(fields: [bookingId], references: [id])
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict) // fiscal document
   payment  Payment @relation(fields: [paymentId], references: [id])
   issuedBy User?   @relation(fields: [issuedById], references: [id])
 
+  @@index([bookingId])
   @@map("receipts")
 }
 
 model BookingGuest {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   bookingId   String
   fullName    String
   phone       String?
@@ -509,10 +578,10 @@ model BookingGuest {
   nationality String?
   idType      String?
   idNumber    String?
-  ageCategory String   // adult | child
-  isPrimary   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  ageCategory AgeCategory // was free-text String — now an enum
+  isPrimary   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
@@ -530,7 +599,8 @@ model AddonService {
   isActive    Boolean       @default(true)
   createdAt   DateTime      @default(now())
 
-  bookingAddons BookingAddon[]
+  bookingAddons    BookingAddon[]
+  roomServiceItems RoomServiceOrderItem[]
 
   @@map("addon_services")
 }
@@ -543,9 +613,10 @@ model BookingAddon {
   unitPrice Decimal @db.Decimal(10, 2)
   subtotal  Decimal @db.Decimal(10, 2)
 
-  booking Booking      @relation(fields: [bookingId], references: [id])
+  booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade) // line item, safe to cascade
   addon   AddonService @relation(fields: [addonId], references: [id])
 
+  @@index([bookingId])
   @@map("booking_addons")
 }
 
@@ -561,6 +632,7 @@ model HousekeepingLog {
   room      Room  @relation(fields: [roomId], references: [id])
   updatedBy User? @relation(fields: [updatedById], references: [id])
 
+  @@index([roomId, updatedAt])
   @@map("housekeeping_logs")
 }
 
@@ -579,6 +651,8 @@ model Notification {
 
   booking Booking? @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId])
+  @@index([status])
   @@map("notifications")
 }
 
@@ -595,6 +669,7 @@ model Review {
   booking Booking @relation(fields: [bookingId], references: [id])
   guest   Guest   @relation(fields: [guestId], references: [id])
 
+  @@index([guestId])
   @@map("reviews")
 }
 
@@ -611,6 +686,8 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [id])
 
+  @@index([entity, entityId])
+  @@index([createdAt]) // for retention/archival sweeps
   @@map("audit_logs")
 }
 
@@ -628,6 +705,7 @@ model Expense {
   hotel Hotel @relation(fields: [hotelId], references: [id])
   user  User? @relation(fields: [userId], references: [id])
 
+  @@index([hotelId, date])
   @@map("expenses")
 }
 
@@ -640,7 +718,7 @@ model Supplier {
   phone         String
   email         String?
   address       String?
-  paymentTerms  String?   
+  paymentTerms  String?
   notes         String?
   isActive      Boolean   @default(true)
   hotel         Hotel     @relation(fields: [hotelId], references: [id])
@@ -649,6 +727,7 @@ model Supplier {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  @@index([hotelId, isActive])
   @@map("suppliers")
 }
 
@@ -656,28 +735,31 @@ model StoreItem {
   id            String        @id @default(cuid())
   hotelId       String
   name          String
-  sku           String?       
-  category      StoreCategory 
-  subCategory   String        
-  unit          StockUnit     
-  currentStock  Float         @default(0)
-  minimumStock  Float         
+  sku           String?
+  category      StoreCategory
+  subCategory   String
+  unit          StockUnit
+  currentStock  Float         @default(0) // fractional KG/LTR — Float is fine for quantities
+  minimumStock  Float
   maximumStock  Float
-  unitCost      Float         
-  sellingPrice  Float?        
+  unitCost      Decimal       @db.Decimal(10, 2) // was Float — money must be Decimal
+  sellingPrice  Decimal?      @db.Decimal(10, 2) // was Float
   supplierId    String?
   supplier      Supplier?     @relation(fields: [supplierId], references: [id])
-  location      String?       
+  location      String?
   isActive      Boolean       @default(true)
-  isSellable    Boolean       @default(false) 
+  isSellable    Boolean       @default(false)
   hotel         Hotel         @relation(fields: [hotelId], references: [id])
   transactions  StoreTransaction[]
   orderItems    PurchaseOrderItem[]
   roomChargeItems RoomChargeItem[]
+  roomServiceItems RoomServiceOrderItem[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   @@unique([hotelId, sku])
+  @@index([hotelId, category])
+  @@index([hotelId, currentStock]) // low-stock alerts
   @@map("store_items")
 }
 
@@ -685,29 +767,30 @@ model StoreTransaction {
   id            String            @id @default(cuid())
   itemId        String
   item          StoreItem         @relation(fields: [itemId], references: [id])
-  type          TransactionType   
+  type          TransactionType
   quantity      Float
-  unitCost      Float?            
-  balanceBefore Float             
-  balanceAfter  Float             
-  reference     String?           
+  unitCost      Decimal?          @db.Decimal(10, 2) // was Float
+  balanceBefore Float
+  balanceAfter  Float
+  reference     String?
   notes         String?
   performedById String
   performedBy   User              @relation(fields: [performedById], references: [id])
   createdAt     DateTime          @default(now())
 
+  @@index([itemId, createdAt])
   @@map("store_transactions")
 }
 
 model PurchaseOrder {
   id              String          @id @default(cuid())
   hotelId         String
-  poNumber        String          
+  poNumber        String
   status          POStatus        @default(PENDING)
   supplierId      String
   supplier        Supplier        @relation(fields: [supplierId], references: [id])
   items           PurchaseOrderItem[]
-  totalAmount     Float
+  totalAmount     Decimal         @db.Decimal(10, 2) // was Float
   notes           String?
   expectedDelivery DateTime?
   receivedAt      DateTime?
@@ -718,6 +801,7 @@ model PurchaseOrder {
   updatedAt       DateTime        @updatedAt
 
   @@unique([hotelId, poNumber])
+  @@index([hotelId, status])
   @@map("purchase_orders")
 }
 
@@ -729,9 +813,10 @@ model PurchaseOrderItem {
   item            StoreItem     @relation(fields: [itemId], references: [id])
   quantityOrdered Float
   quantityReceived Float        @default(0)
-  unitCost        Float
-  totalCost       Float
+  unitCost        Decimal       @db.Decimal(10, 2) // was Float
+  totalCost       Decimal       @db.Decimal(10, 2) // was Float
 
+  @@index([purchaseOrderId])
   @@map("purchase_order_items")
 }
 
@@ -742,7 +827,7 @@ model RoomCharge {
   bookingId   String
   booking     Booking           @relation(fields: [bookingId], references: [id])
   items       RoomChargeItem[]
-  totalAmount Float
+  totalAmount Decimal           @db.Decimal(10, 2) // was Float
   status      ChargeStatus      @default(OPEN)
   source      String            @default("pos")
   notes       String?
@@ -753,20 +838,22 @@ model RoomCharge {
 
   roomServiceOrder RoomServiceOrder?
 
+  @@index([bookingId, status])
   @@map("room_charges")
 }
 
 model RoomChargeItem {
   id            String      @id @default(cuid())
   roomChargeId  String
-  roomCharge    RoomCharge  @relation(fields: [roomChargeId], references: [id])
+  roomCharge    RoomCharge  @relation(fields: [roomChargeId], references: [id], onDelete: Cascade) // line item
   itemId        String
   item          StoreItem   @relation(fields: [itemId], references: [id])
-  itemName      String      
+  itemName      String
   quantity      Float
-  unitPrice     Float       
-  totalPrice    Float
+  unitPrice     Decimal     @db.Decimal(10, 2) // was Float
+  totalPrice    Decimal     @db.Decimal(10, 2) // was Float
 
+  @@index([roomChargeId])
   @@map("room_charge_items")
 }
 
@@ -805,7 +892,13 @@ model GuestAccount {
   otp               String?
   otpExpiresAt      DateTime?
   status            GuestAccountStatus @default(PENDING_ACTIVATION)
+
+  // FIXED: was a bare String with no relation — no referential integrity,
+  // no cascade, couldn't be `include`d. Now a proper FK. Seed code that
+  // sets `linkedBookingId: booking.id` directly keeps working unchanged.
   linkedBookingId   String?
+  linkedBooking     Booking?           @relation("GuestAccountLinkedBooking", fields: [linkedBookingId], references: [id])
+
   roomId            String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -814,6 +907,7 @@ model GuestAccount {
   roomServiceOrders RoomServiceOrder[]
   serviceRequests   ServiceRequest[]
 
+  @@index([linkedBookingId])
   @@map("guest_accounts")
 }
 
@@ -822,7 +916,10 @@ model RoomServiceOrder {
   orderId        String                 @unique
   guestAccountId String
   bookingId      String
-  items          Json
+  // items Json — REMOVED. Replaced with a real relation so stock can be
+  // deducted and item-level sales reports/joins work. seed-full.ts has
+  // been updated to create RoomServiceOrderItem rows instead of a Json array.
+  items          RoomServiceOrderItem[]
   totalAmount    Decimal                @db.Decimal(10, 2)
   notes          String?
   status         RoomServiceOrderStatus @default(PENDING)
@@ -835,7 +932,29 @@ model RoomServiceOrder {
   booking      Booking      @relation(fields: [bookingId], references: [id])
   roomCharge   RoomCharge?  @relation(fields: [roomChargeId], references: [id])
 
+  @@index([bookingId])
+  @@index([guestAccountId, status])
   @@map("room_service_orders")
+}
+
+// NEW: replaces RoomServiceOrder.items Json blob
+model RoomServiceOrderItem {
+  id                 String   @id @default(uuid())
+  roomServiceOrderId String
+  itemId             String?  // StoreItem, if sourced from inventory
+  addonId            String?  // AddonService, if a generic addon
+  itemName           String   // snapshot, matches RoomChargeItem pattern
+  quantity           Int
+  unitPrice          Decimal  @db.Decimal(10, 2)
+  subtotal           Decimal  @db.Decimal(10, 2)
+  createdAt          DateTime @default(now())
+
+  roomServiceOrder RoomServiceOrder @relation(fields: [roomServiceOrderId], references: [id], onDelete: Cascade)
+  storeItem        StoreItem?       @relation(fields: [itemId], references: [id])
+  addon            AddonService?    @relation(fields: [addonId], references: [id])
+
+  @@index([roomServiceOrderId])
+  @@map("room_service_order_items")
 }
 
 model ServiceRequest {
@@ -852,6 +971,7 @@ model ServiceRequest {
   guestAccount GuestAccount @relation(fields: [guestAccountId], references: [id])
   booking      Booking      @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId, status])
   @@map("service_requests")
 }
 
@@ -867,29 +987,30 @@ model ExtensionRequest {
 
   booking Booking @relation(fields: [bookingId], references: [id])
 
+  @@index([bookingId, status])
   @@map("extension_requests")
 }
 
 // ─── STAFF MANAGEMENT ────────────────────────────────
 
 model StaffProfile {
-  id              String    @id @default(uuid())
-  userId          String    @unique
+  id              String         @id @default(uuid())
+  userId          String         @unique
   hotelId         String
   employeeNo      String
   position        String
   department      String
-  employmentType  String    @default("full_time")
+  employmentType  EmploymentType @default(full_time) // was free-text String
   startDate       DateTime
-  basicSalary     Decimal   @db.Decimal(10, 2)
-  allowances      Json      @default("[]")
-  nssf            Boolean   @default(true)
-  wcf             Boolean   @default(true)
+  basicSalary     Decimal        @db.Decimal(10, 2)
+  allowances      Json           @default("[]")
+  nssf            Boolean        @default(true)
+  wcf             Boolean        @default(true)
   bankName        String?
   bankAccount     String?
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   user     User            @relation(fields: [userId], references: [id])
   hotel    Hotel           @relation(fields: [hotelId], references: [id])
@@ -916,6 +1037,8 @@ model Shift {
 
   staff StaffProfile @relation(fields: [staffId], references: [id])
 
+  @@index([staffId, date])
+  @@index([hotelId, date])
   @@map("shifts")
 }
 
@@ -936,6 +1059,8 @@ model LeaveRequest {
 
   staff StaffProfile @relation(fields: [staffId], references: [id])
 
+  @@index([staffId, status])
+  @@index([hotelId, status])
   @@map("leave_requests")
 }
 
@@ -967,6 +1092,7 @@ model PayrollRecord {
   staff StaffProfile @relation(fields: [staffId], references: [id])
 
   @@unique([staffId, month, year])
+  @@index([hotelId, year, month])
   @@map("payroll_records")
 }
 
@@ -1000,7 +1126,10 @@ model Invoice {
   invoiceNumber String        @unique
   type          InvoiceType
   status        InvoiceStatus @default(draft)
-  bookingId     String?
+  // bookingId/booking REMOVED — an invoice's booking(s) are represented
+  // solely through InvoiceBooking now. seed-full.ts previously wrote to
+  // BOTH bookingId and InvoiceBooking for the same booking; that has been
+  // fixed to only write InvoiceBooking.
   companyId     String?
   amount        Decimal       @db.Decimal(10, 2)
   taxAmount     Decimal       @db.Decimal(10, 2) @default(0)
@@ -1015,7 +1144,6 @@ model Invoice {
   updatedAt     DateTime      @updatedAt
 
   hotel   Hotel    @relation(fields: [hotelId], references: [id])
-  booking Booking? @relation(fields: [bookingId], references: [id])
   company Company? @relation(fields: [companyId], references: [id])
   invoiceBookings InvoiceBooking[]
 

@@ -22,6 +22,28 @@ export const errorHandler = (
 
   // Prisma errors
   if (err.constructor.name === 'PrismaClientKnownRequestError') {
+    const code = (err as any).code
+    if (code === '23P01') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'DOUBLE_BOOKING',
+          message: 'Chumba hiki hakipatikani kwa tarehe uliouchagua. Tafadhali chagua tarehe nyingine.'
+        }
+      })
+    }
+    if (code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'DUPLICATE', message: 'Rekodi hii tayari ipo katika mfumo.' }
+      })
+    }
+    if (code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'Rekodi uliyoomba haikupatikana.' }
+      })
+    }
     return res.status(409).json({
       success: false,
       error: { code: 'DB_ERROR', message: 'Database operation failed' }

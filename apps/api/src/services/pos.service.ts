@@ -51,7 +51,7 @@ export class POSService {
           throw ApiError.badRequest(`Stock haitoshi kwa ${item.name}. Inapatikana: ${item.currentStock}`)
         }
 
-        const unitPrice = item.sellingPrice || 0
+        const unitPrice = Number(item.sellingPrice || 0)
         const totalPrice = unitPrice * reqItem.quantity
         totalAmount += totalPrice
 

@@ -7,7 +7,6 @@ export interface Invoice {
   invoiceNumber: string
   type: InvoiceType
   status: InvoiceStatus
-  bookingId?: string
   companyId?: string
   amount: number
   taxAmount: number
@@ -20,10 +19,12 @@ export interface Invoice {
   paidAt?: string
   createdAt: string
   updatedAt: string
-  booking?: {
-    bookingRef: string
-    guest?: { fullName: string }
-  }
+  invoiceBookings?: {
+    booking?: {
+      bookingRef: string
+      guest?: { fullName: string }
+    }
+  }[]
   company?: {
     id: string
     name: string
@@ -31,42 +32,44 @@ export interface Invoice {
 }
 
 export interface InvoiceWithDetails extends Invoice {
-  booking?: {
-    id: string
-    bookingRef: string
-    guest: {
+  invoiceBookings?: {
+    booking?: {
       id: string
-      fullName: string
-      phone: string
-      email?: string
-      nationality?: string
-      idType?: string
-      idNumber?: string
-    }
-    room: {
-      id: string
-      roomNumber: string
-      type: string
-    }
-    payments: {
-      id: string
-      amount: number
-      status: string
-      method: string
-      createdAt: string
-    }[]
-    roomCharges: {
-      id: string
-      totalAmount: number
-      items: {
-        itemName: string
-        quantity: number
-        unitPrice: number
-        totalPrice: number
+      bookingRef: string
+      guest: {
+        id: string
+        fullName: string
+        phone: string
+        email?: string
+        nationality?: string
+        idType?: string
+        idNumber?: string
+      }
+      room: {
+        id: string
+        roomNumber: string
+        type: string
+      }
+      payments: {
+        id: string
+        amount: number
+        status: string
+        method: string
         createdAt: string
       }[]
-    }[]
-  }
+      roomCharges: {
+        id: string
+        totalAmount: number
+        items: {
+          itemName: string
+          quantity: number
+          unitPrice: number
+          totalPrice: number
+          createdAt: string
+        }[]
+      }[]
+    }
+  }[]
   company?: {
     id: string
     name: string

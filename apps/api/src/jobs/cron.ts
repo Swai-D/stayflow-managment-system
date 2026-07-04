@@ -74,9 +74,9 @@ export const initJobs = () => {
           // Create or update invoice
           let invoice = await prisma.invoice.findFirst({
             where: {
-              bookingId: booking.id,
               type: booking.bookingType === 'company' ? 'company' : 'individual',
-              status: { not: 'cancelled' }
+              status: { not: 'cancelled' },
+              invoiceBookings: { some: { bookingId: booking.id } }
             }
           })
 
