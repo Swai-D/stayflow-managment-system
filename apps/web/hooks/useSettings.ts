@@ -38,7 +38,12 @@ export function useCreateStaff() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await api.post('/settings/users', data)
+      const payload = { ...data }
+      if (payload.role) {
+        payload.roleId = payload.role
+        delete payload.role
+      }
+      const res = await api.post('/settings/users', payload)
       return res.data.data
     },
     onSuccess: () => {
@@ -51,7 +56,12 @@ export function useUpdateStaff() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...data }: any) => {
-      const res = await api.patch(`/settings/users/${id}`, data)
+      const payload = { ...data }
+      if (payload.role) {
+        payload.roleId = payload.role
+        delete payload.role
+      }
+      const res = await api.patch(`/settings/users/${id}`, payload)
       return res.data.data
     },
     onSuccess: () => {

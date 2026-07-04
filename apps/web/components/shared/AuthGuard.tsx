@@ -3,13 +3,15 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
+import { AppPermission, hasAnyPermission } from '@/lib/roles'
 
 interface AuthGuardProps {
   children: React.ReactNode
-  allowedRoles?: ('admin' | 'receptionist' | 'housekeeping' | 'waiter')[]
+  allowedRoles?: string[]
+  allowedPermissions?: AppPermission[]
 }
 
-export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
+export default function AuthGuard({ children, allowedRoles, allowedPermissions }: AuthGuardProps) {
   const router = useRouter()
   const { isAuthenticated, user, initialize } = useAuthStore()
 
@@ -25,8 +27,19 @@ export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     init()
   }, [isAuthenticated, router, initialize])
 
-  // Role check
-  if (isAuthenticated && allowedRoles && user && !allowedRoles.includes(user.role)) {
+  // Role / permission check
+  if (isAuthenticated && allowedRoles && user && !allowedRoles.includes(user.role.name)) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900">Huna ruhusa</p>
+          <p className="text-sm text-gray-500 mt-1">Wasiliana na admin</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isAuthenticated && allowedPermissions && user && !hasAnyPermission(user.role, allowedPermissions)) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">

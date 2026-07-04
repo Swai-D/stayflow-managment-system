@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { createExpense, getExpenses, getExpenseStats } from '../controllers/expenses.controller'
 import { authenticate } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
+import { requirePermission } from '../middleware/requirePermission'
 import { z } from 'zod'
 
 const router = Router()
@@ -14,8 +15,8 @@ const expenseSchema = z.object({
   date: z.string().optional()
 })
 
-router.get('/', getExpenses)
-router.get('/stats', getExpenseStats)
-router.post('/', validate(expenseSchema), createExpense)
+router.get('/', requirePermission('reports:view'), getExpenses)
+router.get('/stats', requirePermission('reports:view'), getExpenseStats)
+router.post('/', requirePermission('reports:view'), validate(expenseSchema), createExpense)
 
 export default router

@@ -1,8 +1,9 @@
 import { PrismaClient, BookingStatus, BookingSource, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { availabilityService } from './availability.service'
-import { generateBookingRef } from '../utils/generateRef'
+import { generateBookingRef, generateInvoiceNumber } from '../utils/generateRef'
 import { auditService } from './audit.service'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
 
@@ -424,13 +425,20 @@ export class BookingsService {
   async checkIn(bookingId: string, hotelId: string) {
     const booking = await prisma.booking.findFirst({
       where: { id: bookingId, hotelId },
-      include: { room: true }
+      include: { room: true, guest: true }
     })
     if (!booking) throw ApiError.notFound('Booking haikupatikana')
 
     if (booking.status !== 'confirmed' && booking.status !== 'pending') {
       throw ApiError.badRequest(`Haiwezekani kufanya check-in — hali ya booking: ${booking.status}`)
     }
+
+    if (!booking.guest.email) {
+      throw ApiError.badRequest('Mgeni hana email — inahitajika kwa ajili ya guest portal.')
+    }
+
+    const guestEmail = booking.guest.email
+    const guestPhone = booking.guest.phone || undefined
 
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.booking.update({
@@ -441,7 +449,7 @@ export class BookingsService {
           updatedAt: new Date()
         },
         include: {
-          guest: { select: { fullName: true, phone: true } },
+          guest: { select: { fullName: true, phone: true, email: true } },
           room:  { select: { roomNumber: true } }
         }
       })
@@ -451,6 +459,85 @@ export class BookingsService {
         data: { status: 'occupied', updatedAt: new Date() }
       })
 
+      // Generate/refresh room QR login token
+      const qrToken = crypto.randomBytes(32).toString('hex')
+      const qrExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      await tx.room.update({
+        where: { id: booking.roomId },
+        data: {
+          qrCodeToken: qrToken,
+          qrCodeExpiresAt: qrExpiresAt
+        }
+      })
+
+      // Create or update guest portal account for frictionless access
+      const [firstName, ...rest] = booking.guest.fullName.split(' ')
+      const lastName = rest.join(' ') || ''
+
+      const existingAccount = await tx.guestAccount.findUnique({
+        where: { email: guestEmail }
+      })
+
+      if (existingAccount) {
+        await tx.guestAccount.update({
+          where: { id: existingAccount.id },
+          data: {
+            firstName: existingAccount.firstName || firstName,
+            lastName: existingAccount.lastName || lastName,
+            phone: existingAccount.phone || guestPhone,
+            linkedBookingId: booking.id,
+            roomId: booking.roomId,
+            status: existingAccount.status === 'PENDING_ACTIVATION' ? 'ACTIVE' : existingAccount.status,
+            updatedAt: new Date()
+          }
+        })
+      } else {
+        await tx.guestAccount.create({
+          data: {
+            email: guestEmail,
+            firstName,
+            lastName,
+            phone: guestPhone,
+            linkedBookingId: booking.id,
+            roomId: booking.roomId,
+            status: 'ACTIVE'
+          }
+        })
+      }
+
+      // Create invoice immediately on check-in with payment status matching booking
+      const totalAmount = Number(booking.totalAmount)
+      const paidAmount = Number(booking.paidAmount)
+      const balanceDue = Number(booking.balanceDue)
+      const invoiceType = booking.bookingType === 'company' ? 'company' : 'individual'
+
+      const invoiceData: any = {
+        hotelId,
+        invoiceNumber: await generateInvoiceNumber(),
+        type: invoiceType,
+        amount: balanceDue,
+        taxAmount: 0,
+        totalAmount,
+        paidAmount,
+        status: paidAmount >= totalAmount ? 'paid' : ('draft' as any),
+        dueDate: booking.checkOut,
+        notes: `Invoice generated on check-in for booking ${booking.bookingRef}`
+      }
+
+      if (invoiceType === 'company') {
+        invoiceData.companyId = booking.companyId
+      } else {
+        invoiceData.bookingId = booking.id
+      }
+
+      const invoice = await tx.invoice.create({ data: invoiceData })
+
+      if (invoiceType === 'company' && booking.companyId) {
+        await tx.invoiceBooking.create({
+          data: { invoiceId: invoice.id, bookingId: booking.id }
+        })
+      }
+
       await auditService.log({
         userId: booking.createdById,
         action: 'booking.check_in',
@@ -458,7 +545,7 @@ export class BookingsService {
         entityId: bookingId
       })
 
-      return updated
+      return { ...updated, qrToken, invoice }
     })
   }
 

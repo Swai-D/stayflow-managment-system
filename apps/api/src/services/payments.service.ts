@@ -1,6 +1,7 @@
 import { PrismaClient, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { auditService } from './audit.service'
+import { syncInvoicesForBooking } from './invoices.service'
 
 const prisma = new PrismaClient()
 
@@ -43,7 +44,7 @@ export class PaymentsService {
         const updatedPaidAmount = Number(booking.paidAmount) + amount
         const updatedBalanceDue = Number(booking.totalAmount) - updatedPaidAmount
 
-        await tx.booking.update({
+        const updatedBooking = await tx.booking.update({
           where: { id: bookingId },
           data: {
             paidAmount: updatedPaidAmount,
@@ -51,6 +52,9 @@ export class PaymentsService {
             status: updatedBalanceDue <= 0 && booking.status === 'pending' ? 'confirmed' : booking.status
           }
         })
+
+        // Sync linked invoice(s) so payment status matches the booking
+        await syncInvoicesForBooking(tx, updatedBooking)
       }
 
       await auditService.logPaymentRecorded(receivedById || 'system', payment.id, amount)

@@ -68,3 +68,10 @@ export const updateRoomStatus = asyncHandler(async (req: AuthRequest, res: Respo
   )
   res.json(new ApiResponse(room, 'Hali ya chumba imesasishwa'))
 })
+
+// POST /rooms/:id/qr-code
+export const generateRoomQRCode = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const hotelId = await getSystemHotelId()
+  const result = await roomsService.generateRoomQRToken(req.params.id, hotelId)
+  res.json(new ApiResponse(result, 'QR code limeundwa'))
+})

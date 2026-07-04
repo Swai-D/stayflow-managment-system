@@ -9,13 +9,6 @@ datasource db {
 
 // ─── ENUMS ───────────────────────────────────────────
 
-enum UserRole {
-  admin
-  receptionist
-  housekeeping
-  waiter
-}
-
 enum RoomType {
   standard
   deluxe
@@ -265,8 +258,49 @@ model Hotel {
   apiKeys   ApiKey[]
   webhooks  Webhook[]
   staffProfiles StaffProfile[]
+  aiSettings AiSettings?
 
   @@map("hotels")
+}
+
+model AiSettings {
+  hotelId         String   @id
+  enabled         Boolean  @default(false)
+  provider        String   @default("openai")
+  openaiKey       String?
+  openaiModel     String   @default("gpt-4o-mini")
+  deepseekKey     String?
+  deepseekModel   String   @default("deepseek-chat")
+  geminiKey       String?
+  geminiModel     String   @default("gemini-1.5-flash")
+  temperature     Float    @default(0.7)
+  maxTokens       Int      @default(2000)
+  systemPrompt    String   @default("You are Buffalo, a helpful hotel management assistant for Buffalo Hotel. Answer questions about hotel operations, bookings, guests, and staff in a professional manner. Respond in Kiswahili when possible.")
+  language        String   @default("swahili")
+  responseStyle   String   @default("professional")
+  includeCharts   Boolean  @default(false)
+  autoAnalyze     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+
+  @@map("ai_settings")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  hotelId     String
+  name        String
+  description String?
+  permissions Json     @default("[]")
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+
+  @@unique([hotelId, name])
+  @@map("roles")
 }
 
 model User {
@@ -275,7 +309,7 @@ model User {
   fullName     String
   email        String    @unique
   passwordHash String
-  role         UserRole  @default(receptionist)
+  roleId       String
   phone        String?
   avatarUrl    String?
   isActive     Boolean   @default(true)
@@ -284,6 +318,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   hotel            Hotel            @relation(fields: [hotelId], references: [id])
+  role             Role             @relation(fields: [roleId], references: [id])
   bookingsCreated  Booking[]        @relation("CreatedBy")
   paymentsReceived Payment[]        @relation("ReceivedBy")
   housekeepingLogs HousekeepingLog[]
@@ -340,6 +375,8 @@ model Room {
   images          Json       @default("[]")
   lockId          String?
   lockProvider    String?
+  qrCodeToken     String?    @unique
+  qrCodeExpiresAt DateTime?
   isActive        Boolean    @default(true)
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
@@ -347,6 +384,7 @@ model Room {
   hotel            Hotel             @relation(fields: [hotelId], references: [id])
   bookings         Booking[]
   housekeepingLogs HousekeepingLog[]
+  guestAccounts    GuestAccount[]
 
   @@unique([hotelId, roomNumber])
   @@map("rooms")
@@ -705,12 +743,15 @@ model RoomCharge {
   booking     Booking           @relation(fields: [bookingId], references: [id])
   items       RoomChargeItem[]
   totalAmount Float
-  status      ChargeStatus      @default(OPEN)  
+  status      ChargeStatus      @default(OPEN)
+  source      String            @default("pos")
   notes       String?
   postedById  String
   postedBy    User              @relation(fields: [postedById], references: [id])
   settledAt   DateTime?
   createdAt   DateTime          @default(now())
+
+  roomServiceOrder RoomServiceOrder?
 
   @@map("room_charges")
 }
@@ -765,9 +806,11 @@ model GuestAccount {
   otpExpiresAt      DateTime?
   status            GuestAccountStatus @default(PENDING_ACTIVATION)
   linkedBookingId   String?
+  roomId            String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
+  room              Room?              @relation(fields: [roomId], references: [id])
   roomServiceOrders RoomServiceOrder[]
   serviceRequests   ServiceRequest[]
 
@@ -783,11 +826,14 @@ model RoomServiceOrder {
   totalAmount    Decimal                @db.Decimal(10, 2)
   notes          String?
   status         RoomServiceOrderStatus @default(PENDING)
+  postedToRoom   Boolean                @default(false)
+  roomChargeId   String?                @unique
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
   guestAccount GuestAccount @relation(fields: [guestAccountId], references: [id])
   booking      Booking      @relation(fields: [bookingId], references: [id])
+  roomCharge   RoomCharge?  @relation(fields: [roomChargeId], references: [id])
 
   @@map("room_service_orders")
 }

@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import {
   getSellableItems, getActiveBookings, postCharge, getFolio,
   voidCharge, getInvoice, sendInvoiceEmail, getInvoicePdf, checkout
@@ -9,21 +9,21 @@ import {
 const router = Router()
 router.use(authenticate)
 
-// POS items & Active bookings: admin, receptionist, waiter
-router.get('/items',           authorize('admin', 'receptionist', 'waiter'), getSellableItems)
-router.get('/active-bookings', authorize('admin', 'receptionist', 'waiter'), getActiveBookings)
+// POS items & Active bookings
+router.get('/items',           requirePermission('pos:view'), getSellableItems)
+router.get('/active-bookings', requirePermission('pos:view'), getActiveBookings)
 
-// Post charge: admin, receptionist, waiter
-router.post('/charge',         authorize('admin', 'receptionist', 'waiter'), postCharge)
+// Post charge
+router.post('/charge',         requirePermission('pos:charge'), postCharge)
 
-// Folio, Invoice, Checkout: admin, receptionist only
-router.get('/folio/:bookingId',   authorize('admin', 'receptionist'), getFolio)
-router.get('/invoice/:bookingId', authorize('admin', 'receptionist'), getInvoice)
-router.post('/invoice/:bookingId/email', authorize('admin', 'receptionist'), sendInvoiceEmail)
-router.get('/invoice/:bookingId/pdf', authorize('admin', 'receptionist'), getInvoicePdf)
-router.post('/checkout/:bookingId',authorize('admin', 'receptionist'), checkout)
+// Folio, Invoice, Checkout
+router.get('/folio/:bookingId',   requirePermission('pos:view'), getFolio)
+router.get('/invoice/:bookingId', requirePermission('pos:view'), getInvoice)
+router.post('/invoice/:bookingId/email', requirePermission('pos:view'), sendInvoiceEmail)
+router.get('/invoice/:bookingId/pdf',    requirePermission('pos:view'), getInvoicePdf)
+router.post('/checkout/:bookingId',      requirePermission('pos:checkout'), checkout)
 
-// Void charge: admin only
-router.delete('/charge/:chargeId', authorize('admin'), voidCharge)
+// Void charge
+router.delete('/charge/:chargeId', requirePermission('pos:void'), voidCharge)
 
 export default router

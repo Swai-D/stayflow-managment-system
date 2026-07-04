@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import {
   getStaff, createStaff, updateStaff, deactivateStaff,
   clockIn, clockOut, getShifts,
@@ -12,27 +12,27 @@ import {
 const router = Router()
 router.use(authenticate)
 
-// ─── Staff accounts (Admin full, Receptionist view) ─
-router.get('/', authorize('admin', 'receptionist'), getStaff)
-router.post('/', authorize('admin'), createStaff)
-router.patch('/:id', authorize('admin'), updateStaff)
-router.delete('/:id', authorize('admin'), deactivateStaff)
+// ─── Staff accounts ─
+router.get('/', requirePermission('staff:view'), getStaff)
+router.post('/', requirePermission('staff:manage'), createStaff)
+router.patch('/:id', requirePermission('staff:manage'), updateStaff)
+router.delete('/:id', requirePermission('staff:manage'), deactivateStaff)
 
-// ─── Shifts (All staff — self + admin) ────────────
+// ─── Shifts (All authenticated staff) ────────────
 router.post('/shifts/clock-in', clockIn)
 router.post('/shifts/clock-out', clockOut)
 router.get('/shifts', getShifts)
 
-// ─── Leave (All staff request, admin approves) ────
+// ─── Leave ────
 router.get('/leave', getLeaves)
 router.post('/leave', requestLeave)
-router.patch('/leave/:id', authorize('admin'), reviewLeave)
+router.patch('/leave/:id', requirePermission('staff:manage'), reviewLeave)
 
-// ─── Payroll (Admin only) ─────────────────────────
-router.get('/payroll', authorize('admin'), getPayroll)
-router.post('/payroll/generate', authorize('admin'), generatePayroll)
-router.patch('/payroll/:id/approve', authorize('admin'), approvePayroll)
-router.patch('/payroll/:id/mark-paid', authorize('admin'), markPaid)
-router.get('/payroll/summary', authorize('admin'), getPayrollSummary)
+// ─── Payroll ─────────────────────────
+router.get('/payroll', requirePermission('payroll:view'), getPayroll)
+router.post('/payroll/generate', requirePermission('payroll:manage'), generatePayroll)
+router.patch('/payroll/:id/approve', requirePermission('payroll:manage'), approvePayroll)
+router.patch('/payroll/:id/mark-paid', requirePermission('payroll:manage'), markPaid)
+router.get('/payroll/summary', requirePermission('payroll:view'), getPayrollSummary)
 
 export default router

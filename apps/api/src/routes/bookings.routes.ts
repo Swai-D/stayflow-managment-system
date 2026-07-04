@@ -5,7 +5,7 @@ import {
   confirmPayment, getTodayCheckouts, extendStay
 } from '../controllers/bookings.controller'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import { validate } from '../middleware/validate'
 import { z } from 'zod'
 
@@ -78,17 +78,17 @@ const extendSchema = z.object({
   reason: z.string().optional()
 })
 
-router.get('/',            getBookings)
-router.get('/stats',       getBookingStats)
-router.get('/checkouts/today', getTodayCheckouts)
-router.get('/availability',checkAvailability)
-router.get('/:id',         getBooking)
-router.post('/',           validate(createBookingSchema), createBooking)
-router.patch('/:id',       updateBooking)
-router.delete('/:id',      authorize('admin', 'receptionist'), validate(cancelSchema), cancelBooking)
-router.post('/:id/check-in',  checkIn)
-router.post('/:id/check-out', checkOut)
-router.post('/:id/extend',    validate(extendSchema), extendStay)
-router.post('/:id/confirm-payment', confirmPayment)
+router.get('/',            requirePermission('bookings:view'), getBookings)
+router.get('/stats',       requirePermission('reports:view'), getBookingStats)
+router.get('/checkouts/today', requirePermission('bookings:view', 'housekeeping:view'), getTodayCheckouts)
+router.get('/availability', requirePermission('bookings:view'), checkAvailability)
+router.get('/:id',         requirePermission('bookings:view'), getBooking)
+router.post('/',           requirePermission('bookings:manage'), validate(createBookingSchema), createBooking)
+router.patch('/:id',       requirePermission('bookings:manage'), updateBooking)
+router.delete('/:id',      requirePermission('bookings:manage'), validate(cancelSchema), cancelBooking)
+router.post('/:id/check-in',  requirePermission('bookings:checkin'), checkIn)
+router.post('/:id/check-out', requirePermission('bookings:checkout'), checkOut)
+router.post('/:id/extend',    requirePermission('bookings:extend'), validate(extendSchema), extendStay)
+router.post('/:id/confirm-payment', requirePermission('payments:record'), confirmPayment)
 
 export default router

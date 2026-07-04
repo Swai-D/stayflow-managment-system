@@ -10,63 +10,81 @@ import {
   ChevronDown, LayoutGrid, Package, ArrowLeftRight,
   ShoppingCart, Truck, CreditCard, Banknote, FileText, Building2,
   Code2, KeyRound, Webhook, ScrollText, Activity,
-  Users2, Wallet
+  Users2, Wallet, Smartphone, ConciergeBell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { hasAnyPermission } from '@/lib/roles'
 import { useState } from 'react'
 import { useUIStore } from '@/store/uiStore'
 
-const NAV_GROUPS = [
+type NavItem = {
+  label: string
+  href: string
+  icon: React.ElementType
+  badge?: number
+  permissions?: import('@/lib/roles').AppPermission[]
+}
+
+const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
   {
     key: 'daily',
     label: 'DAILY OPERATION',
     items: [
       { label:'Overview',       href:'/overview',             icon:LayoutDashboard },
-      { label:'Reservations',   href:'/reservations',         icon:CalendarDays,   badge:6 },
-      { label:'Calendar',       href:'/calendar',             icon:CalendarIcon },
-      { label:'Guests',         href:'/guests',               icon:Users },
-      { label:'Rooms',          href:'/rooms',                icon:DoorOpen },
-      { label:'Housekeeping',   href:'/housekeeping',         icon:Sparkles },
-      { label:'Checkouts',      href:'/checkouts',            icon:DoorOpen },
+      { label:'Reservations',   href:'/reservations',         icon:CalendarDays,   badge:6, permissions:['bookings:view'] },
+      { label:'Calendar',       href:'/calendar',             icon:CalendarIcon, permissions:['bookings:view'] },
+      { label:'Guests',         href:'/guests',               icon:Users, permissions:['guests:view'] },
+      { label:'Rooms',          href:'/rooms',                icon:DoorOpen, permissions:['rooms:view'] },
+      { label:'Housekeeping',   href:'/housekeeping',         icon:Sparkles, permissions:['housekeeping:view'] },
+      { label:'Checkouts',      href:'/checkouts',            icon:DoorOpen, permissions:['bookings:checkout'] },
     ]
   },
   {
     key: 'accounting',
     label: 'ACCOUNTING',
     items: [
-      { label:'Expense Tracking',   href:'/accounting/expenses', icon:Receipt },
-      { label:'Revenue Management', href:'/accounting/revenue',  icon:TrendingUp },
+      { label:'Expense Tracking',   href:'/accounting/expenses', icon:Receipt, permissions:['reports:view'] },
+      { label:'Revenue Management', href:'/accounting/revenue',  icon:TrendingUp, permissions:['reports:view'] },
     ]
   },
   {
     key: 'billing',
     label: 'BILLING',
     items: [
-      { label:'Payments',     href:'/payments',     icon:Banknote },
-      { label:'Invoices',     href:'/invoices',     icon:FileText },
-      { label:'Companies',    href:'/companies',    icon:Building2 },
+      { label:'Payments',     href:'/payments',     icon:Banknote, permissions:['payments:view'] },
+      { label:'Invoices',     href:'/invoices',     icon:FileText, permissions:['invoices:view'] },
+      { label:'Companies',    href:'/companies',    icon:Building2, permissions:['companies:view'] },
     ]
   },
   {
     key: 'store',
     label: 'STORE & INVENTORY',
     items: [
-      { label:'Store Dashboard',    href:'/store',                    icon:LayoutGrid },
-      { label:'Items & Stock',      href:'/store/items',              icon:Package },
-      { label:'Transactions',       href:'/store/transactions',       icon:ArrowLeftRight },
-      { label:'Purchase Orders',    href:'/store/purchase-orders',    icon:ShoppingCart },
-      { label:'Suppliers',          href:'/store/suppliers',          icon:Truck },
-      { label:'POS — Post to Room', href:'/store/pos',                icon:CreditCard },
+      { label:'Store Dashboard',    href:'/store',                    icon:LayoutGrid, permissions:['store:view'] },
+      { label:'Items & Stock',      href:'/store/items',              icon:Package, permissions:['store:view'] },
+      { label:'Transactions',       href:'/store/transactions',       icon:ArrowLeftRight, permissions:['store:view'] },
+      { label:'Purchase Orders',    href:'/store/purchase-orders',    icon:ShoppingCart, permissions:['store:view'] },
+      { label:'Suppliers',          href:'/store/suppliers',          icon:Truck, permissions:['store:view'] },
+      { label:'POS — Post to Room', href:'/store/pos',                icon:CreditCard, permissions:['pos:view'] },
+    ]
+  },
+  {
+    key: 'guest-portal',
+    label: 'GUEST PORTAL',
+    items: [
+      { label:'Portal Dashboard',   href:'/guest-portal',             icon:Smartphone, permissions:['guest_portal:orders','guest_portal:requests'] },
+      { label:'Orders',             href:'/guest-portal/orders',      icon:ShoppingCart, permissions:['guest_portal:orders'] },
+      { label:'Requests',           href:'/guest-portal/requests',    icon:ConciergeBell, permissions:['guest_portal:requests'] },
     ]
   },
   {
     key: 'developer',
     label: 'DEVELOPER',
     items: [
-      { label:'API Keys',       href:'/developer/api-keys',    icon:KeyRound },
-      { label:'Webhooks',       href:'/developer/webhooks',    icon:Webhook },
-      { label:'API Logs',       href:'/developer/logs',        icon:Activity },
-      { label:'Documentation',  href:'/developer/docs',        icon:ScrollText },
+      { label:'API Keys',       href:'/developer/api-keys',    icon:KeyRound, permissions:['developer:manage'] },
+      { label:'Webhooks',       href:'/developer/webhooks',    icon:Webhook, permissions:['developer:manage'] },
+      { label:'API Logs',       href:'/developer/logs',        icon:Activity, permissions:['developer:manage'] },
+      { label:'Documentation',  href:'/developer/docs',        icon:ScrollText, permissions:['developer:manage'] },
     ]
   },
 ]
@@ -125,7 +143,7 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[13px] font-semibold text-[#111827] truncate leading-tight">{user?.fullName ?? 'Admin'}</p>
-              <p className="text-[11px] text-[#9ca3af] capitalize leading-tight">{user?.role ?? 'admin'}</p>
+              <p className="text-[11px] text-[#9ca3af] capitalize leading-tight">{user?.role?.name ?? 'admin'}</p>
             </div>
             <ChevronDown size={12} className="text-[#9ca3af] flex-shrink-0"/>
           </div>
@@ -133,7 +151,12 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5 no-scrollbar">
-          {NAV_GROUPS.map(group => (
+          {NAV_GROUPS.map(group => {
+            const visibleItems = group.items.filter(item =>
+              !item.permissions || hasAnyPermission(user?.role, item.permissions)
+            )
+            if (visibleItems.length === 0) return null
+            return (
             <div key={group.key} className="mb-1">
               <button onClick={() => toggle(group.key)}
                 className="w-full flex items-center justify-between px-2 pt-2 pb-1.5">
@@ -143,7 +166,7 @@ export default function Sidebar() {
                 <ChevronDown size={10} className={cn('text-[#d1d5db] transition-transform', !isOpen(group.key) && '-rotate-90')}/>
               </button>
 
-              {isOpen(group.key) && group.items.map(item => {
+              {isOpen(group.key) && visibleItems.map(item => {
                 const isActive = pathname === item.href ||
                   (item.href !== '/store' && pathname.startsWith(item.href + '/')) ||
                   (item.href === '/store' && pathname === '/store')
@@ -168,7 +191,7 @@ export default function Sidebar() {
                 )
               })}
             </div>
-          ))}
+          )})}
 
           {/* System option */}
           <div className="flex items-center justify-between px-2 pt-3 pb-1.5">
@@ -176,7 +199,7 @@ export default function Sidebar() {
             <ChevronDown size={10} className="text-[#d1d5db]"/>
           </div>
 
-          {(user?.role === 'admin' || user?.role === 'receptionist') && (
+          {hasAnyPermission(user?.role, ['staff:view']) && (
             <Link href="/staff"
               onClick={closeSidebar}
               className={cn(
@@ -190,7 +213,7 @@ export default function Sidebar() {
             </Link>
           )}
 
-          {user?.role === 'admin' && (
+          {hasAnyPermission(user?.role, ['payroll:view']) && (
             <Link href="/staff/payroll"
               onClick={closeSidebar}
               className={cn(
@@ -207,15 +230,17 @@ export default function Sidebar() {
 
         {/* Bottom */}
         <div className="px-3 pb-4 pt-2 border-t border-[#f3f4f6] flex-shrink-0 space-y-0.5">
-          <Link href="/settings"
-            onClick={closeSidebar}
-            className={cn(
-              'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] transition-all duration-150 font-medium',
-              pathname === '/settings' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6b7280] hover:bg-[#f3f4f6]'
-            )}>
-            <Settings size={14} className="text-[#9ca3af] flex-shrink-0"/>
-            Settings
-          </Link>
+          {hasAnyPermission(user?.role, ['settings:view','settings:manage']) && (
+            <Link href="/settings"
+              onClick={closeSidebar}
+              className={cn(
+                'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] transition-all duration-150 font-medium',
+                pathname === '/settings' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6b7280] hover:bg-[#f3f4f6]'
+              )}>
+              <Settings size={14} className="text-[#9ca3af] flex-shrink-0"/>
+              Settings
+            </Link>
+          )}
           <button onClick={() => logout()}
             className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-all duration-150 font-medium">
             <LogOut size={14} className="text-[#9ca3af] flex-shrink-0"/>

@@ -120,8 +120,12 @@ export const createPublicBooking = asyncHandler(async (req, res) => {
   if (!hotel) throw ApiError.notFound('Hotel haikupatikana')
 
   // Find a hotel admin/staff to mark as creator of the public booking
+  const adminRole = await prisma.role.findFirst({
+    // Cast needed because ts-node's type resolution for the new Role model disagrees with tsc
+    where: { hotelId: hotel.id, name: 'admin' } as any
+  })
   const creator = await prisma.user.findFirst({
-    where: { hotelId: hotel.id, role: 'admin', isActive: true }
+    where: { hotelId: hotel.id, roleId: adminRole?.id, isActive: true }
   })
 
   if (!creator) {

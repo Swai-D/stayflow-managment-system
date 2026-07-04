@@ -229,4 +229,60 @@ export class InvoicesService {
   }
 }
 
+/**
+ * Sync invoice(s) linked to a booking whenever the booking's payment/balance changes.
+ * Should be called inside the same Prisma transaction that updated the booking.
+ */
+export async function syncInvoicesForBooking(
+  tx: Prisma.TransactionClient,
+  booking: { id: string; totalAmount: number | Prisma.Decimal; paidAmount: number | Prisma.Decimal }
+) {
+  const totalAmount = Number(booking.totalAmount)
+  const paidAmount = Number(booking.paidAmount)
+  const balanceDue = totalAmount - paidAmount
+  const status: any = paidAmount >= totalAmount ? 'paid' : paidAmount > 0 ? 'sent' : 'draft'
+
+  // Individual invoices linked directly to the booking
+  await tx.invoice.updateMany({
+    where: { bookingId: booking.id, type: 'individual' },
+    data: {
+      totalAmount,
+      paidAmount,
+      amount: balanceDue,
+      status,
+      paidAt: status === 'paid' ? new Date() : null,
+      updatedAt: new Date()
+    }
+  })
+
+  // Company invoices linked via InvoiceBooking
+  const companyInvoices = await tx.invoice.findMany({
+    where: {
+      type: 'company',
+      invoiceBookings: { some: { bookingId: booking.id } }
+    },
+    include: { invoiceBookings: { include: { booking: true } } }
+  })
+
+  for (const invoice of companyInvoices) {
+    const linkedBookings = invoice.invoiceBookings.map(ib => ib.booking)
+    const invTotal = linkedBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+    const invPaid = linkedBookings.reduce((sum, b) => sum + Number(b.paidAmount), 0)
+    const invBalance = invTotal - invPaid
+    const invStatus: any = invPaid >= invTotal ? 'paid' : invPaid > 0 ? 'sent' : 'draft'
+
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        totalAmount: invTotal,
+        paidAmount: invPaid,
+        amount: invBalance,
+        status: invStatus,
+        paidAt: invStatus === 'paid' ? new Date() : invoice.paidAt,
+        updatedAt: new Date()
+      }
+    })
+  }
+}
+
 export const invoicesService = new InvoicesService()

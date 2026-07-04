@@ -2,6 +2,7 @@ import { PrismaClient, ChargeStatus } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
 import { pdfService } from './pdf.service'
 import { brevoService } from './brevo.service'
+import { syncInvoicesForBooking } from './invoices.service'
 import { webhookService } from './webhook.service'
 import { format } from 'date-fns'
 
@@ -265,7 +266,7 @@ export class POSService {
 
       // 2. Settle the booking balance as per spec
       // Note: In real scenarios, this should record a Payment too.
-      return tx.booking.update({
+      const updatedBooking = await tx.booking.update({
         where: { id: booking.id },
         data: { 
           balanceDue: 0,
@@ -273,6 +274,11 @@ export class POSService {
           updatedAt: new Date() 
         }
       })
+
+      // Sync linked invoice(s) so payment status matches the booking
+      await syncInvoicesForBooking(tx, updatedBooking)
+
+      return updatedBooking
     })
   }
 

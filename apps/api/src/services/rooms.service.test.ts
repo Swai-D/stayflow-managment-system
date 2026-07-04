@@ -8,6 +8,7 @@ const { mockPrisma } = vi.hoisted(() => {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     housekeepingLog: { create: vi.fn() },
   }
@@ -35,10 +36,12 @@ describe('RoomsService', () => {
       mockPrisma.room.findMany.mockResolvedValue([
         { id: '1', roomNumber: '111', status: 'available', bookings: [], housekeepingLogs: [] }
       ])
-      const rooms = await service.getRooms('hotel-1')
-      expect(Array.isArray(rooms)).toBe(true)
-      expect(rooms).toHaveLength(1)
+      mockPrisma.room.count.mockResolvedValue(1)
+      const result = await service.getRooms('hotel-1')
+      expect(Array.isArray(result.rooms)).toBe(true)
+      expect(result.rooms).toHaveLength(1)
       expect(mockPrisma.room.findMany).toHaveBeenCalled()
+      expect(mockPrisma.room.count).toHaveBeenCalled()
     })
   })
 

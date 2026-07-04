@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { ApiError } from '../utils/ApiError'
 
@@ -30,7 +30,14 @@ export class SettingsService {
         id: true,
         fullName: true,
         email: true,
-        role: true,
+        roleId: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            permissions: true
+          }
+        },
         phone: true,
         isActive: true,
         lastLoginAt: true,
@@ -45,11 +52,16 @@ export class SettingsService {
     fullName: string
     email: string
     password: string
-    role: UserRole
+    roleId: string
     phone?: string
   }) {
     const existing = await prisma.user.findUnique({ where: { email: data.email } })
     if (existing) throw ApiError.conflict('Email tayari inatumiwa')
+
+    const role = await prisma.role.findFirst({
+      where: { id: data.roleId, hotelId }
+    })
+    if (!role) throw ApiError.badRequest('Jukumu lililochaguliwa halipo')
 
     const passwordHash = await bcrypt.hash(data.password, 12)
 
@@ -59,15 +71,23 @@ export class SettingsService {
         fullName: data.fullName,
         email: data.email,
         passwordHash,
-        role: data.role,
+        roleId: data.roleId,
         phone: data.phone,
         isActive: true
+      },
+      include: {
+        role: {
+          select: { id: true, name: true, permissions: true }
+        }
       }
     })
   }
 
   async updateUser(userId: string, hotelId: string, data: any) {
-    const user = await prisma.user.findFirst({ where: { id: userId, hotelId } })
+    const user = await prisma.user.findFirst({
+      where: { id: userId, hotelId },
+      include: { role: true }
+    })
     if (!user) throw ApiError.notFound('Mtumiaji hakupatikana')
 
     if (data.password) {
@@ -75,17 +95,32 @@ export class SettingsService {
       delete data.password
     }
 
+    if (data.roleId) {
+      const role = await prisma.role.findFirst({
+        where: { id: data.roleId, hotelId }
+      })
+      if (!role) throw ApiError.badRequest('Jukumu lililochaguliwa halipo')
+    }
+
     return prisma.user.update({
       where: { id: userId },
       data: {
         ...data,
         updatedAt: new Date()
+      },
+      include: {
+        role: {
+          select: { id: true, name: true, permissions: true }
+        }
       }
     })
   }
 
   async deleteUser(userId: string, hotelId: string, requestUserId: string) {
-    const user = await prisma.user.findFirst({ where: { id: userId, hotelId } })
+    const user = await prisma.user.findFirst({
+      where: { id: userId, hotelId },
+      include: { role: true }
+    })
     if (!user) throw ApiError.notFound('Mtumiaji hakupatikana')
 
     // RULE 1: Huwezi kujifuta mwenyewe
@@ -94,7 +129,8 @@ export class SettingsService {
     }
 
     // RULE 2: Huwezi kufuta Admin (Only Super Admin/Developer via DB can do this)
-    if (user.role === 'admin') {
+    const userPermissions = (user.role.permissions as string[]) ?? []
+    if (user.role.name === 'admin' || userPermissions.includes('all')) {
       throw ApiError.forbidden('Akaunti ya Admin haiwezi kufutwa na Admin mwingine. Wasiliana na Developer.')
     }
 

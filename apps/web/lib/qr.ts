@@ -1,9 +1,12 @@
 import QRCode from 'qrcode'
 
-export async function generateRoomQR(roomId: string) {
+const GUEST_PORTAL_URL = process.env.NEXT_PUBLIC_GUEST_PORTAL_URL || 'http://localhost:5501'
+
+export async function generateRoomQR(qrToken?: string | null) {
+  if (!qrToken) return ''
+
   try {
-    // URL for room details in guest portal
-    const url = `${window.location.origin}/book?room=${roomId}`
+    const url = `${GUEST_PORTAL_URL}/login.html?qr=${qrToken}`
     return await QRCode.toDataURL(url, {
       margin: 1,
       width: 120,

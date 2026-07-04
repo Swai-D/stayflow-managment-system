@@ -1,0 +1,3 @@
+[submodule "buffalo-guest"]
+	path = buffalo-guest
+	url = https://github.com/Swai-D/guest-portal.git

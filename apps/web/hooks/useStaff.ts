@@ -5,7 +5,7 @@ export interface StaffFormData {
   fullName: string
   email: string
   password?: string
-  role: 'admin' | 'receptionist' | 'housekeeping'
+  roleId: string
   phone?: string
   position: string
   department: string
@@ -22,7 +22,7 @@ export interface StaffFormData {
 export interface StaffUpdateData {
   fullName?: string
   phone?: string
-  role?: string
+  roleId?: string
   position?: string
   department?: string
   basicSalary?: number

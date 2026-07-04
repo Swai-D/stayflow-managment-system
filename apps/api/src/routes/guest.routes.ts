@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { authenticateGuest } from '../middleware/guest.auth'
 import {
   login,
+  qrLogin,
   requestOtp,
   verifyOtp,
   verifyActivationToken,
@@ -17,6 +18,7 @@ const router = Router()
 
 // Public auth routes
 router.post('/login', login)
+router.post('/qr-login', qrLogin)
 router.post('/otp', requestOtp)
 router.post('/otp/verify', verifyOtp)
 router.get('/activate/verify', verifyActivationToken)

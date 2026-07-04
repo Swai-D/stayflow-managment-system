@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { getHousekeepingStatus, updateHousekeepingStatus } from '../controllers/housekeeping.controller'
 import { authenticate } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
+import { requirePermission } from '../middleware/requirePermission'
 import { z } from 'zod'
 
 const router = Router()
@@ -12,7 +13,7 @@ const updateHkSchema = z.object({
   notes: z.string().optional(),
 })
 
-router.get('/', getHousekeepingStatus)
-router.patch('/:roomId', validate(updateHkSchema), updateHousekeepingStatus)
+router.get('/', requirePermission('housekeeping:view'), getHousekeepingStatus)
+router.patch('/:roomId', requirePermission('housekeeping:manage'), validate(updateHkSchema), updateHousekeepingStatus)
 
 export default router

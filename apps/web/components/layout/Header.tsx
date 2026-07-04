@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { useSearch, type SearchResult } from '@/hooks/useSearch'
 import Link from 'next/link'
+import AIChatDrawer from '@/components/ai/AIChatDrawer'
 
 const titleMap: Record<string, string> = {
   '/overview': 'Dashboard',
@@ -279,6 +280,9 @@ export default function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
+        {/* AI Assistant */}
+        <AIChatDrawer />
+
         {/* Dark Mode Toggle */}
         <button className="w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-lg text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
           <Moon size={15} />

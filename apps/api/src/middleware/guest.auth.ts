@@ -21,7 +21,7 @@ export const authenticateGuest = async (
   next: NextFunction
 ) => {
   const token = req.headers.authorization?.split(' ')[1]
-  if (!token) throw ApiError.unauthorized('Token inahitajika')
+  if (!token) return next(ApiError.unauthorized('Token inahitajika'))
 
   try {
     const decoded = jwt.verify(
@@ -38,7 +38,7 @@ export const authenticateGuest = async (
     })
 
     if (!account || account.status !== 'ACTIVE') {
-      throw ApiError.unauthorized('Akaunti haijathibitishwa')
+      return next(ApiError.unauthorized('Akaunti haijathibitishwa'))
     }
 
     req.guest = {
@@ -51,6 +51,6 @@ export const authenticateGuest = async (
 
     next()
   } catch {
-    throw ApiError.unauthorized('Token imekwisha au si sahihi')
+    return next(ApiError.unauthorized('Token imekwisha au si sahihi'))
   }
 }

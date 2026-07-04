@@ -4,7 +4,7 @@ import {
   updateCompany, deleteCompany
 } from '../controllers/companies.controller'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import { validate } from '../middleware/validate'
 import { z } from 'zod'
 
@@ -21,10 +21,10 @@ const companySchema = z.object({
   notes: z.string().optional(),
 })
 
-router.get('/', getCompanies)
-router.post('/', authorize('admin', 'receptionist'), validate(companySchema), createCompany)
-router.get('/:id', getCompany)
-router.patch('/:id', authorize('admin', 'receptionist'), validate(companySchema.partial()), updateCompany)
-router.delete('/:id', authorize('admin'), deleteCompany)
+router.get('/', requirePermission('companies:view'), getCompanies)
+router.post('/', requirePermission('companies:manage'), validate(companySchema), createCompany)
+router.get('/:id', requirePermission('companies:view'), getCompany)
+router.patch('/:id', requirePermission('companies:manage'), validate(companySchema.partial()), updateCompany)
+router.delete('/:id', requirePermission('companies:manage'), deleteCompany)
 
 export default router

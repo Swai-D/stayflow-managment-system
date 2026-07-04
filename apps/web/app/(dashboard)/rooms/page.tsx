@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRooms, useRoomStats, useFloors, useDeleteRoom } from '@/hooks/useRooms'
+import { useRooms, useRoomStats, useFloors, useDeleteRoom, useGenerateRoomQR } from '@/hooks/useRooms'
 import { Room, ROOM_STATUS_CONFIG, RoomStatus } from '@/types/room'
 import { formatTZS } from '@/lib/formatters'
 import { generateRoomQR } from '@/lib/qr'
@@ -349,6 +349,8 @@ function CompactRoomItem({ room, onClick, index }: { room: Room; onClick: () => 
 // ─── High Information Room Card ─────────────────────
 function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClick: () => void; index: number; onEdit: () => void }) {
   const [qrCode, setQrCode] = useState('')
+  const [qrToken, setQrToken] = useState(room.qrCodeToken)
+  const { mutate: generateQR, isPending: generatingQR } = useGenerateRoomQR()
   const currentBooking = room.bookings?.[0]
   const status = room.status
   const isOccupied = status === 'occupied'
@@ -365,8 +367,8 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
   const roomImage = ROOM_IMAGES[room.type] || ROOM_IMAGES.standard
 
   useEffect(() => {
-    generateRoomQR(room.id).then(setQrCode)
-  }, [room.id])
+    generateRoomQR(qrToken).then(setQrCode)
+  }, [qrToken])
 
   return (
     <div 
@@ -423,10 +425,27 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
                   </div>
                </div>
             </div>
-            {qrCode && (
+            {qrCode ? (
                <div className="bg-white p-1.5 rounded-xl shadow-lg border border-gray-100 rotate-3 group-hover:rotate-0 transition-transform">
                   <img src={qrCode} alt="QR" className="w-10 h-10" />
                </div>
+            ) : (
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation()
+                   generateQR(room.id, {
+                     onSuccess: (data) => {
+                       setQrToken(data.qrToken)
+                       toast.success('QR code regenerated')
+                     },
+                     onError: () => toast.error('Failed to regenerate QR')
+                   })
+                 }}
+                 disabled={generatingQR}
+                 className="text-[10px] font-bold text-[#2563EB] hover:text-[#1D4ED8] disabled:opacity-50"
+               >
+                 {generatingQR ? '...' : 'Generate QR'}
+               </button>
             )}
          </div>
 
@@ -443,14 +462,16 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
 // ─── Detailed Room Side Panel ────────────────────────
 function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { room: Room; onClose: () => void; onBook: () => void; onEdit: () => void; onDelete: () => void }) {
   const [qrCode, setQrCode] = useState('')
+  const [qrToken, setQrToken] = useState(room.qrCodeToken)
+  const { mutate: generateQR, isPending: generatingQR } = useGenerateRoomQR()
   const currentBooking = room.bookings?.[0]
   const status = room.status
   const styles = STATUS_STYLES[status] || STATUS_STYLES.available
   const roomImage = ROOM_IMAGES[room.type] || ROOM_IMAGES.standard
 
   useEffect(() => {
-    generateRoomQR(room.id).then(setQrCode)
-  }, [room.id])
+    generateRoomQR(qrToken).then(setQrCode)
+  }, [qrToken])
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -526,18 +547,26 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
              {!qrCode && <div className="w-16 h-16 bg-white/10 rounded-xl animate-pulse shrink-0" />}
              <div className="relative z-10 text-left">
                 <div className="flex items-center gap-1.5 font-bold uppercase text-[10px] tracking-[0.15em] text-blue-400 mb-1">
-                   <QrCode size={12} /> Guest Pass
+                   <QrCode size={12} /> Guest Portal
                 </div>
                 <p className="text-[11px] text-white/80 font-medium leading-snug">
-                   Scan to view room details or book quickly.
+                   Scan to auto-login to the guest portal.
                 </p>
-                <a 
-                 href={`/book?room=${room.id}`} 
-                 target="_blank" 
-                 className="mt-1.5 text-[10px] text-blue-400 font-bold uppercase flex items-center gap-1 hover:text-blue-300 transition-colors"
+                <button
+                  onClick={() => {
+                    generateQR(room.id, {
+                      onSuccess: (data) => {
+                        setQrToken(data.qrToken)
+                        toast.success('QR code regenerated')
+                      },
+                      onError: () => toast.error('Failed to regenerate QR')
+                    })
+                  }}
+                  disabled={generatingQR}
+                  className="mt-1.5 text-[10px] text-blue-400 font-bold uppercase flex items-center gap-1 hover:text-blue-300 transition-colors disabled:opacity-50"
                 >
-                  Preview <ExternalLink size={10} />
-                </a>
+                  {generatingQR ? 'Generating...' : <><ExternalLink size={10} /> Regenerate QR</>}
+                </button>
              </div>
           </div>
         </div>

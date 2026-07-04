@@ -10,6 +10,7 @@ import {
   useDeleteStaff, 
   useAuditLogs 
 } from '@/hooks/useSettings'
+import { useRoles } from '@/hooks/useRoles'
 import { format } from 'date-fns'
 import { 
   Building, Users, Activity, Save, Plus, Trash2, X,
@@ -17,23 +18,28 @@ import {
   Lock, Camera, Mail, Phone, MapPin, 
   ChevronRight, Search, Filter, Loader2,
   AlertCircle, CheckCircle2, Zap, Info,
-  UserCircle, Eye, EyeOff
+  UserCircle, Eye, EyeOff, ArrowRight, Sparkles
 } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
+import { hasPermission } from '@/lib/roles'
 import { useUpdateProfile } from '@/hooks/useAuth'
 import ConfirmModal from '@/components/shared/ConfirmModal'
+import AISettingsView from '@/components/ai/AISettingsView'
 
-type SettingsTab = 'profile' | 'hotel' | 'staff' | 'finance' | 'booking' | 'audit'
+type SettingsTab = 'profile' | 'hotel' | 'staff' | 'finance' | 'booking' | 'audit' | 'ai'
 
 function SettingsPageContent() {
   const searchParams = useSearchParams()
+  const { user } = useAuthStore()
+  const canManageAi = user?.role?.name === 'admin' || hasPermission(user?.role, 'settings:manage')
   const [activeTab, setActiveTab] = useState<SettingsTab>('hotel')
 
   useEffect(() => {
     const tab = searchParams.get('tab') as SettingsTab | null
-    const validTabs: SettingsTab[] = ['profile', 'hotel', 'staff', 'finance', 'booking', 'audit']
+    const validTabs: SettingsTab[] = ['profile', 'hotel', 'staff', 'finance', 'booking', 'audit', 'ai']
     if (tab && validTabs.includes(tab)) {
       setActiveTab(tab)
     }
@@ -43,6 +49,7 @@ function SettingsPageContent() {
     { id: 'profile', label: 'My Profile',      icon: UserCircle,  desc: 'Your account & password' },
     { id: 'hotel',   label: 'Hotel Profile',   icon: Building,   desc: 'Identity, contacts & branding' },
     { id: 'staff',   label: 'Staff & Roles',    icon: Users,      desc: 'Manage team access levels' },
+    ...(canManageAi ? [{ id: 'ai' as SettingsTab, label: 'AI Assistant', icon: Sparkles, desc: 'Configure AI provider & prompts' }] : []),
     { id: 'finance', label: 'Financial Setup',  icon: CreditCard,  desc: 'Taxes, currency & EFD rules' },
     { id: 'booking', label: 'Booking Policy',  icon: Clock,       desc: 'Check-in/out & late rules' },
     { id: 'audit',   label: 'Security Logs',    icon: Activity,    desc: 'Full system audit trail' },
@@ -107,6 +114,7 @@ function SettingsPageContent() {
               {activeTab === 'profile' && <ProfileSettingsView />}
               {activeTab === 'hotel'   && <HotelSettingsView />}
               {activeTab === 'staff'   && <StaffManagementView />}
+              {activeTab === 'ai'      && <AISettingsView />}
               {activeTab === 'finance' && <FinancialSettingsView />}
               {activeTab === 'booking' && <BookingPolicyView />}
               {activeTab === 'audit'   && <AuditLogView />}
@@ -192,13 +200,6 @@ function ProfileSettingsView() {
     })
   }
 
-  const roleLabels: Record<string, string> = {
-    admin: 'System Admin',
-    receptionist: 'Receptionist',
-    housekeeping: 'Housekeeping',
-    waiter: 'Waiter'
-  }
-
   return (
     <div className="p-8 md:p-12 animate-in fade-in duration-500">
       <div className="mb-10">
@@ -237,7 +238,7 @@ function ProfileSettingsView() {
               <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">System Role</label>
               <div className="w-full h-12 bg-gray-100 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-gray-500 flex items-center gap-2">
                 <Shield size={16} className="text-[#9ca3af]" />
-                {user?.role ? roleLabels[user.role] : '—'}
+                {user?.role?.name ? user.role.name : '—'}
               </div>
               <p className="text-[10px] text-gray-400 ml-1">Role can only be changed by an administrator</p>
             </div>
@@ -395,7 +396,10 @@ function HotelSettingsView() {
 
 // ─── 2. Staff Management ───────────────────────────
 function StaffManagementView() {
+  const { user } = useAuthStore()
+  const canManageRoles = user?.role?.name === 'admin' || hasPermission(user?.role, 'settings:manage')
   const { data: staff, isLoading } = useStaff()
+  const { data: roles = [] } = useRoles()
   const { mutate: createStaff, isPending: isCreating } = useCreateStaff()
   const { mutate: deleteStaff, isPending: isDeletingStaff } = useDeleteStaff()
   const [isAdding, setIsAdding] = useState(false)
@@ -404,12 +408,19 @@ function StaffManagementView() {
 
   const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    createStaff(Object.fromEntries(formData), { 
+    const form = e.currentTarget
+    const formData = new FormData(form)
+    const data = Object.fromEntries(formData)
+    createStaff({
+      ...data,
+      roleId: data.roleId,
+    }, { 
       onSuccess: () => {
         toast.success('Staff member invited successfully')
         setIsAdding(false)
-      }
+        form.reset()
+      },
+      onError: () => toast.error('Failed to invite staff')
     })
   }
 
@@ -439,16 +450,28 @@ function StaffManagementView() {
            <h2 className="text-[18px] font-bold text-[#111827] tracking-tight leading-none">Manage Team</h2>
            <p className="text-[12px] text-[#9ca3af] font-medium mt-1">Hapa unaweza kuongeza na kusimamia ufikiaji wa staff</p>
         </div>
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className={cn(
-            "h-10 px-4 rounded-xl text-[12px] font-bold flex items-center gap-2 transition-all shadow-sm border",
-            isAdding ? "bg-white text-gray-500 border-gray-200" : "bg-[#2563eb] text-white border-blue-500 shadow-blue-100"
+        <div className="flex items-center gap-2">
+          {canManageRoles && (
+            <Link
+              href="/staff/roles"
+              className="h-10 px-4 rounded-xl text-[12px] font-bold flex items-center gap-2 transition-all shadow-sm border bg-white text-[#6b7280] border-gray-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+            >
+              <Shield size={15} />
+              Manage Roles
+              <ArrowRight size={13} />
+            </Link>
           )}
-        >
-          {isAdding ? <X size={16} /> : <Plus size={16} />}
-          {isAdding ? 'Cancel' : 'Invite Staff'}
-        </button>
+          <button 
+            onClick={() => setIsAdding(!isAdding)}
+            className={cn(
+              "h-10 px-4 rounded-xl text-[12px] font-bold flex items-center gap-2 transition-all shadow-sm border",
+              isAdding ? "bg-white text-gray-500 border-gray-200" : "bg-[#2563eb] text-white border-blue-500 shadow-blue-100"
+            )}
+          >
+            {isAdding ? <X size={16} /> : <Plus size={16} />}
+            {isAdding ? 'Cancel' : 'Invite Staff'}
+          </button>
+        </div>
       </div>
 
       <ConfirmModal
@@ -468,15 +491,15 @@ function StaffManagementView() {
 
       {isAdding && (
         <div className="p-8 bg-blue-50/50 border-b border-blue-100 animate-in slide-in-from-top duration-300">
-          <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
             <div className="md:col-span-1"><FormInput label="Full Name" name="fullName" required placeholder="mf. Bakari Salum" /></div>
             <div className="md:col-span-1"><FormInput label="Email Address" name="email" type="email" required placeholder="name@buffalo.co.tz" /></div>
+            <div className="md:col-span-1"><FormInput label="Password" name="password" type="password" required placeholder="Min 6 characters" /></div>
             <div className="md:col-span-1">
-               <FormSelect label="Assigned Role" name="role">
-                  <option value="receptionist">Receptionist</option>
-                  <option value="housekeeping">Housekeeping</option>
-                  <option value="waiter">Waiter</option>
-                  <option value="admin">System Admin</option>
+               <FormSelect label="Assigned Role" name="roleId">
+                  {roles.map((role: any) => (
+                    <option key={role.id} value={role.id}>{role.name}</option>
+                  ))}
                </FormSelect>
             </div>
             <button type="submit" disabled={isCreating} className="h-12 bg-[#2563eb] text-white rounded-2xl font-bold text-[13px] hover:bg-[#1d4ed8] shadow-md shadow-blue-100">
@@ -513,10 +536,10 @@ function StaffManagementView() {
                 <td className="px-8 py-5">
                    <div className={cn(
                      "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border",
-                     u.role === 'admin' ? "bg-indigo-50 text-indigo-600 border-indigo-100" : "bg-gray-50 text-[#6b7280] border-gray-100"
+                     u.role?.name === 'admin' ? "bg-indigo-50 text-indigo-600 border-indigo-100" : "bg-gray-50 text-[#6b7280] border-gray-100"
                    )}>
-                      {u.role === 'admin' && <Shield size={12} />}
-                      {u.role}
+                      {u.role?.name === 'admin' && <Shield size={12} />}
+                      {u.role?.name || '—'}
                    </div>
                 </td>
                 <td className="px-8 py-5 text-[13px] font-medium text-[#6b7280]">

@@ -36,7 +36,10 @@ export class AuthService {
     // 1. Find user
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
-      include: { hotel: { select: { id: true, name: true, logoUrl: true } } }
+      include: {
+        hotel: { select: { id: true, name: true, logoUrl: true } },
+        role: { select: { id: true, name: true, permissions: true } }
+      }
     })
 
     if (!user) throw ApiError.unauthorized('Email au nywila si sahihi')
@@ -55,7 +58,7 @@ export class AuthService {
     // 4. Generate tokens
     const payload: TokenPayload = {
       id: user.id,
-      role: user.role,
+      role: user.role.name,
       hotelId: user.hotelId,
       email: user.email
     }
@@ -71,6 +74,7 @@ export class AuthService {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        roleId: user.roleId,
         role: user.role,
         avatarUrl: user.avatarUrl,
         hotel: user.hotel
@@ -89,14 +93,21 @@ export class AuthService {
       // Verify user still exists and is active
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, role: true, hotelId: true, email: true, isActive: true }
+        select: {
+          id: true,
+          roleId: true,
+          hotelId: true,
+          email: true,
+          isActive: true,
+          role: { select: { name: true } }
+        }
       })
 
       if (!user || !user.isActive) throw ApiError.unauthorized()
 
       const payload: TokenPayload = {
         id: user.id,
-        role: user.role,
+        role: user.role.name,
         hotelId: user.hotelId,
         email: user.email
       }
@@ -162,10 +173,17 @@ export class AuthService {
         id: true,
         fullName: true,
         email: true,
-        role: true,
+        roleId: true,
         phone: true,
         avatarUrl: true,
         lastLoginAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            permissions: true
+          }
+        },
         hotel: {
           select: {
             id: true,
@@ -189,10 +207,17 @@ export class AuthService {
         id: true,
         fullName: true,
         email: true,
-        role: true,
+        roleId: true,
         phone: true,
         avatarUrl: true,
         lastLoginAt: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            permissions: true
+          }
+        },
         hotel: {
           select: {
             id: true,

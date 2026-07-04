@@ -62,7 +62,7 @@ export default function RoomDetailModal({ room, onClose, onEdit }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-1">
-            {user?.role === 'admin' && onEdit && (
+            {user?.role?.name === 'admin' && onEdit && (
               <button
                 onClick={onEdit}
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400"

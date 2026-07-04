@@ -1,10 +1,12 @@
 import { Router } from 'express'
 import { authenticate } from '../middleware/authenticate'
+import { requirePermission } from '../middleware/requirePermission'
 import * as developerController from '../controllers/developer.controller'
 
 const router = Router()
 
 router.use(authenticate)
+router.use(requirePermission('developer:manage'))
 
 router.get('/metadata', developerController.getScopesAndEvents)
 

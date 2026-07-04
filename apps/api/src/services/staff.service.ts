@@ -17,7 +17,10 @@ export class StaffService {
   async getStaff(hotelId: string) {
     return prisma.user.findMany({
       where: { hotelId, isActive: true },
-      include: { staffProfile: true },
+      include: {
+        staffProfile: true,
+        role: { select: { id: true, name: true, permissions: true } }
+      },
       orderBy: { fullName: 'asc' }
     })
   }
@@ -27,7 +30,7 @@ export class StaffService {
     fullName: string
     email: string
     password: string
-    role: 'admin' | 'receptionist' | 'housekeeping'
+    roleId: string
     phone?: string
     position: string
     department: string
@@ -43,6 +46,11 @@ export class StaffService {
     const existing = await prisma.user.findUnique({ where: { email: data.email } })
     if (existing) throw ApiError.conflict('Email hii tayari inatumika')
 
+    const role = await prisma.role.findFirst({
+      where: { id: data.roleId, hotelId }
+    })
+    if (!role) throw ApiError.badRequest('Jukumu lililochaguliwa halipo')
+
     const count = await prisma.user.count({ where: { hotelId } })
     const employeeNo = `EMP-${String(count + 1).padStart(3, '0')}`
 
@@ -55,7 +63,7 @@ export class StaffService {
           fullName: data.fullName,
           email: data.email.toLowerCase().trim(),
           passwordHash,
-          role: data.role,
+          roleId: data.roleId,
           phone: data.phone,
           isActive: true,
         }
@@ -87,7 +95,7 @@ export class StaffService {
   async updateStaff(userId: string, hotelId: string, data: Partial<{
     fullName: string
     phone: string
-    role: string
+    roleId: string
     position: string
     department: string
     basicSalary: number
@@ -99,6 +107,13 @@ export class StaffService {
     const user = await prisma.user.findFirst({ where: { id: userId, hotelId } })
     if (!user) throw ApiError.notFound('Mfanyakazi hakupatikana')
 
+    if (data.roleId) {
+      const role = await prisma.role.findFirst({
+        where: { id: data.roleId, hotelId }
+      })
+      if (!role) throw ApiError.badRequest('Jukumu lililochaguliwa halipo')
+    }
+
     return prisma.$transaction(async (tx) => {
       const { position, department, basicSalary, allowances, bankName, bankAccount, ...userFields } = data
 
@@ -106,7 +121,6 @@ export class StaffService {
         where: { id: userId },
         data: {
           ...userFields,
-          role: userFields.role ? (userFields.role as any) : undefined,
           updatedAt: new Date()
         }
       })

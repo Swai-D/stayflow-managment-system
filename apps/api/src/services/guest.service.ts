@@ -10,6 +10,48 @@ import { getSystemHotelId } from '../utils/systemHotel'
 
 const prisma = new PrismaClient()
 
+// Helper to get a system user ID for guest-portal actions (e.g. posting room charges)
+async function getSystemUserId(): Promise<string> {
+  const admin = await prisma.user.findFirst({
+    where: { email: 'admin@buffalo-hotel.co.tz', isActive: true }
+  })
+  if (admin) return admin.id
+
+  const fallback = await prisma.user.findFirst({ where: { isActive: true } })
+  if (fallback) return fallback.id
+
+  throw ApiError.internal('Hakuna mtumiaji wa mfumo wa kuchaji gharama za chumba')
+}
+
+// Helper to get or create a generic store item for unmatched guest portal menu items
+async function getOrCreateGenericStoreItem(hotelId: string, postedById: string) {
+  const genericName = 'Guest Portal Order'
+  let item = await prisma.storeItem.findFirst({
+    where: { hotelId, name: genericName, isActive: true }
+  })
+
+  if (!item) {
+    item = await prisma.storeItem.create({
+      data: {
+        hotelId,
+        name: genericName,
+        category: 'FB',
+        subCategory: 'Food',
+        unit: 'PCS',
+        currentStock: 9999,
+        minimumStock: 0,
+        maximumStock: 9999,
+        unitCost: 0,
+        sellingPrice: 0,
+        isActive: true,
+        isSellable: true
+      }
+    })
+  }
+
+  return item
+}
+
 export interface GuestTokenPayload {
   id: string
   email: string
@@ -296,6 +338,92 @@ export class GuestService {
     return { token: jwtToken, guest: this.sanitizeGuest(updated) }
   }
 
+  // ─── QR Code Auto-login ───────────────────────────────────────────────────
+  async qrLogin(qrToken: string) {
+    const room = await prisma.room.findUnique({
+      where: { qrCodeToken: qrToken },
+      include: { hotel: { select: { id: true, name: true } } }
+    })
+
+    if (!room || !room.isActive) {
+      throw ApiError.unauthorized('QR code si sahihi')
+    }
+
+    if (!room.qrCodeExpiresAt || room.qrCodeExpiresAt < new Date()) {
+      throw ApiError.unauthorized('QR code imekwisha')
+    }
+
+    // Find the active checked-in booking for this room
+    const booking = await prisma.booking.findFirst({
+      where: {
+        roomId: room.id,
+        status: 'checked_in',
+        checkOut: { gte: new Date() }
+      },
+      include: { guest: true, room: true },
+      orderBy: { checkIn: 'desc' }
+    })
+
+    if (!booking) {
+      throw ApiError.notFound('Chumba hiki hakina mgeni aliyefanya check-in kwa sasa.')
+    }
+
+    if (!booking.guest.email) {
+      throw ApiError.badRequest('Mgeni hana email. Tafadhali wasiliana na reception.')
+    }
+
+    // Find or create guest account
+    let account = await prisma.guestAccount.findUnique({
+      where: { email: booking.guest.email }
+    })
+
+    const [firstName, ...rest] = booking.guest.fullName.split(' ')
+    const lastName = rest.join(' ') || ''
+
+    if (account) {
+      account = await prisma.guestAccount.update({
+        where: { id: account.id },
+        data: {
+          firstName: account.firstName || firstName,
+          lastName: account.lastName || lastName,
+          phone: account.phone || booking.guest.phone,
+          linkedBookingId: booking.id,
+          roomId: room.id,
+          status: account.status === 'PENDING_ACTIVATION' ? 'ACTIVE' : account.status,
+          updatedAt: new Date()
+        }
+      })
+    } else {
+      account = await prisma.guestAccount.create({
+        data: {
+          email: booking.guest.email,
+          firstName,
+          lastName,
+          phone: booking.guest.phone,
+          linkedBookingId: booking.id,
+          roomId: room.id,
+          status: 'ACTIVE'
+        }
+      })
+    }
+
+    const token = this.generateJwt({
+      guestId: account.id,
+      email: account.email,
+      bookingId: booking.id
+    })
+
+    return {
+      token,
+      guest: this.sanitizeGuest(account),
+      room: {
+        id: room.id,
+        number: room.roomNumber,
+        type: room.type
+      }
+    }
+  }
+
   // ─── Active Booking ───────────────────────────────────────────────────────
   async getActiveBooking(guest: GuestTokenPayload) {
     let booking = null
@@ -380,12 +508,116 @@ export class GuestService {
       }
     })
 
+    // Post to room charge (Post To Room) so it appears in POS/folio
+    await this.postRoomServiceOrderToRoomCharge(order, booking).catch(err => {
+      console.error('[GuestService] Failed to post order to room charge:', err)
+    })
+
     return {
       success: true,
       orderId: order.orderId,
       estimatedDelivery: '20-30 minutes',
       message: 'Order received! Estimated delivery: 20-30 minutes'
     }
+  }
+
+  // ─── Post Room Service Order to Room Charge ───────────────────────────────
+  private async postRoomServiceOrderToRoomCharge(
+    order: any,
+    booking: any
+  ) {
+    const postedById = await getSystemUserId()
+
+    // Try to match each ordered item to a sellable store item by name
+    const chargeItems: Array<{
+      itemId: string
+      itemName: string
+      quantity: number
+      unitPrice: number
+      totalPrice: number
+    }> = []
+
+    for (const orderedItem of order.items as Array<{ name: string; quantity: number; unitPrice: number }>) {
+      const storeItem = await prisma.storeItem.findFirst({
+        where: {
+          hotelId: booking.hotelId,
+          isActive: true,
+          isSellable: true,
+          name: { equals: orderedItem.name, mode: 'insensitive' }
+        }
+      })
+
+      if (storeItem && storeItem.currentStock >= orderedItem.quantity) {
+        const unitPrice = storeItem.sellingPrice || orderedItem.unitPrice
+        const totalPrice = unitPrice * orderedItem.quantity
+
+        chargeItems.push({
+          itemId: storeItem.id,
+          itemName: storeItem.name,
+          quantity: orderedItem.quantity,
+          unitPrice,
+          totalPrice
+        })
+
+        // Deduct stock
+        await prisma.storeItem.update({
+          where: { id: storeItem.id },
+          data: { currentStock: { decrement: orderedItem.quantity } }
+        })
+
+        await prisma.storeTransaction.create({
+          data: {
+            itemId: storeItem.id,
+            type: 'STOCK_OUT',
+            quantity: orderedItem.quantity,
+            unitCost: storeItem.unitCost,
+            balanceBefore: storeItem.currentStock,
+            balanceAfter: storeItem.currentStock - orderedItem.quantity,
+            reference: order.orderId,
+            notes: `Guest portal order ${order.orderId}`,
+            performedById: postedById
+          }
+        })
+      } else {
+        // No matching store item — use a generic guest portal item
+        const genericItem = await getOrCreateGenericStoreItem(booking.hotelId, postedById)
+        chargeItems.push({
+          itemId: genericItem.id,
+          itemName: orderedItem.name,
+          quantity: orderedItem.quantity,
+          unitPrice: orderedItem.unitPrice,
+          totalPrice: orderedItem.unitPrice * orderedItem.quantity
+        })
+      }
+    }
+
+    if (chargeItems.length === 0) return
+
+    const totalAmount = chargeItems.reduce((sum, i) => sum + i.totalPrice, 0)
+
+    const roomCharge = await prisma.roomCharge.create({
+      data: {
+        bookingId: booking.id,
+        totalAmount,
+        notes: `Guest portal order: ${order.orderId}. ${order.notes || ''}`,
+        postedById,
+        source: 'guest_portal',
+        items: { create: chargeItems }
+      }
+    })
+
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: {
+        balanceDue: { increment: totalAmount },
+        totalAmount: { increment: totalAmount }
+      }
+    })
+
+    await prisma.roomServiceOrder.update({
+      where: { id: order.id },
+      data: { postedToRoom: true, roomChargeId: roomCharge.id }
+    })
   }
 
   // ─── Service Requests ─────────────────────────────────────────────────────

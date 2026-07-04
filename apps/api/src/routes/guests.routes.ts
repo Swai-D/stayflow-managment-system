@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { getGuests, getGuest, createGuest, updateGuest, getRegisteredGuests, getGuestStats } from '../controllers/guests.controller'
 import { authenticate } from '../middleware/authenticate'
 import { validate } from '../middleware/validate'
+import { requirePermission } from '../middleware/requirePermission'
 import { z } from 'zod'
 
 const router = Router()
@@ -17,11 +18,11 @@ const guestSchema = z.object({
   notes: z.string().optional(),
 })
 
-router.get('/', getGuests)
-router.get('/stats', getGuestStats)
-router.get('/registered', getRegisteredGuests)
-router.get('/:id', getGuest)
-router.post('/', validate(guestSchema), createGuest)
-router.patch('/:id', validate(guestSchema.partial()), updateGuest)
+router.get('/', requirePermission('guests:view'), getGuests)
+router.get('/stats', requirePermission('guests:view'), getGuestStats)
+router.get('/registered', requirePermission('guests:view'), getRegisteredGuests)
+router.get('/:id', requirePermission('guests:view'), getGuest)
+router.post('/', requirePermission('guests:manage'), validate(guestSchema), createGuest)
+router.patch('/:id', requirePermission('guests:manage'), validate(guestSchema.partial()), updateGuest)
 
 export default router

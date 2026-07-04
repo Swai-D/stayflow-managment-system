@@ -12,6 +12,13 @@ export const login = asyncHandler(async (req: GuestAuthRequest, res: Response) =
   res.json({ success: true, ...result })
 })
 
+export const qrLogin = asyncHandler(async (req: GuestAuthRequest, res: Response) => {
+  const { token } = req.body
+  if (!token) throw ApiError.badRequest('QR token is required')
+  const result = await guestService.qrLogin(token)
+  res.json({ success: true, ...result })
+})
+
 export const requestOtp = asyncHandler(async (req: GuestAuthRequest, res: Response) => {
   const { email } = req.body
   if (!email) throw ApiError.badRequest('Email is required')

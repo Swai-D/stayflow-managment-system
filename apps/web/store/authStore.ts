@@ -7,7 +7,12 @@ export interface User {
   fullName: string
   email: string
   phone?: string
-  role: 'admin' | 'receptionist' | 'housekeeping' | 'waiter'
+  roleId: string
+  role: {
+    id: string
+    name: string
+    permissions: string[]
+  }
   avatarUrl?: string
   lastLoginAt?: string
   hotel: {

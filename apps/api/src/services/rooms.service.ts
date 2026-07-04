@@ -1,5 +1,6 @@
 import { PrismaClient, RoomStatus, RoomType, HousekeepingStatus, Prisma } from '@prisma/client'
 import { ApiError } from '../utils/ApiError'
+import crypto from 'crypto'
 
 const prisma = new PrismaClient()
 
@@ -35,7 +36,29 @@ export class RoomsService {
     const [rooms, total] = await Promise.all([
       prisma.room.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          hotelId: true,
+          roomNumber: true,
+          name: true,
+          floor: true,
+          type: true,
+          status: true,
+          pricePerNight: true,
+          pricePerHour: true,
+          specialRate: true,
+          fullBoardRate: true,
+          nonResidentRate: true,
+          beds: true,
+          capacity: true,
+          description: true,
+          amenities: true,
+          images: true,
+          isActive: true,
+          qrCodeToken: true,
+          qrCodeExpiresAt: true,
+          createdAt: true,
+          updatedAt: true,
           bookings: {
             where: {
               status: { in: ['checked_in', 'confirmed'] },
@@ -61,9 +84,8 @@ export class RoomsService {
       }),
       prisma.room.count({ where })
     ])
-
     return {
-      rooms,
+      rooms: rooms as any[],
       meta: {
         total,
         page,
@@ -243,6 +265,53 @@ export class RoomsService {
       orderBy: { floor: 'asc' }
     })
     return rooms.map(r => r.floor)
+  }
+
+  // ─── Generate secure QR login token for a room ─────────
+  async generateRoomQRToken(id: string, hotelId: string) {
+    const room = await prisma.room.findFirst({
+      where: { id, hotelId, isActive: true }
+    })
+    if (!room) throw ApiError.notFound('Chumba hakikupatikana')
+
+    const token = crypto.randomBytes(32).toString('hex')
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+
+    const updated = await prisma.room.update({
+      where: { id },
+      data: {
+        qrCodeToken: token,
+        qrCodeExpiresAt: expiresAt,
+        updatedAt: new Date()
+      }
+    })
+
+    return {
+      roomId: updated.id,
+      roomNumber: updated.roomNumber,
+      qrToken: token,
+      expiresAt
+    }
+  }
+
+  // ─── Find room by QR login token ───────────────────────
+  async getRoomByQRToken(token: string) {
+    const room = await prisma.room.findUnique({
+      where: { qrCodeToken: token },
+      include: {
+        hotel: { select: { id: true, name: true } }
+      }
+    })
+
+    if (!room || !room.isActive) {
+      throw ApiError.notFound('QR code si sahihi')
+    }
+
+    if (!room.qrCodeExpiresAt || room.qrCodeExpiresAt < new Date()) {
+      throw ApiError.unauthorized('QR code imekwisha. Tafadhali omba mpya.')
+    }
+
+    return room
   }
 }
 

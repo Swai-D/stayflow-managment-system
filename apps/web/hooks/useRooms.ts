@@ -120,3 +120,12 @@ export function useDeleteRoom() {
     }
   })
 }
+
+export function useGenerateRoomQR() {
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.post(`/rooms/${id}/qr-code`)
+      return res.data.data
+    }
+  })
+}

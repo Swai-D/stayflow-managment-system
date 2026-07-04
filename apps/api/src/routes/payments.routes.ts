@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { recordPayment, initiateSnippePayment, handleSnippeWebhook, getPayments, getPaymentStats } from '../controllers/payments.controller'
 import { authenticate } from '../middleware/authenticate'
+import { requirePermission } from '../middleware/requirePermission'
 import { validate } from '../middleware/validate'
 import { asyncHandler } from '../utils/asyncHandler'
 import { ApiResponse } from '../utils/ApiResponse'
@@ -18,14 +19,14 @@ const recordPaymentSchema = z.object({
   bankRef: z.string().optional(),
 })
 
-router.get('/', authenticate, getPayments)
-router.get('/stats', authenticate, getPaymentStats)
-router.post('/', authenticate, validate(recordPaymentSchema), recordPayment)
-router.get('/booking/:bookingId', authenticate, asyncHandler(async (req, res) => {
+router.get('/', authenticate, requirePermission('payments:view'), getPayments)
+router.get('/stats', authenticate, requirePermission('reports:view'), getPaymentStats)
+router.post('/', authenticate, requirePermission('payments:record'), validate(recordPaymentSchema), recordPayment)
+router.get('/booking/:bookingId', authenticate, requirePermission('payments:view'), asyncHandler(async (req, res) => {
   const payments = await paymentsService.getPayments(req.params.bookingId)
   res.json(new ApiResponse(payments))
 }))
-router.post('/snippe/initiate', authenticate, initiateSnippePayment)
+router.post('/snippe/initiate', authenticate, requirePermission('payments:record'), initiateSnippePayment)
 router.post('/snippe/webhook', handleSnippeWebhook)
 
 export default router

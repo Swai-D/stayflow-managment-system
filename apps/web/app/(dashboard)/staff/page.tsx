@@ -3,19 +3,16 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useStaff, useCreateStaff, useUpdateStaff, useDeactivateStaff } from '@/hooks/useStaff'
+import { useRoles } from '@/hooks/useRoles'
 import { formatDate, formatTZS } from '@/lib/formatters'
+import { hasPermission } from '@/lib/roles'
 import { 
   Plus, Search, Users2, Briefcase, Mail, Phone, Shield, 
-  Edit2, Trash2, X, Loader2, Calendar, Wallet
+  Edit2, Trash2, X, Loader2, Calendar, Wallet, ArrowRight
 } from 'lucide-react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import ConfirmModal from '@/components/shared/ConfirmModal'
-
-const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'receptionist', label: 'Receptionist' },
-  { value: 'housekeeping', label: 'Housekeeping' },
-]
 
 const DEPARTMENTS = ['Front Desk', 'Housekeeping', 'Management', 'Restaurant', 'Maintenance', 'Security', 'Other']
 
@@ -23,7 +20,7 @@ const emptyForm = {
   fullName: '',
   email: '',
   password: '',
-  role: 'receptionist' as const,
+  roleId: '',
   phone: '',
   position: '',
   department: 'Front Desk',
@@ -38,7 +35,7 @@ const emptyForm = {
 
 export default function StaffPage() {
   const { user } = useAuthStore()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role?.name === 'admin' || hasPermission(user?.role, 'settings:manage')
 
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -48,13 +45,16 @@ export default function StaffPage() {
   const [staffToDelete, setStaffToDelete] = useState<string | null>(null)
 
   const { data: staff = [], isLoading } = useStaff()
+  const { data: roles = [] } = useRoles()
   const { mutate: createStaff, isPending: creating } = useCreateStaff()
   const { mutate: updateStaff, isPending: updating } = useUpdateStaff()
   const { mutate: deactivateStaff, isPending: deleting } = useDeactivateStaff()
 
+  const defaultRoleId = roles[0]?.id ?? ''
+
   const openCreate = () => {
     setEditingStaff(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, roleId: defaultRoleId })
     setIsModalOpen(true)
   }
 
@@ -64,7 +64,7 @@ export default function StaffPage() {
       fullName: member.fullName || '',
       email: member.email || '',
       password: '',
-      role: member.role || 'receptionist',
+      roleId: member.roleId || member.role?.id || defaultRoleId,
       phone: member.phone || '',
       position: member.staffProfile?.position || '',
       department: member.staffProfile?.department || 'Front Desk',
@@ -99,10 +99,15 @@ export default function StaffPage() {
       return
     }
 
+    if (!form.roleId) {
+      toast.error('Tafadhali chagua jukumu')
+      return
+    }
+
     const payload: any = {
       fullName: form.fullName,
       email: form.email,
-      role: form.role,
+      roleId: form.roleId,
       phone: form.phone || undefined,
       position: form.position,
       department: form.department,
@@ -121,7 +126,7 @@ export default function StaffPage() {
       const updatePayload: any = {
         fullName: form.fullName,
         phone: form.phone || undefined,
-        role: form.role,
+        roleId: form.roleId,
         position: form.position,
         department: form.department,
         basicSalary: Number(form.basicSalary),
@@ -183,15 +188,27 @@ export default function StaffPage() {
           <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Staff Management</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-[-2px]">Manage team members, roles and employment details</p>
         </div>
-        {isAdmin && (
-          <button
-            onClick={openCreate}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
-          >
-            <Plus size={16} />
-            Add Staff
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link
+              href="/staff/roles"
+              className="bg-white border border-gray-200 hover:border-blue-200 hover:bg-blue-50 text-[#6b7280] hover:text-blue-600 rounded-xl px-4 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all"
+            >
+              <Shield size={15} />
+              Manage Roles
+              <ArrowRight size={13} />
+            </Link>
+          )}
+          {isAdmin && (
+            <button
+              onClick={openCreate}
+              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+            >
+              <Plus size={16} />
+              Add Staff
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
@@ -263,10 +280,10 @@ export default function StaffPage() {
                 <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between">
                   <span className={`
                     inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider
-                    ${member.role === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}
+                    ${member.role?.name === 'admin' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}
                   `}>
                     <Shield size={10} />
-                    {member.role}
+                    {member.role?.name || member.role || '—'}
                   </span>
                   <span className="text-[11px] text-[#9ca3af] font-medium capitalize">
                     {member.staffProfile?.employmentType?.replace('_', '-') || 'full-time'}
@@ -361,11 +378,14 @@ export default function StaffPage() {
                 <div>
                   <label className="text-[11px] font-bold text-[#6b7280] uppercase">Role *</label>
                   <select
-                    value={form.role}
-                    onChange={e => setForm({ ...form, role: e.target.value as any })}
+                    value={form.roleId}
+                    onChange={e => setForm({ ...form, roleId: e.target.value })}
                     className="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-blue-500"
                   >
-                    {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    {roles.length === 0 && <option value="">Loading roles...</option>}
+                    {roles.map((role: any) => (
+                      <option key={role.id} value={role.id}>{role.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

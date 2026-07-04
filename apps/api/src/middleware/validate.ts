@@ -25,6 +25,6 @@ export const createUserSchema = z.object({
   fullName: z.string().min(2, 'Jina linahitajika'),
   email: z.string().email('Email si sahihi'),
   password: z.string().min(8, 'Nywila lazima iwe na herufi 8+'),
-  role: z.enum(['admin', 'receptionist', 'housekeeping']),
+  roleId: z.string().uuid('Chagua jukumu sahihi'),
   phone: z.string().optional(),
 })

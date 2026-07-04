@@ -42,7 +42,7 @@ const emptyForm = {
 
 export default function LeavesPage() {
   const { user } = useAuthStore()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role?.name === 'admin'
 
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')

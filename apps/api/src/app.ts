@@ -23,10 +23,13 @@ import reportRoutes from './routes/reports.routes'
 import searchRoutes from './routes/search.routes'
 import advisorRoutes from './routes/advisor.routes'
 import settingsRoutes from './routes/settings.routes'
+import rolesRoutes from './routes/roles.routes'
 import guestPortalRoutes from './routes/guest.routes'
+import guestPortalManagementRoutes from './routes/guestPortal.routes'
 import developerRoutes from './routes/developer.routes'
 import publicApiRoutes from './routes/public-api.routes'
 import staffRoutes from './routes/staff.routes'
+import aiRoutes from './routes/ai.routes'
 
 const app = express()
 
@@ -86,10 +89,13 @@ app.use('/api/v1/reports', reportRoutes)
 app.use('/api/v1/search', searchRoutes)
 app.use('/api/v1/advisor', advisorRoutes)
 app.use('/api/v1/settings', settingsRoutes)
+app.use('/api/v1/roles', rolesRoutes)
 app.use('/api/v1/developer', developerRoutes)
 app.use('/api/v1/ext', publicApiRoutes)
 app.use('/api/v1/staff', staffRoutes)
+app.use('/api/v1/ai', aiRoutes)
 app.use('/api/guest', guestPortalRoutes)
+app.use('/api/v1/guest-portal', guestPortalManagementRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)

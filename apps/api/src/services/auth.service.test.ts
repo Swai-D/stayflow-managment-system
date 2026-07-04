@@ -50,7 +50,8 @@ describe('AuthService', () => {
 
     it('should throw unauthorized if user is inactive', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: '1', email: 'test@test.com', isActive: false, passwordHash: 'hash'
+        id: '1', email: 'test@test.com', isActive: false, passwordHash: 'hash',
+        roleId: 'role-1', role: { id: 'role-1', name: 'admin', permissions: [] }
       })
 
       await expect(authService.login('test@test.com', 'password'))
@@ -59,7 +60,8 @@ describe('AuthService', () => {
 
     it('should throw unauthorized if password is wrong', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: '1', email: 'test@test.com', isActive: true, passwordHash: 'hash'
+        id: '1', email: 'test@test.com', isActive: true, passwordHash: 'hash',
+        roleId: 'role-1', role: { id: 'role-1', name: 'admin', permissions: [] }
       })
 
       const bcrypt = await import('bcryptjs')

@@ -4,7 +4,7 @@ import {
   deleteInvoice, recordInvoicePayment, generateCompanyInvoice, getInvoicePdf
 } from '../controllers/invoices.controller'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import { validate } from '../middleware/validate'
 import { z } from 'zod'
 
@@ -36,13 +36,13 @@ const recordPaymentSchema = z.object({
   amount: z.number().positive()
 })
 
-router.get('/', getInvoices)
-router.post('/', authorize('admin', 'receptionist'), validate(createInvoiceSchema), createInvoice)
-router.get('/:id', getInvoice)
-router.patch('/:id', authorize('admin', 'receptionist'), updateInvoice)
-router.delete('/:id', authorize('admin', 'receptionist'), deleteInvoice)
-router.post('/:id/payment', authorize('admin', 'receptionist'), validate(recordPaymentSchema), recordInvoicePayment)
-router.post('/company/generate', authorize('admin', 'receptionist'), validate(companyInvoiceSchema), generateCompanyInvoice)
-router.get('/:id/pdf', getInvoicePdf)
+router.get('/', requirePermission('invoices:view'), getInvoices)
+router.post('/', requirePermission('invoices:manage'), validate(createInvoiceSchema), createInvoice)
+router.get('/:id', requirePermission('invoices:view'), getInvoice)
+router.patch('/:id', requirePermission('invoices:manage'), updateInvoice)
+router.delete('/:id', requirePermission('invoices:manage'), deleteInvoice)
+router.post('/:id/payment', requirePermission('payments:record'), validate(recordPaymentSchema), recordInvoicePayment)
+router.post('/company/generate', requirePermission('invoices:manage'), validate(companyInvoiceSchema), generateCompanyInvoice)
+router.get('/:id/pdf', requirePermission('invoices:view'), getInvoicePdf)
 
 export default router

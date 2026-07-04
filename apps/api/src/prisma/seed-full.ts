@@ -227,6 +227,83 @@ async function seedHotelAndUsers() {
   })
   console.log('✅ Hotel:', hotel.name)
 
+  // Create system roles for the hotel
+  const roleDefinitions = [
+    {
+      name: 'admin',
+      description: 'Full system access. Can manage users, settings, payroll and all operations.',
+      permissions: [
+        'bookings:view','bookings:manage','bookings:checkin','bookings:checkout','bookings:extend',
+        'guests:view','guests:manage',
+        'rooms:view','rooms:manage',
+        'housekeeping:view','housekeeping:manage',
+        'pos:view','pos:charge','pos:checkout','pos:void',
+        'payments:record','payments:view',
+        'invoices:view','invoices:manage',
+        'companies:view','companies:manage',
+        'store:view','store:manage',
+        'staff:view','staff:manage',
+        'payroll:view','payroll:manage',
+        'reports:view',
+        'settings:view','settings:manage',
+        'guest_portal:orders','guest_portal:requests',
+        'developer:manage'
+      ]
+    },
+    {
+      name: 'receptionist',
+      description: 'Front desk operations: bookings, check-in/out, payments, POS, invoices and reports.',
+      permissions: [
+        'bookings:view','bookings:manage','bookings:checkin','bookings:checkout','bookings:extend',
+        'guests:view','guests:manage',
+        'rooms:view',
+        'housekeeping:view',
+        'pos:view','pos:charge','pos:checkout',
+        'payments:record','payments:view',
+        'invoices:view','invoices:manage',
+        'companies:view','companies:manage',
+        'store:view',
+        'reports:view',
+        'guest_portal:orders','guest_portal:requests'
+      ]
+    },
+    {
+      name: 'housekeeping',
+      description: 'Room status updates, consumption logging and guest service requests.',
+      permissions: [
+        'rooms:view',
+        'housekeeping:view','housekeeping:manage',
+        'store:view',
+        'guest_portal:requests'
+      ]
+    },
+    {
+      name: 'waiter',
+      description: 'POS operations and guest portal food orders.',
+      permissions: [
+        'pos:view','pos:charge',
+        'guest_portal:orders'
+      ]
+    }
+  ]
+
+  const roleMap: Record<string, string> = {}
+  for (const r of roleDefinitions) {
+    const role = await prisma.role.upsert({
+      where: { hotelId_name: { hotelId: hotel.id, name: r.name } },
+      update: {},
+      create: {
+        hotelId: hotel.id,
+        name: r.name,
+        description: r.description,
+        permissions: r.permissions as any,
+        isSystem: true
+      }
+    })
+    roleMap[r.name] = role.id
+  }
+  console.log(`✅ ${roleDefinitions.length} system roles created`)
+
   const users = [
     { fullName: 'Administrator', email: 'admin@buffalo-hotel.co.tz', role: 'admin', password: 'Admin@2026!' },
     { fullName: 'Receptionist', email: 'reception@buffalo-hotel.co.tz', role: 'receptionist', password: 'Recep@2026!' },
@@ -244,7 +321,7 @@ async function seedHotelAndUsers() {
         fullName: u.fullName,
         email: u.email,
         passwordHash,
-        role: u.role as any,
+        roleId: roleMap[u.role],
         isActive: true,
       },
     })

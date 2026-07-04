@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { authenticate } from '../middleware/authenticate'
-import { authorize } from '../middleware/authorize'
+import { requirePermission } from '../middleware/requirePermission'
 import {
   getItems, getItem, createItem, updateItem, getLowStockItems,
   getTransactions, createTransaction, recordHousekeepingConsumption,
@@ -12,31 +12,31 @@ import {
 const router = Router()
 router.use(authenticate)
 
-// View dashboard/stats: admin, receptionist, housekeeping
-router.get('/dashboard',       authorize('admin', 'receptionist', 'housekeeping'), getDashboardStats)
+// View dashboard/stats
+router.get('/dashboard',       requirePermission('store:view'), getDashboardStats)
 
-// Items: view for admin/recep/house, edit for admin/recep
-router.get('/items',           authorize('admin', 'receptionist', 'housekeeping'), getItems)
-router.get('/items/low-stock', authorize('admin', 'receptionist', 'housekeeping'), getLowStockItems)
-router.get('/items/:id',       authorize('admin', 'receptionist', 'housekeeping'), getItem)
-router.post('/items',          authorize('admin', 'receptionist'), createItem)
-router.patch('/items/:id',     authorize('admin', 'receptionist'), updateItem)
+// Items
+router.get('/items',           requirePermission('store:view'), getItems)
+router.get('/items/low-stock', requirePermission('store:view'), getLowStockItems)
+router.get('/items/:id',       requirePermission('store:view'), getItem)
+router.post('/items',          requirePermission('store:manage'), createItem)
+router.patch('/items/:id',     requirePermission('store:manage'), updateItem)
 
-// Transactions: admin, receptionist
-router.get('/transactions',    authorize('admin', 'receptionist'), getTransactions)
-router.post('/transactions',   authorize('admin', 'receptionist'), createTransaction)
-router.post('/housekeeping-consumption', authorize('admin', 'receptionist', 'housekeeping'), recordHousekeepingConsumption)
+// Transactions
+router.get('/transactions',    requirePermission('store:view'), getTransactions)
+router.post('/transactions',   requirePermission('store:manage'), createTransaction)
+router.post('/housekeeping-consumption', requirePermission('store:view', 'housekeeping:manage'), recordHousekeepingConsumption)
 
-// Purchase Orders: admin/recep can view/create, admin only for auto-generate (usually)
-router.get('/purchase-orders',               authorize('admin', 'receptionist'), getPurchaseOrders)
-router.post('/purchase-orders',              authorize('admin', 'receptionist'), createPurchaseOrder)
-router.post('/purchase-orders/auto-generate',authorize('admin'), autoGeneratePO)
-router.post('/purchase-orders/:id/receive',  authorize('admin', 'receptionist'), receivePurchaseOrder)
-router.patch('/purchase-orders/:id/status',   authorize('admin', 'receptionist'), updatePOStatus)
+// Purchase Orders
+router.get('/purchase-orders',               requirePermission('store:view'), getPurchaseOrders)
+router.post('/purchase-orders',              requirePermission('store:manage'), createPurchaseOrder)
+router.post('/purchase-orders/auto-generate',requirePermission('store:manage'), autoGeneratePO)
+router.post('/purchase-orders/:id/receive',  requirePermission('store:manage'), receivePurchaseOrder)
+router.patch('/purchase-orders/:id/status',   requirePermission('store:manage'), updatePOStatus)
 
-// Suppliers: admin, receptionist
-router.get('/suppliers',       authorize('admin', 'receptionist'), getSuppliers)
-router.post('/suppliers',      authorize('admin', 'receptionist'), createSupplier)
-router.patch('/suppliers/:id',   authorize('admin', 'receptionist'), updateSupplier)
+// Suppliers
+router.get('/suppliers',       requirePermission('store:view'), getSuppliers)
+router.post('/suppliers',      requirePermission('store:manage'), createSupplier)
+router.patch('/suppliers/:id',   requirePermission('store:manage'), updateSupplier)
 
 export default router

@@ -54,7 +54,7 @@ export class NextSmsService {
     const payload = {
       from: this.getSenderId(senderId),
       to: normalizedTo,
-      content: message
+      text: message
     }
 
     try {
@@ -81,7 +81,7 @@ export class NextSmsService {
     const payload = {
       from: this.getSenderId(senderId),
       to: normalizedTo,
-      content: message
+      text: message
     }
 
     try {

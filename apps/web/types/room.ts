@@ -18,6 +18,8 @@ export interface Room {
   description?: string
   amenities: string[]
   images: string[]
+  qrCodeToken?: string | null
+  qrCodeExpiresAt?: string | null
   bookings: RoomBooking[]
   housekeepingLogs: HousekeepingLog[]
 }
