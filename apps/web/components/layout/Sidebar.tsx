@@ -110,42 +110,42 @@ export default function Sidebar() {
       )}
 
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-[240px] bg-white rounded-2xl shadow-card flex flex-col flex-shrink-0 transition-transform duration-300",
+        "fixed inset-y-0 left-0 z-50 w-[240px] bg-white dark:bg-[#1f2937] rounded-2xl shadow-card flex flex-col flex-shrink-0 transition-transform duration-300",
         "lg:static lg:ml-4 lg:my-4 lg:h-[calc(100vh-32px)]",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
 
         {/* Logo */}
-        <div className="flex items-center gap-2 px-5 h-[60px] border-b border-[#f3f4f6] flex-shrink-0">
-          <div className="w-8 h-8 bg-[#1a2b4a] rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-2 px-5 h-[60px] border-b border-[#f3f4f6] dark:border-gray-700 flex-shrink-0">
+          <div className="w-8 h-8 bg-[#1a2b4a] dark:bg-[#2563EB] rounded-lg flex items-center justify-center flex-shrink-0">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
               <path d="M8 1L1.5 4.5v7L8 15l6.5-3.5v-7L8 1z" fill="white" opacity="0.95"/>
               <path d="M8 5L4.5 7v4L8 13l3.5-2V7L8 5z" fill="white" opacity="0.4"/>
             </svg>
           </div>
-          <span className="text-[15px] font-bold text-[#111827]">
-            Buffalo<span className="text-[#2563EB]"> MS</span>
+          <span className="text-[15px] font-bold text-[#111827] dark:text-gray-100">
+            Buffalo<span className="text-[#2563EB] dark:text-blue-400"> MS</span>
           </span>
         </div>
 
         {/* User */}
-        <div className="px-4 py-4 border-b border-[#f3f4f6] flex-shrink-0">
+        <div className="px-4 py-4 border-b border-[#f3f4f6] dark:border-gray-700 flex-shrink-0">
           <div
             onClick={() => router.push('/settings?tab=profile')}
-            className="flex items-center gap-2.5 cursor-pointer hover:bg-[#f3f4f6] rounded-lg p-1.5 -m-1.5 transition-colors"
+            className="flex items-center gap-2.5 cursor-pointer hover:bg-[#f3f4f6] dark:hover:bg-gray-700/50 rounded-lg p-1.5 -m-1.5 transition-colors"
             title="Go to My Profile"
           >
-            <div className="w-9 h-9 rounded-full bg-[#c7d2fe] flex items-center justify-center text-[#1a2b4a] font-semibold text-[11px] flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#c7d2fe] dark:bg-blue-900/40 flex items-center justify-center text-[#1a2b4a] dark:text-blue-200 font-semibold text-[11px] flex-shrink-0">
               {user?.avatarUrl
                 ? <img src={user.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover"/>
                 : getInitials(user?.fullName ?? 'U')
               }
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-[#111827] truncate leading-tight">{user?.fullName ?? 'Admin'}</p>
-              <p className="text-[11px] text-[#9ca3af] capitalize leading-tight">{user?.role?.name ?? 'admin'}</p>
+              <p className="text-[13px] font-semibold text-[#111827] dark:text-gray-100 truncate leading-tight">{user?.fullName ?? 'Admin'}</p>
+              <p className="text-[11px] text-[#9ca3af] dark:text-gray-400 capitalize leading-tight">{user?.role?.name ?? 'admin'}</p>
             </div>
-            <ChevronDown size={12} className="text-[#9ca3af] flex-shrink-0"/>
+            <ChevronDown size={12} className="text-[#9ca3af] dark:text-gray-500 flex-shrink-0"/>
           </div>
         </div>
 
@@ -160,10 +160,10 @@ export default function Sidebar() {
             <div key={group.key} className="mb-1">
               <button onClick={() => toggle(group.key)}
                 className="w-full flex items-center justify-between px-2 pt-2 pb-1.5">
-                <span className="text-[9.5px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em]">
+                <span className="text-[9.5px] font-semibold text-[#9ca3af] dark:text-gray-500 uppercase tracking-[0.08em]">
                   {group.label}
                 </span>
-                <ChevronDown size={10} className={cn('text-[#d1d5db] transition-transform', !isOpen(group.key) && '-rotate-90')}/>
+                <ChevronDown size={10} className={cn('text-[#d1d5db] dark:text-gray-600 transition-transform', !isOpen(group.key) && '-rotate-90')}/>
               </button>
 
               {isOpen(group.key) && visibleItems.map(item => {
@@ -177,10 +177,10 @@ export default function Sidebar() {
                     className={cn(
                       'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150',
                       isActive
-                        ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
-                        : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827] font-medium'
+                        ? 'bg-[#EFF6FF] dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-300 font-semibold'
+                        : 'text-[#6b7280] dark:text-gray-400 hover:bg-[#f3f4f6] dark:hover:bg-gray-700/50 hover:text-[#111827] dark:hover:text-gray-200 font-medium'
                     )}>
-                    <Icon size={14} className={cn('flex-shrink-0', isActive ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
+                    <Icon size={14} className={cn('flex-shrink-0', isActive ? 'text-[#2563EB] dark:text-blue-300' : 'text-[#9ca3af] dark:text-gray-500')}/>
                     <span className="flex-1 truncate">{item.label}</span>
                     {'badge' in item && item.badge && (
                       <span className="bg-[#ef4444] text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 flex-shrink-0">
@@ -195,8 +195,8 @@ export default function Sidebar() {
 
           {/* System option */}
           <div className="flex items-center justify-between px-2 pt-3 pb-1.5">
-            <span className="text-[9.5px] font-semibold text-[#9ca3af] uppercase tracking-[0.08em]">SYSTEM OPTION</span>
-            <ChevronDown size={10} className="text-[#d1d5db]"/>
+            <span className="text-[9.5px] font-semibold text-[#9ca3af] dark:text-gray-500 uppercase tracking-[0.08em]">SYSTEM OPTION</span>
+            <ChevronDown size={10} className="text-[#d1d5db] dark:text-gray-600"/>
           </div>
 
           {hasAnyPermission(user?.role, ['staff:view']) && (
@@ -205,10 +205,10 @@ export default function Sidebar() {
               className={cn(
                 'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150 font-medium',
                 pathname === '/staff' || pathname.startsWith('/staff/')
-                  ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
-                  : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+                  ? 'bg-[#EFF6FF] dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-300 font-semibold'
+                  : 'text-[#6b7280] dark:text-gray-400 hover:bg-[#f3f4f6] dark:hover:bg-gray-700/50 hover:text-[#111827] dark:hover:text-gray-200'
               )}>
-              <Users2 size={14} className={cn('flex-shrink-0', pathname === '/staff' || pathname.startsWith('/staff/') ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
+              <Users2 size={14} className={cn('flex-shrink-0', pathname === '/staff' || pathname.startsWith('/staff/') ? 'text-[#2563EB] dark:text-blue-300' : 'text-[#9ca3af] dark:text-gray-500')}/>
               <span className="flex-1 truncate">Staff</span>
             </Link>
           )}
@@ -219,31 +219,31 @@ export default function Sidebar() {
               className={cn(
                 'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] mb-0.5 transition-all duration-150 font-medium',
                 pathname === '/staff/payroll'
-                  ? 'bg-[#EFF6FF] text-[#2563EB] font-semibold'
-                  : 'text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
+                  ? 'bg-[#EFF6FF] dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-300 font-semibold'
+                  : 'text-[#6b7280] dark:text-gray-400 hover:bg-[#f3f4f6] dark:hover:bg-gray-700/50 hover:text-[#111827] dark:hover:text-gray-200'
               )}>
-              <Wallet size={14} className={cn('flex-shrink-0', pathname === '/staff/payroll' ? 'text-[#2563EB]' : 'text-[#9ca3af]')}/>
+              <Wallet size={14} className={cn('flex-shrink-0', pathname === '/staff/payroll' ? 'text-[#2563EB] dark:text-blue-300' : 'text-[#9ca3af] dark:text-gray-500')}/>
               <span className="flex-1 truncate">Payroll</span>
             </Link>
           )}
         </nav>
 
         {/* Bottom */}
-        <div className="px-3 pb-4 pt-2 border-t border-[#f3f4f6] flex-shrink-0 space-y-0.5">
+        <div className="px-3 pb-4 pt-2 border-t border-[#f3f4f6] dark:border-gray-700 flex-shrink-0 space-y-0.5">
           {hasAnyPermission(user?.role, ['settings:view','settings:manage']) && (
             <Link href="/settings"
               onClick={closeSidebar}
               className={cn(
                 'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] transition-all duration-150 font-medium',
-                pathname === '/settings' ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6b7280] hover:bg-[#f3f4f6]'
+                pathname === '/settings' ? 'bg-[#EFF6FF] dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-300' : 'text-[#6b7280] dark:text-gray-400 hover:bg-[#f3f4f6] dark:hover:bg-gray-700/50 dark:hover:text-gray-200'
               )}>
-              <Settings size={14} className="text-[#9ca3af] flex-shrink-0"/>
+              <Settings size={14} className="text-[#9ca3af] dark:text-gray-500 flex-shrink-0"/>
               Settings
             </Link>
           )}
           <button onClick={() => logout()}
-            className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] text-[#6b7280] hover:bg-[#fef2f2] hover:text-[#ef4444] transition-all duration-150 font-medium">
-            <LogOut size={14} className="text-[#9ca3af] flex-shrink-0"/>
+            className="w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[12.5px] text-[#6b7280] dark:text-gray-400 hover:bg-[#fef2f2] dark:hover:bg-red-900/20 hover:text-[#ef4444] dark:hover:text-red-300 transition-all duration-150 font-medium">
+            <LogOut size={14} className="text-[#9ca3af] dark:text-gray-500"/>
             Log out
           </button>
         </div>

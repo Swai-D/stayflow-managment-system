@@ -6,25 +6,31 @@ export interface SearchResult {
   id: string
   title: string
   subtitle?: string
-  type: 'booking' | 'guest' | 'room' | 'store_item' | 'supplier'
+  type: 'booking' | 'guest' | 'room' | 'store_item' | 'supplier' | 'staff' | 'invoice' | 'payment' | 'expense' | 'company'
   href: string
   status?: string
   meta?: string
 }
 
 export class SearchService {
-  async search(hotelId: string, query: string, limit: number = 8): Promise<SearchResult[]> {
+  async search(hotelId: string, query: string, limit: number = 12): Promise<SearchResult[]> {
     const q = query.trim()
     if (!q || q.length < 2) return []
 
     const searchPattern = q
+    const perType = Math.ceil(limit / 3)
 
     const [
       bookings,
       guests,
       rooms,
       storeItems,
-      suppliers
+      suppliers,
+      staff,
+      invoices,
+      payments,
+      expenses,
+      companies
     ] = await Promise.all([
       // Bookings by ref or guest name
       prisma.booking.findMany({
@@ -99,7 +105,84 @@ export class SearchService {
           ]
         },
         orderBy: { name: 'asc' },
-        take: limit
+        take: perType
+      }),
+
+      // Staff by name, email, phone
+      prisma.staff.findMany({
+        where: {
+          hotelId,
+          OR: [
+            { fullName: { contains: searchPattern, mode: 'insensitive' } },
+            { email: { contains: searchPattern, mode: 'insensitive' } },
+            { phone: { contains: searchPattern, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { fullName: 'asc' },
+        take: perType
+      }),
+
+      // Invoices by number or guest name
+      prisma.invoice.findMany({
+        where: {
+          hotelId,
+          OR: [
+            { invoiceNumber: { contains: searchPattern, mode: 'insensitive' } },
+            { booking: { guest: { fullName: { contains: searchPattern, mode: 'insensitive' } } } },
+            { company: { name: { contains: searchPattern, mode: 'insensitive' } } }
+          ]
+        },
+        include: {
+          booking: { select: { guest: { select: { fullName: true } } } },
+          company: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: perType
+      }),
+
+      // Payments by reference or guest name
+      prisma.payment.findMany({
+        where: {
+          hotelId,
+          OR: [
+            { reference: { contains: searchPattern, mode: 'insensitive' } },
+            { booking: { guest: { fullName: { contains: searchPattern, mode: 'insensitive' } } } },
+            { method: { contains: searchPattern, mode: 'insensitive' } }
+          ]
+        },
+        include: {
+          booking: { select: { guest: { select: { fullName: true } }, bookingRef: true } }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: perType
+      }),
+
+      // Expenses by description or category
+      prisma.expense.findMany({
+        where: {
+          hotelId,
+          OR: [
+            { description: { contains: searchPattern, mode: 'insensitive' } },
+            { category: { contains: searchPattern, mode: 'insensitive' } },
+            { vendor: { contains: searchPattern, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { date: 'desc' },
+        take: perType
+      }),
+
+      // Companies by name or TIN
+      prisma.company.findMany({
+        where: {
+          hotelId,
+          OR: [
+            { name: { contains: searchPattern, mode: 'insensitive' } },
+            { tinNumber: { contains: searchPattern, mode: 'insensitive' } },
+            { email: { contains: searchPattern, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { name: 'asc' },
+        take: perType
       })
     ])
 
@@ -150,6 +233,53 @@ export class SearchService {
         type: 'supplier' as const,
         href: `/store/suppliers`,
         meta: s.email || undefined
+      })),
+
+      ...staff.map(s => ({
+        id: s.id,
+        title: s.fullName,
+        subtitle: s.position || s.department,
+        type: 'staff' as const,
+        href: `/staff`,
+        meta: s.phone || s.email
+      })),
+
+      ...invoices.map(i => ({
+        id: i.id,
+        title: i.invoiceNumber,
+        subtitle: i.booking?.guest?.fullName || i.company?.name,
+        type: 'invoice' as const,
+        href: `/invoices`,
+        status: i.status,
+        meta: `TZS ${Number(i.totalAmount).toLocaleString()}`
+      })),
+
+      ...payments.map(p => ({
+        id: p.id,
+        title: p.reference || `Payment for ${p.booking?.bookingRef}`,
+        subtitle: p.booking?.guest?.fullName,
+        type: 'payment' as const,
+        href: `/payments`,
+        status: p.status,
+        meta: `${p.method} — TZS ${Number(p.amount).toLocaleString()}`
+      })),
+
+      ...expenses.map(e => ({
+        id: e.id,
+        title: e.description,
+        subtitle: e.category,
+        type: 'expense' as const,
+        href: `/accounting/expenses`,
+        meta: `TZS ${Number(e.amount).toLocaleString()}`
+      })),
+
+      ...companies.map(c => ({
+        id: c.id,
+        title: c.name,
+        subtitle: c.tinNumber,
+        type: 'company' as const,
+        href: `/companies`,
+        meta: c.email || c.phone
       }))
     ]
 

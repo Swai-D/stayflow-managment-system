@@ -56,32 +56,32 @@ export default function AIChatDrawer() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        className="relative w-[34px] h-[34px] flex items-center justify-center bg-white border border-[#e5e7eb] rounded-lg text-[#2563EB] hover:bg-[#EFF6FF] transition-colors"
+        className="relative w-[34px] h-[34px] flex items-center justify-center bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 rounded-lg text-[#2563EB] hover:bg-[#EFF6FF] dark:hover:bg-blue-900/20 transition-colors"
         title="Buffalo AI Assistant"
       >
         <Sparkles size={16} />
       </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col" showCloseButton={false}>
-        <SheetHeader className="px-4 py-3 border-b border-[#f3f4f6]">
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col bg-white dark:bg-[#1f2937] border-l border-[#e5e7eb] dark:border-gray-700" showCloseButton={false}>
+        <SheetHeader className="px-4 py-3 border-b border-[#f3f4f6] dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center text-[#2563EB]">
                 <Bot size={16} />
               </div>
               <div>
-                <SheetTitle className="text-[15px] font-bold text-[#111827]">Buffalo</SheetTitle>
-                <p className="text-[11px] text-[#9ca3af]">
+                <SheetTitle className="text-[15px] font-bold text-[#111827] dark:text-gray-100">Buffalo</SheetTitle>
+                <p className="text-[11px] text-[#9ca3af] dark:text-gray-400">
                   {loadingSettings ? 'Inapakia...' : status?.enabled ? `Powered by ${status.provider}` : 'Haijawashwa'}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
               <Link href="/settings?tab=ai" onClick={() => setOpen(false)}>
-                <Button variant="ghost" size="icon-sm" className="text-[#6b7280] h-8 w-8" title="AI Settings">
+                <Button variant="ghost" size="icon-sm" className="text-[#6b7280] dark:text-gray-400 h-8 w-8" title="AI Settings">
                   <Settings size={15} />
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon-sm" className="text-[#6b7280] h-8 w-8" onClick={() => setOpen(false)} title="Close">
+              <Button variant="ghost" size="icon-sm" className="text-[#6b7280] dark:text-gray-400 h-8 w-8" onClick={() => setOpen(false)} title="Close">
                 <X size={15} />
               </Button>
             </div>
@@ -89,20 +89,20 @@ export default function AIChatDrawer() {
         </SheetHeader>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f8f9fa]">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#f8f9fa] dark:bg-[#111827]">
           {loadingSettings ? (
-            <div className="flex items-center justify-center h-full text-[#9ca3af]">
+            <div className="flex items-center justify-center h-full text-[#9ca3af] dark:text-gray-500">
               <Loader2 size={18} className="animate-spin mr-2" />
               <span className="text-[12px]">Inapakia...</span>
             </div>
           ) : (
             <>
               {!status?.enabled && (
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-start gap-2">
-                  <AlertCircle size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 rounded-xl p-3 flex items-start gap-2">
+                  <AlertCircle size={14} className="text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="text-[12px] font-medium text-amber-800">Buffalo haijawashwa</p>
-                    <p className="text-[11px] text-amber-700 mt-0.5">
+                    <p className="text-[12px] font-medium text-amber-800 dark:text-amber-300">Buffalo haijawashwa</p>
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-0.5">
                       Admin anaweza kumwasha katika <Link href="/settings?tab=ai" onClick={() => setOpen(false)} className="underline">Settings &gt; AI</Link>
                     </p>
                   </div>
@@ -120,7 +120,7 @@ export default function AIChatDrawer() {
                   <div
                     className={cn(
                       'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
-                      msg.role === 'user' ? 'bg-[#2563EB] text-white' : 'bg-white border border-[#e5e7eb] text-[#2563EB]'
+                      msg.role === 'user' ? 'bg-[#2563EB] text-white' : 'bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#2563EB] dark:text-blue-300'
                     )}
                   >
                     {msg.role === 'user' ? <User size={13} /> : <Bot size={13} />}
@@ -130,7 +130,7 @@ export default function AIChatDrawer() {
                       'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed',
                       msg.role === 'user'
                         ? 'bg-[#2563EB] text-white rounded-br-md'
-                        : 'bg-white border border-[#e5e7eb] text-[#374151] rounded-bl-md'
+                        : 'bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#374151] dark:text-gray-200 rounded-bl-md'
                     )}
                   >
                     {msg.content}
@@ -140,12 +140,12 @@ export default function AIChatDrawer() {
 
               {isPending && (
                 <div className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-white border border-[#e5e7eb] text-[#2563EB] flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#2563EB] dark:text-blue-300 flex items-center justify-center flex-shrink-0">
                     <Bot size={13} />
                   </div>
-                  <div className="bg-white border border-[#e5e7eb] rounded-2xl rounded-bl-md px-4 py-2.5 flex items-center gap-2">
-                    <Loader2 size={14} className="animate-spin text-[#9ca3af]" />
-                    <span className="text-[12px] text-[#9ca3af]">AI inafikiria...</span>
+                  <div className="bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-2.5 flex items-center gap-2">
+                    <Loader2 size={14} className="animate-spin text-[#9ca3af] dark:text-gray-500" />
+                    <span className="text-[12px] text-[#9ca3af] dark:text-gray-400">AI inafikiria...</span>
                   </div>
                 </div>
               )}
@@ -155,15 +155,15 @@ export default function AIChatDrawer() {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="p-3 bg-white border-t border-[#f3f4f6]">
-          <div className="flex items-center gap-2 bg-[#f8f9fa] border border-[#e5e7eb] rounded-xl px-3 py-2 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#dbeafe]">
+        <form onSubmit={handleSubmit} className="p-3 bg-white dark:bg-[#1f2937] border-t border-[#f3f4f6] dark:border-gray-700">
+          <div className="flex items-center gap-2 bg-[#f8f9fa] dark:bg-[#111827] border border-[#e5e7eb] dark:border-gray-700 rounded-xl px-3 py-2 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#dbeafe] dark:focus-within:ring-blue-900/40">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={status?.enabled ? 'Andika ujumbe wako...' : 'Andika ujumbe... (AI haijawashwa)'}
               disabled={isPending}
-              className="flex-1 bg-transparent text-[13px] text-[#374151] placeholder:text-[#9ca3af] outline-none"
+              className="flex-1 bg-transparent text-[13px] text-[#374151] dark:text-gray-200 placeholder:text-[#9ca3af] dark:placeholder:text-gray-500 outline-none"
             />
             <button
               type="submit"
@@ -173,7 +173,7 @@ export default function AIChatDrawer() {
               {isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>
           </div>
-          <p className="text-[10px] text-[#9ca3af] mt-2 text-center">
+          <p className="text-[10px] text-[#9ca3af] dark:text-gray-500 mt-2 text-center">
             AI inaweza kukosea. Thibitisha taarifa muhimu.
           </p>
         </form>

@@ -77,6 +77,28 @@
   --ring: var(--blue-mid);
 }
 
+.dark {
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border: #374151;
+  --border-light: #1f2937;
+  --background: #0f1115;
+
+  --foreground: var(--text-primary);
+  --card: #1f2937;
+  --card-foreground: var(--text-primary);
+  --popover: #1f2937;
+  --popover-foreground: var(--text-primary);
+  --secondary: #374151;
+  --secondary-foreground: var(--text-secondary);
+  --muted: #374151;
+  --muted-foreground: var(--text-muted);
+  --accent: #1e3a8a;
+  --accent-foreground: #dbeafe;
+  --input: var(--border);
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;

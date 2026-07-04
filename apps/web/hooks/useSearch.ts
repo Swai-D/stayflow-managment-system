@@ -5,7 +5,7 @@ export interface SearchResult {
   id: string
   title: string
   subtitle?: string
-  type: 'booking' | 'guest' | 'room' | 'store_item' | 'supplier'
+  type: 'booking' | 'guest' | 'room' | 'store_item' | 'supplier' | 'staff' | 'invoice' | 'payment' | 'expense' | 'company' | 'nav'
   href: string
   status?: string
   meta?: string
