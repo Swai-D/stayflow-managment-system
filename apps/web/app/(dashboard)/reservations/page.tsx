@@ -101,7 +101,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-        <div className="relative bg-white rounded-2xl w-full max-w-[520px] overflow-hidden shadow-modal">
+        <div className="relative bg-white rounded-2xl w-full max-w-[520px] max-h-[90vh] flex flex-col overflow-hidden shadow-modal">
 
           {/* Header */}
           <div className="flex items-start justify-between p-6 pb-0 font-sans text-left">
@@ -126,7 +126,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
             </button>
           </div>
 
-          <div className="p-6 space-y-4 font-sans text-left">
+          <div className="p-6 space-y-4 font-sans text-left overflow-y-auto flex-1">
             {checkoutDone ? (
               <div className="text-center py-6 space-y-4">
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">

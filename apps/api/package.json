@@ -10,9 +10,6 @@
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
     "build": "prisma generate && tsc",
     "start": "prisma migrate deploy && node dist/server.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
@@ -42,8 +39,8 @@
     "morgan": "^1.x",
     "multer": "^1.x",
     "node-cron": "^3.x",
-    "prisma": "5.22.0",
     "pdfkit": "^0.16.0",
+    "prisma": "5.22.0",
     "redis": "^4.x",
     "zod": "^3.x"
   },
@@ -59,11 +56,8 @@
     "@types/node": "^20.x",
     "@types/node-cron": "^3.0.11",
     "@types/pdfkit": "^0.13.5",
-    "@types/supertest": "^6.x",
     "nodemon": "^3.x",
-    "supertest": "^6.x",
     "ts-node": "^10.x",
-    "typescript": "^5.x",
-    "vitest": "^1.x"
+    "typescript": "^5.x"
   }
 }
