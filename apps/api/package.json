@@ -16,6 +16,8 @@
     "db:seed": "ts-node src/prisma/seed.ts",
     "db:seed:prod": "node dist/prisma/seed.js",
     "db:seed:full": "ts-node src/prisma/seed-full.ts",
+    "db:seed:production": "ts-node src/prisma/seed-production.ts",
+    "db:seed:production:built": "node dist/prisma/seed-production.js",
     "db:fresh": "prisma db push --force-reset --accept-data-loss && npm run db:seed",
     "db:fresh:full": "prisma db push --force-reset --accept-data-loss && npm run db:seed:full",
     "db:seed:store": "ts-node src/prisma/seed-store.ts",
