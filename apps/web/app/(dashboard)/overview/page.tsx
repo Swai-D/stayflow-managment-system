@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { formatTZS } from '@/lib/formatters'
 
-const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+const COLORS = ['#8b4530', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
 
 function KPICard({ label, value, subtext, icon: Icon, iconBg, isLoading, trend }: any) {
   return (
@@ -97,15 +97,15 @@ function RevenueTrendChart({ data, isLoading }: { data: any[]; isLoading: boolea
       <AreaChart data={chartData}>
         <defs>
           <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2}/>
-            <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+            <stop offset="5%" stopColor="#8b4530" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#8b4530" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
         <YAxis hide />
         <ReTooltip formatter={(v: any) => [formatTZS(v), 'Revenue']} />
-        <Area type="monotone" dataKey="total" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+        <Area type="monotone" dataKey="total" stroke="#8b4530" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
       </AreaChart>
     </ResponsiveContainer>
   )
@@ -131,17 +131,17 @@ function RoomCardMini({ room, index }: { room: Room; index: number }) {
   const currentBooking = room.bookings?.[0]
   const status = room.status
   const occColors = [
-    { bg: 'bg-[#1a2b4a]', text: 'text-white', border: 'border-[#1a2b4a]', sub: 'text-[#9ca3af]' },
-    { bg: 'bg-[#2563eb]', text: 'text-white', border: 'border-[#2563eb]', sub: 'text-blue-100' },
-    { bg: 'bg-[#bfdbfe]', text: 'text-[#1e40af]', border: 'border-[#93c5fd]', sub: 'text-[#1e40af]/60' }
+    { bg: 'bg-[#26120c]', text: 'text-white', border: 'border-[#26120c]', sub: 'text-[#9ca3af]' },
+    { bg: 'bg-[#8b4530]', text: 'text-white', border: 'border-[#8b4530]', sub: 'text-blue-100' },
+    { bg: 'bg-[#ebc3a6]', text: 'text-[#522519]', border: 'border-[#93c5fd]', sub: 'text-[#522519]/60' }
   ]
   const occ = occColors[index % 3]
   const styles = status === 'available' ? { bg: 'bg-[#ecfdf5]', text: 'text-[#10b981]', border: 'border-[#d1fae5]', sub: 'text-[#10b981]/60' } :
-                 status === 'occupied'  ? occ :
-                 status === 'dirty'     ? { bg: 'bg-[#fffbeb]', text: 'text-[#d97706]', border: 'border-[#fef3c7]', sub: 'text-[#d97706]/60' } :
-                 status === 'cleaning'  ? { bg: 'bg-[#e0e7ff]', text: 'text-[#3730a3]', border: 'border-[#c7d2fe]', sub: 'text-[#3730a3]/60' } :
-                 status === 'maintenance' ? { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', sub: 'text-[#dc2626]/60' } :
-                 { bg: 'bg-[#f3f4f6]', text: 'text-[#6b7280]', border: 'border-[#e5e7eb]', sub: 'text-[#9ca3af]' }
+    status === 'occupied' ? occ :
+      status === 'dirty' ? { bg: 'bg-[#fffbeb]', text: 'text-[#d97706]', border: 'border-[#fef3c7]', sub: 'text-[#d97706]/60' } :
+        status === 'cleaning' ? { bg: 'bg-[#e0e7ff]', text: 'text-[#3730a3]', border: 'border-[#f5dfce]', sub: 'text-[#3730a3]/60' } :
+          status === 'maintenance' ? { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', sub: 'text-[#dc2626]/60' } :
+            { bg: 'bg-[#f3f4f6]', text: 'text-[#6b7280]', border: 'border-[#e5e7eb]', sub: 'text-[#9ca3af]' }
 
   return (
     <div className={cn(
@@ -203,31 +203,31 @@ export default function OverviewPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div>
-           <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Dashboard</h1>
-           <p className="text-[12px] text-[#9ca3af] font-medium mt-[-2px]">Business overview at a glance</p>
+          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">📊 Dashboard</h1>
+          <p className="text-[12px] text-[#9ca3af] font-medium mt-[-2px]">Business overview at a glance</p>
         </div>
         <div className="bg-white border border-gray-100 shadow-sm rounded-xl px-4 py-2 text-[12px] font-semibold text-[#6b7280] flex items-center gap-2">
-           <Calendar size={14} className="text-[#2563eb]" />
-           {format(new Date(), 'EEEE, dd MMMM yyyy')}
+          <Calendar size={14} className="text-[#8b4530]" />
+          {format(new Date(), 'EEEE, dd MMMM yyyy')}
         </div>
       </div>
 
       {/* Row 1: KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-[14px]">
-        <KPICard label="Revenue Today" value={formatTZS(summary?.revenueToday ?? 0)} icon={Wallet} iconBg="bg-[#2563eb]" isLoading={summaryLoading} subtext="Payments received" />
-        <KPICard label="Occupancy Rate" value={`${occupancyRate}%`} icon={Users} iconBg="bg-[#10b981]" isLoading={summaryLoading} subtext={`${occupiedRooms} of ${totalRooms} rooms`} />
-        <KPICard label="Active Guests" value={summary?.totalActive ?? 0} icon={DoorOpen} iconBg="bg-[#f59e0b]" isLoading={summaryLoading} subtext="Confirmed / checked in" />
-        <KPICard label="Net Profit (30d)" value={formatTZS(financial?.netProfit ?? 0)} icon={TrendingUp} iconBg="bg-[#8b5cf6]" isLoading={financialLoading} subtext={`${Math.round(financial?.expenseRatio || 0)}% expense ratio`} trend={financial?.netProfit >= 0 ? 'up' : 'down'} />
-        <KPICard label="Store Alerts" value={(store?.lowStockCount || 0) + (store?.outOfStockCount || 0)} icon={Package} iconBg="bg-[#ef4444]" isLoading={storeLoading} subtext={`${store?.pendingPOs || 0} pending POs`} trend="down" />
+        <KPICard label="💵 Revenue Today" value={formatTZS(summary?.revenueToday ?? 0)} icon={Wallet} iconBg="bg-[#8b4530]" isLoading={summaryLoading} subtext="Payments received" />
+        <KPICard label="🛏️ Occupancy Rate" value={`${occupancyRate}%`} icon={Users} iconBg="bg-[#10b981]" isLoading={summaryLoading} subtext={`${occupiedRooms} of ${totalRooms} rooms`} />
+        <KPICard label="🧑‍🤝‍🧑 Active Guests" value={summary?.totalActive ?? 0} icon={DoorOpen} iconBg="bg-[#f59e0b]" isLoading={summaryLoading} subtext="Confirmed / checked in" />
+        <KPICard label="📈 Net Profit (30d)" value={formatTZS(financial?.netProfit ?? 0)} icon={TrendingUp} iconBg="bg-[#8b5cf6]" isLoading={financialLoading} subtext={`${Math.round(financial?.expenseRatio || 0)}% expense ratio`} trend={financial?.netProfit >= 0 ? 'up' : 'down'} />
+        <KPICard label="⚠️ Store Alerts" value={(store?.lowStockCount || 0) + (store?.outOfStockCount || 0)} icon={Package} iconBg="bg-[#ef4444]" isLoading={storeLoading} subtext={`${store?.pendingPOs || 0} pending POs`} trend="down" />
       </div>
 
       {/* Row 2: Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-[14px]">
-        <SectionCard title="Weekly Visitors" subtitle="Guests per day this week">
+        <SectionCard title="🚶 Weekly Visitors" subtitle="Guests per day this week">
           <WeeklyVisitorsPie data={occupancyData} isLoading={occupancyLoading} />
         </SectionCard>
-        <SectionCard title="Revenue Trend" subtitle="Last 7 days payments" action={
-          <Link href="/accounting/revenue" className="text-[11px] font-bold text-[#2563eb] hover:underline flex items-center gap-1">Details <ChevronRight size={12} /></Link>
+        <SectionCard title="📉 Revenue Trend" subtitle="Last 7 days payments" action={
+          <Link href="/accounting/revenue" className="text-[11px] font-bold text-[#8b4530] hover:underline flex items-center gap-1">Details <ChevronRight size={12} /></Link>
         }>
           <RevenueTrendChart data={revenueData} isLoading={revenueLoading} />
         </SectionCard>
@@ -243,8 +243,8 @@ export default function OverviewPage() {
 
       {/* Row 4: Store & Inventory + Business Advice */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-[14px]">
-        <SectionCard title="Store & Inventory" subtitle="Stock health and usage" action={
-          <Link href="/store" className="text-[11px] font-bold text-[#2563eb] hover:underline flex items-center gap-1">Manage <ChevronRight size={12} /></Link>
+        <SectionCard title="📦 Store & Inventory" subtitle="Stock health and usage" action={
+          <Link href="/store" className="text-[11px] font-bold text-[#8b4530] hover:underline flex items-center gap-1">Manage <ChevronRight size={12} /></Link>
         }>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <StatMini label="Total Items" value={store?.totalItems ?? 0} isLoading={storeLoading} />
@@ -258,12 +258,12 @@ export default function OverviewPage() {
               <div className="space-y-2 max-h-[140px] overflow-y-auto thin-scrollbar">
                 {storeLoading ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-8 bg-[#f3f4f6] animate-pulse rounded-lg" />) :
                   (store?.lowStockItems || []).length === 0 ? <p className="text-xs text-[#9ca3af]">All stock levels healthy</p> :
-                  (store?.lowStockItems || []).map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-2 bg-[#fffbeb] border border-[#fef3c7] rounded-lg">
-                      <span className="text-xs font-bold text-[#92400e] truncate">{item.name}</span>
-                      <span className="text-[10px] font-bold text-[#d97706]">{item.currentStock} / {item.minimumStock}</span>
-                    </div>
-                  ))
+                    (store?.lowStockItems || []).map((item: any) => (
+                      <div key={item.id} className="flex items-center justify-between p-2 bg-[#fffbeb] border border-[#fef3c7] rounded-lg">
+                        <span className="text-xs font-bold text-[#92400e] truncate">{item.name}</span>
+                        <span className="text-[10px] font-bold text-[#d97706]">{item.currentStock} / {item.minimumStock}</span>
+                      </div>
+                    ))
                 }
               </div>
             </div>
@@ -274,24 +274,24 @@ export default function OverviewPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Business Advisor" subtitle="AI-powered insights">
+        <SectionCard title="🧠 Business Advisor" subtitle="AI-powered insights">
           <div className="space-y-3">
             {adviceLoading ? Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-16 bg-[#f3f4f6] animate-pulse rounded-xl" />) :
               (adviceData?.advice || []).slice(0, 4).map((tip: any, i: number) => (
                 <div key={i} className={cn(
                   'p-3 rounded-xl border text-left',
                   tip.type === 'danger' ? 'bg-red-50 border-red-100' :
-                  tip.type === 'warning' ? 'bg-amber-50 border-amber-100' :
-                  tip.type === 'success' ? 'bg-green-50 border-green-100' :
-                  'bg-blue-50 border-blue-100'
+                    tip.type === 'warning' ? 'bg-amber-50 border-amber-100' :
+                      tip.type === 'success' ? 'bg-green-50 border-green-100' :
+                        'bg-blue-50 border-blue-100'
                 )}>
                   <div className="flex items-start gap-2">
                     <Lightbulb size={14} className={cn(
                       'mt-0.5 shrink-0',
                       tip.type === 'danger' ? 'text-red-500' :
-                      tip.type === 'warning' ? 'text-amber-500' :
-                      tip.type === 'success' ? 'text-green-500' :
-                      'text-blue-500'
+                        tip.type === 'warning' ? 'text-amber-500' :
+                          tip.type === 'success' ? 'text-green-500' :
+                            'text-blue-500'
                     )} />
                     <div>
                       <p className="text-xs font-bold text-[#111827]">{tip.title}</p>
@@ -307,8 +307,8 @@ export default function OverviewPage() {
 
       {/* Row 5: Room Status Pulse + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-[14px]">
-        <SectionCard title="Room Status Pulse" subtitle="Live availability" action={
-          <Link href="/rooms"><button className="bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe] transition-all text-[11px] font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 border border-[#dbeafe]">Full Map <ChevronRight size={14} /></button></Link>
+        <SectionCard title="🚪 Room Status Pulse" subtitle="Live availability" action={
+          <Link href="/rooms"><button className="bg-[#fbf1ea] text-[#8b4530] hover:bg-[#f5dfce] transition-all text-[11px] font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 border border-[#f5dfce]">Full Map <ChevronRight size={14} /></button></Link>
         }>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {miniRooms.map((r, i) => <RoomCardMini key={r.id} room={r} index={i} />)}
@@ -324,24 +324,24 @@ export default function OverviewPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Recent Activity" subtitle="Latest bookings">
+        <SectionCard title="🕒 Recent Activity" subtitle="Latest bookings">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-separate border-spacing-y-2">
               <tbody>
                 {recentBookings.map((b: Booking) => (
                   <tr key={b.id} className="group cursor-pointer">
-                    <td className="py-[10px] bg-[#f9fafb] rounded-l-xl px-3 border-l-2 border-transparent group-hover:border-[#2563eb] group-hover:bg-[#eff6ff]/30 transition-all">
-                       <p className="text-[13px] font-bold text-[#111827] group-hover:text-[#2563eb]">{b.guest.fullName}</p>
-                       <p className="text-[9px] font-medium text-[#9ca3af]">{b.bookingRef}</p>
+                    <td className="py-[10px] bg-[#f9fafb] rounded-l-xl px-3 border-l-2 border-transparent group-hover:border-[#8b4530] group-hover:bg-[#fbf1ea]/30 transition-all">
+                      <p className="text-[13px] font-bold text-[#111827] group-hover:text-[#8b4530]">{b.guest.fullName}</p>
+                      <p className="text-[9px] font-medium text-[#9ca3af]">{b.bookingRef}</p>
                     </td>
-                    <td className="text-[11px] py-[10px] bg-[#f9fafb] px-2 font-bold text-[#6b7280] group-hover:bg-[#eff6ff]/30 transition-all">#{b.room.roomNumber}</td>
-                    <td className="text-[10px] py-[10px] bg-[#f9fafb] rounded-r-xl px-3 font-bold text-[#9ca3af] whitespace-nowrap group-hover:bg-[#eff6ff]/30 transition-all">
-                       {format(new Date(b.checkIn), 'dd MMM')} – {format(new Date(b.checkOut), 'dd MMM')}
+                    <td className="text-[11px] py-[10px] bg-[#f9fafb] px-2 font-bold text-[#6b7280] group-hover:bg-[#fbf1ea]/30 transition-all">#{b.room.roomNumber}</td>
+                    <td className="text-[10px] py-[10px] bg-[#f9fafb] rounded-r-xl px-3 font-bold text-[#9ca3af] whitespace-nowrap group-hover:bg-[#fbf1ea]/30 transition-all">
+                      {format(new Date(b.checkIn), 'dd MMM')} – {format(new Date(b.checkOut), 'dd MMM')}
                     </td>
                   </tr>
                 ))}
                 {recentBookings.length === 0 && (
-                   <tr><td colSpan={3} className="py-12 text-center text-[#9ca3af] text-[10px] font-medium italic">No recent bookings</td></tr>
+                  <tr><td colSpan={3} className="py-12 text-center text-[#9ca3af] text-[10px] font-medium italic">No recent bookings</td></tr>
                 )}
               </tbody>
             </table>
@@ -352,21 +352,21 @@ export default function OverviewPage() {
       {/* Row 6: Booking Ledger */}
       <div className="bg-white rounded-[16px] shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden border border-[#f3f4f6]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#f3f4f6] bg-white">
-           <div>
-             <h2 className="text-[16px] font-bold text-[#111827] tracking-tight">Booking Ledger</h2>
-             <p className="text-[11px] text-[#9ca3af] font-medium">Reservations & settlements</p>
-           </div>
-           <Link href="/reservations">
-             <button className="flex items-center gap-2 text-[11px] font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] shadow-lg shadow-blue-200/50 px-5 py-2.5 rounded-2xl transition-all">
-               Manage Bookings <ChevronRight size={16} />
-             </button>
-           </Link>
+          <div>
+            <h2 className="text-[16px] font-bold text-[#111827] tracking-tight">📖 Booking Ledger</h2>
+            <p className="text-[11px] text-[#9ca3af] font-medium">Reservations & settlements</p>
+          </div>
+          <Link href="/reservations">
+            <button className="flex items-center gap-2 text-[11px] font-bold text-white bg-[#8b4530] hover:bg-[#6e3323] shadow-lg shadow-blue-200/50 px-5 py-2.5 rounded-2xl transition-all">
+              Manage Bookings <ChevronRight size={16} />
+            </button>
+          </Link>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-[#f3f4f6] bg-[#f9fafb]">
-                {['Guest Profile','Assignment','Stay Period','Financial Ledger','Status'].map(h => (
+                {['Guest Profile', 'Assignment', 'Stay Period', 'Financial Ledger', 'Status'].map(h => (
                   <th key={h} className="text-left px-6 py-3 text-[10px] text-[#9ca3af] font-bold whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -375,14 +375,14 @@ export default function OverviewPage() {
               {recentBookings.map((b: Booking, idx: number) => {
                 const statusCfg = BOOKING_STATUS_CONFIG[b.status]
                 return (
-                  <tr key={b.id} className="hover:bg-[#eff6ff]/10 transition-all cursor-pointer group">
+                  <tr key={b.id} className="hover:bg-[#fbf1ea]/10 transition-all cursor-pointer group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={cn("w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-sm transition-all shadow-sm border border-white", idx % 2 === 0 ? "bg-[#eff6ff] text-[#2563eb]" : "bg-[#ecfdf5] text-[#10b981]")}>
+                        <div className={cn("w-9 h-9 rounded-[10px] flex items-center justify-center font-bold text-sm transition-all shadow-sm border border-white", idx % 2 === 0 ? "bg-[#fbf1ea] text-[#8b4530]" : "bg-[#ecfdf5] text-[#10b981]")}>
                           {b.guest.fullName.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-[13px] font-bold text-[#111827] group-hover:text-[#2563eb]">{b.guest.fullName}</p>
+                          <p className="text-[13px] font-bold text-[#111827] group-hover:text-[#8b4530]">{b.guest.fullName}</p>
                           <p className="text-[9px] text-[#9ca3af] font-medium font-mono">{b.bookingRef}</p>
                         </div>
                       </div>

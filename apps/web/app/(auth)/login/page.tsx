@@ -18,10 +18,10 @@ export default function LoginPage() {
     e.preventDefault()
     try {
       await login(email, password)
-      toast.success('Karibu tena! Umefanikiwa kuingia.')
+      toast.success('🎉 Karibu tena! Umefanikiwa kuingia.')
       router.push('/overview')
     } catch (err: any) {
-      toast.error(err.message || 'Imeshindwa kuingia. Angalia barua pepe na nywila.')
+      toast.error('🚫 ' + (err.message || 'Imeshindwa kuingia. Angalia barua pepe na nywila.'))
     }
   }
 
@@ -85,7 +85,7 @@ export default function LoginPage() {
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Inaingia...
               </span>
-            ) : 'Ingia'}
+            ) : '👋 Ingia'}
           </Button>
         </form>
       </div>
