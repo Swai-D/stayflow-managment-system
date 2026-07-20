@@ -23,6 +23,10 @@ type RoomType = 'standard' | 'deluxe' | 'twin' | 'triple'
 
 async function wipeAllData() {
   console.log('🧹 Wiping all existing data...')
+  await prisma.webhookDelivery.deleteMany()
+  await prisma.apiLog.deleteMany()
+  await prisma.webhook.deleteMany()
+  await prisma.apiKey.deleteMany()
   await prisma.roomServiceOrder.deleteMany()
   await prisma.serviceRequest.deleteMany()
   await prisma.extensionRequest.deleteMany()
@@ -49,7 +53,15 @@ async function wipeAllData() {
   await prisma.storeItem.deleteMany()
   await prisma.supplier.deleteMany()
   await prisma.addonService.deleteMany()
+  await prisma.roomRate.deleteMany()
   await prisma.room.deleteMany()
+  await prisma.businessAdvice.deleteMany()
+  await prisma.advisorRefreshLog.deleteMany()
+  await prisma.shift.deleteMany()
+  await prisma.leaveRequest.deleteMany()
+  await prisma.payrollRecord.deleteMany()
+  await prisma.staffProfile.deleteMany()
+  await prisma.aiSettings.deleteMany()
   // Wipe users + roles + hotel too, so we start completely clean and
   // recreate them fresh below (avoids leftover demo accounts).
   await prisma.user.deleteMany()
