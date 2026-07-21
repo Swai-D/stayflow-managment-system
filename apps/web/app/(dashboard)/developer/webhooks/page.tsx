@@ -50,7 +50,7 @@ export default function WebhooksPage() {
       {/* Create Webhook */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-[14px] font-bold text-gray-900 mb-3 flex items-center gap-2">
-          <Plus size={15} className="text-[#2563EB]"/> Create Webhook
+          <Plus size={15} className="text-[#8B4530]"/> Create Webhook
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
@@ -76,7 +76,7 @@ export default function WebhooksPage() {
                 className={cn(
                   'px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors',
                   selectedEvents.includes(event)
-                    ? 'bg-[#EFF6FF] border-[#2563EB] text-[#2563EB]'
+                    ? 'bg-[#FBF1EA] border-[#8B4530] text-[#8B4530]'
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 )}
               >
@@ -85,7 +85,7 @@ export default function WebhooksPage() {
             ))}
           </div>
         </div>
-        <Button onClick={handleCreate} disabled={create.isPending || !name.trim() || !url.trim()} size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8]">
+        <Button onClick={handleCreate} disabled={create.isPending || !name.trim() || !url.trim()} size="sm" className="bg-[#8B4530] hover:bg-[#6E3323]">
           {create.isPending ? <Loader2 size={14} className="animate-spin"/> : <Webhook size={14}/>}
           Add Webhook
         </Button>

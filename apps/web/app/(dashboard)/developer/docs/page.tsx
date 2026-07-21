@@ -17,7 +17,7 @@ export default function DeveloperDocsPage() {
   const baseUrl = 'http://localhost:5000/api/v1/ext'
 
   const codeBlock = (code: string, key: string) => (
-    <div className="relative bg-[#1a2b4a] rounded-lg p-3 mb-3 group">
+    <div className="relative bg-[#26120c] rounded-lg p-3 mb-3 group">
       <pre className="text-[11px] font-mono text-gray-100 overflow-x-auto"><code>{code}</code></pre>
       <button
         onClick={() => copy(code, key)}
@@ -64,7 +64,7 @@ export default function DeveloperDocsPage() {
             ['GET', '/payments', 'List payments'],
           ].map(([method, path, desc]) => (
             <div key={path} className="grid grid-cols-12 px-4 py-2 border-b border-gray-100 last:border-0">
-              <span className="col-span-2 font-mono text-[#2563EB]">{method}</span>
+              <span className="col-span-2 font-mono text-[#8B4530]">{method}</span>
               <span className="col-span-5 font-mono text-gray-700">{path}</span>
               <span className="col-span-5 text-gray-600">{desc}</span>
             </div>

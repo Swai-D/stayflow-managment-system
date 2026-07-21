@@ -8,7 +8,7 @@ import { Search, Plus, Package, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 
-const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#8B4530] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
 // ── Stock Transaction Modal ──────────────────────────────────────────────────
 function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void }) {
@@ -84,7 +84,7 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
           {/* Preview */}
           {qty && (
             <div className={cn('rounded-xl px-4 py-3 flex items-center justify-between text-[12px] font-semibold',
-              newStock < 0 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-[#2563EB]')}>
+              newStock < 0 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-[#8B4530]')}>
               <span>New balance</span>
               <span>{Math.max(0, newStock)} {item.unit.toLowerCase()}</span>
             </div>
@@ -102,7 +102,7 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={handleConfirm} disabled={!qty || Number(qty) <= 0 || ((type === 'ADJUSTMENT' || type === 'WASTAGE') && !notes.trim()) || createTx.isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createTx.isPending ? 'Confirming...' : 'Confirm'}
             </button>
           </div>
@@ -219,7 +219,7 @@ function ItemFormModal({ item, onClose }: { item?: StoreItem; onClose: () => voi
               <label className="flex items-center gap-2.5 cursor-pointer">
                 <div onClick={() => setForm(f=>({...f, isSellable:!f.isSellable}))}
                   className={cn('w-10 h-5 rounded-full transition-colors relative flex-shrink-0',
-                    form.isSellable ? 'bg-[#2563EB]' : 'bg-gray-200')}>
+                    form.isSellable ? 'bg-[#8B4530]' : 'bg-gray-200')}>
                   <div className={cn('absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
                     form.isSellable ? 'translate-x-5' : 'translate-x-0.5')}/>
                 </div>
@@ -230,7 +230,7 @@ function ItemFormModal({ item, onClose }: { item?: StoreItem; onClose: () => voi
           <div className="flex gap-3 mt-6">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={handleConfirm} disabled={!form.name || !form.subCategory || !form.minimumStock || !form.maximumStock || !form.unitCost || createItem.isPending || updateItem.isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createItem.isPending || updateItem.isPending ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Item')}
             </button>
           </div>
@@ -299,7 +299,7 @@ export default function StoreItemsPage() {
         ].map(chip => (
           <button key={chip.filter} onClick={() => setCatFilter(chip.filter)}
             className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-colors',
-              catFilter === chip.filter ? 'bg-[#2563EB] text-white border-[#2563EB]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50')}>
+              catFilter === chip.filter ? 'bg-[#8B4530] text-white border-[#8B4530]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50')}>
             {chip.label}
           </button>
         ))}
@@ -315,7 +315,7 @@ export default function StoreItemsPage() {
           </button>
         ))}
         <button onClick={() => setItemModal('new')}
-          className="ml-auto flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
+          className="ml-auto flex items-center gap-1.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
           <Plus size={13}/> Add Item
         </button>
       </div>
@@ -350,7 +350,7 @@ export default function StoreItemsPage() {
                       <div className="flex items-center gap-2.5">
                         <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
                           item.category === 'FB' ? 'bg-blue-50' : 'bg-purple-50')}>
-                          <Package size={14} className={item.category === 'FB' ? 'text-[#2563EB]' : 'text-purple-600'}/>
+                          <Package size={14} className={item.category === 'FB' ? 'text-[#8B4530]' : 'text-purple-600'}/>
                         </div>
                         <div>
                           <p className="text-[13px] font-semibold text-gray-900">{item.name}</p>
@@ -360,7 +360,7 @@ export default function StoreItemsPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full',
-                        item.category === 'FB' ? 'bg-blue-50 text-[#2563EB]' : 'bg-purple-50 text-purple-600')}>
+                        item.category === 'FB' ? 'bg-blue-50 text-[#8B4530]' : 'bg-purple-50 text-purple-600')}>
                         {item.category === 'FB' ? 'F&B' : 'Hotel'}
                       </span>
                       <p className="text-[10px] text-gray-400 mt-0.5">{item.subCategory}</p>
@@ -391,7 +391,7 @@ export default function StoreItemsPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1">
                         <button onClick={() => setStockModal(item)}
-                          className="h-7 px-2.5 text-[11px] font-semibold text-[#2563EB] bg-[#EFF6FF] hover:bg-[#DBEAFE] rounded-md transition-colors whitespace-nowrap">
+                          className="h-7 px-2.5 text-[11px] font-semibold text-[#8B4530] bg-[#FBF1EA] hover:bg-[#F5DFCE] rounded-md transition-colors whitespace-nowrap">
                           Update
                         </button>
                         <button onClick={() => setItemModal(item)}

@@ -21,7 +21,7 @@ import { formatTZS } from '@/lib/formatters'
 import { toast } from 'sonner'
 
 const CATEGORIES = [
-  { id: 'salary',      label: 'Staff Salary',     icon: Users,      color: '#2563eb', bg: 'bg-blue-50' },
+  { id: 'salary',      label: 'Staff Salary',     icon: Users,      color: '#8b4530', bg: 'bg-blue-50' },
   { id: 'utilities',   label: 'Utilities (LUKU)', icon: UtilityPole, color: '#f59e0b', bg: 'bg-amber-50' },
   { id: 'maintenance', label: 'Repairs & Maint',  icon: Wrench,       color: '#ef4444', bg: 'bg-red-50' },
   { id: 'supplies',    label: 'Hotel Supplies',   icon: ShoppingCart, color: '#10b981', bg: 'bg-emerald-50' },
@@ -95,7 +95,7 @@ export default function ExpensesPage() {
            </button>
            <button 
               onClick={() => setIsModalOpen(true)}
-              className="h-11 px-6 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
+              className="h-11 px-6 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl text-[13px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
            >
               <Plus size={18} /> Record Expense
            </button>
@@ -122,7 +122,7 @@ export default function ExpensesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
          
          {/* Total Spent Card */}
-         <div className="lg:col-span-4 bg-[#1a2b4a] rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl">
+         <div className="lg:col-span-4 bg-[#26120c] rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 rounded-full -mr-10 -mt-10 blur-3xl" />
             <div className="relative z-10 space-y-6">
                <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export default function ExpensesPage() {
                <p className="text-[12px] text-[#9ca3af] font-medium">Listing {expenses.length} recent expenditures</p>
             </div>
             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 min-w-[240px] focus-within:bg-white focus-within:border-[#2563eb]/20 transition-all">
+               <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 min-w-[240px] focus-within:bg-white focus-within:border-[#8b4530]/20 transition-all">
                   <Search size={16} className="text-[#9ca3af]" />
                   <input 
                      value={search}
@@ -256,7 +256,7 @@ export default function ExpensesPage() {
                            </td>
                            <td className="px-8 py-5">
                               <div className="flex items-center gap-2">
-                                 <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-[#2563eb]">
+                                 <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center text-[10px] font-bold text-[#8b4530]">
                                     {exp.user?.fullName.charAt(0)}
                                  </div>
                                  <span className="text-[12px] font-bold text-gray-700">{exp.user?.fullName}</span>
@@ -284,14 +284,14 @@ export default function ExpensesPage() {
                   <button 
                      disabled={page === 1}
                      onClick={() => setPage(p => p - 1)}
-                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-[#9ca3af] hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-[#9ca3af] hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
                   >
                      <ChevronLeft size={18} />
                   </button>
                   <button 
                      disabled={page >= meta.totalPages}
                      onClick={() => setPage(p => p + 1)}
-                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-[#9ca3af] hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+                     className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-[#9ca3af] hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
                   >
                      <ChevronRight size={18} />
                   </button>
@@ -319,34 +319,34 @@ export default function ExpensesPage() {
                <div className="space-y-2">
                   <label className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] ml-1">Amount (TZS)</label>
                   <div className="relative">
-                     <input name="amount" type="number" required placeholder="0.00" className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-lg font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all" />
+                     <input name="amount" type="number" required placeholder="0.00" className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-lg font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all" />
                      <Wallet className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={18} />
                   </div>
                </div>
 
                <div className="space-y-2">
                   <label className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] ml-1">Category</label>
-                  <select name="category" required className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none cursor-pointer appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all">
+                  <select name="category" required className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none cursor-pointer appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all">
                      {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                   </select>
                </div>
 
                <div className="space-y-2">
                   <label className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] ml-1">Description</label>
-                  <input name="description" type="text" required placeholder="What was this for?" className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all" />
+                  <input name="description" type="text" required placeholder="What was this for?" className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all" />
                </div>
 
                <div className="space-y-2">
                   <label className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.2em] ml-1">Transaction Date</label>
                   <div className="relative">
-                     <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all" />
+                     <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full h-14 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all" />
                      <Calendar className="absolute right-5 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={18} />
                   </div>
                </div>
 
                <div className="pt-4 flex gap-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 h-14 border border-gray-100 text-[#9ca3af] rounded-[20px] font-bold text-[14px] hover:bg-gray-50 transition-all">Cancel</button>
-                  <button type="submit" disabled={isCreating} className="flex-[2] h-14 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-[20px] font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2">
+                  <button type="submit" disabled={isCreating} className="flex-[2] h-14 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-[20px] font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2">
                      {isCreating ? <Loader2 size={20} className="animate-spin" /> : 'Record Transaction'}
                   </button>
                </div>

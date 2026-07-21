@@ -43,7 +43,7 @@ function getBookingForCell(date: Date, bookings: CalendarBooking[]): CalendarBoo
 
 const STATUS_CONFIG: Record<CellStatus, { label: string; bg: string; border: string; text: string }> = {
   available: { label: 'Available', bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' },
-  occupied:  { label: 'Occupied',  bg: 'bg-[#1a2b4a]', border: 'border-[#1a2b4a]', text: 'text-white' },
+  occupied:  { label: 'Occupied',  bg: 'bg-[#26120c]', border: 'border-[#26120c]', text: 'text-white' },
   checkin:   { label: 'Check-in',  bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-600' },
   checkout:  { label: 'Check-out', bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-600' },
 }
@@ -103,7 +103,7 @@ export default function CalendarPage() {
               <ChevronLeft size={18} />
             </button>
             <div className="h-10 px-4 flex items-center gap-2 min-w-[160px] justify-center">
-              <CalendarIcon size={16} className="text-[#2563eb]" />
+              <CalendarIcon size={16} className="text-[#8b4530]" />
               <span className="text-[13px] font-bold text-[#111827]">{format(currentMonth, 'MMMM yyyy')}</span>
             </div>
             <button onClick={handleNextMonth} className="h-10 w-10 flex items-center justify-center hover:bg-gray-50 text-[#6b7280]">
@@ -160,7 +160,7 @@ export default function CalendarPage() {
                       )}>{format(day, 'EEE')}</p>
                       <p className={cn(
                         "text-[13px] font-bold mt-0.5",
-                        isSameDay(day, new Date()) ? "text-[#2563eb]" : isWeekend ? "text-gray-700" : "text-[#111827]"
+                        isSameDay(day, new Date()) ? "text-[#8b4530]" : isWeekend ? "text-gray-700" : "text-[#111827]"
                       )}>{format(day, 'd')}</p>
                     </div>
                   )
@@ -222,7 +222,7 @@ export default function CalendarPage() {
                               <div className={cn(
                                 "w-full h-full flex items-center justify-center rounded px-1 border",
                                 cfg.border,
-                                status === 'occupied' ? "bg-[#1a2b4a]" : cfg.bg
+                                status === 'occupied' ? "bg-[#26120c]" : cfg.bg
                               )}>
                                 <span className={cn("text-[10px] font-bold truncate max-w-full", cfg.text)}>
                                   {booking?.guestName.split(' ')[0] || cfg.label}
@@ -309,7 +309,7 @@ function BookingDetailModal({ booking, onClose }: { booking: CalendarBooking; on
           </div>
         </div>
         <div className="p-6 border-t border-gray-100 bg-gray-50/50">
-          <button onClick={onClose} className="w-full py-3 bg-[#2563eb] text-white rounded-xl text-[13px] font-bold hover:bg-[#1d4ed8] transition-all">
+          <button onClick={onClose} className="w-full py-3 bg-[#8b4530] text-white rounded-xl text-[13px] font-bold hover:bg-[#6e3323] transition-all">
             Funga
           </button>
         </div>

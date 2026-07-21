@@ -108,7 +108,7 @@ export default function PayrollPage() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+            className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
           >
             <Plus size={16} />
             Generate

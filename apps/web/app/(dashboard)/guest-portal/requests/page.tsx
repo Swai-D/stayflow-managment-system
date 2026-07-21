@@ -86,7 +86,7 @@ export default function GuestPortalRequestsPage() {
               onClick={() => setType(t)}
               className={cn(
                 'px-3 py-2 rounded-xl text-[12px] font-bold whitespace-nowrap transition-colors capitalize',
-                type === t ? 'bg-[#2563EB] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                type === t ? 'bg-[#8B4530] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               )}
             >
               {TYPE_ICONS[t]} {t}

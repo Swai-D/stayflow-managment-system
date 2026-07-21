@@ -122,7 +122,7 @@ export default function CompanyDetailPage() {
     <div className="space-y-4 font-sans text-left">
       <button
         onClick={() => router.push('/companies')}
-        className="flex items-center gap-1.5 text-[12px] font-medium text-[#6b7280] hover:text-[#2563eb]"
+        className="flex items-center gap-1.5 text-[12px] font-medium text-[#6b7280] hover:text-[#8b4530]"
       >
         <ArrowLeft size={14} /> Back to Companies
       </button>
@@ -273,7 +273,7 @@ export default function CompanyDetailPage() {
                   link.click()
                   toast.success('Download started')
                 }}
-                className="flex items-center gap-2 h-10 px-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-[12px] font-bold transition-all"
+                className="flex items-center gap-2 h-10 px-4 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl text-[12px] font-bold transition-all"
               >
                 <Download size={14} />
                 Download

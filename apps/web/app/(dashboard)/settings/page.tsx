@@ -81,7 +81,7 @@ function SettingsPageContent() {
              >
                <div className={cn(
                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
-                 activeTab === tab.id ? "bg-[#2563eb] text-white" : "bg-gray-100 text-[#9ca3af] group-hover:bg-blue-50 group-hover:text-blue-600"
+                 activeTab === tab.id ? "bg-[#8b4530] text-white" : "bg-gray-100 text-[#9ca3af] group-hover:bg-blue-50 group-hover:text-blue-600"
                )}>
                   <tab.icon size={20} />
                </div>
@@ -92,11 +92,11 @@ function SettingsPageContent() {
                   )}>{tab.label}</p>
                   <p className="text-[11px] text-[#9ca3af] font-medium truncate">{tab.desc}</p>
                </div>
-               {activeTab === tab.id && <ChevronRight className="ml-auto text-[#2563eb]" size={16} />}
+               {activeTab === tab.id && <ChevronRight className="ml-auto text-[#8b4530]" size={16} />}
              </button>
            ))}
 
-           <div className="mt-10 p-6 bg-gradient-to-br from-[#1a2b4a] to-[#2563eb] rounded-[24px] text-white shadow-xl relative overflow-hidden">
+           <div className="mt-10 p-6 bg-gradient-to-br from-[#26120c] to-[#8b4530] rounded-[24px] text-white shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 p-4 opacity-10">
                  <Shield size={60} />
               </div>
@@ -230,7 +230,7 @@ function ProfileSettingsView() {
 
         {/* Role (read-only) */}
         <div className="space-y-6 pt-6 border-t border-gray-50">
-          <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+          <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
             <Shield size={14} /> Role & Access
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -254,7 +254,7 @@ function ProfileSettingsView() {
 
         {/* Password change */}
         <div className="space-y-6 pt-6 border-t border-gray-50">
-          <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+          <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
             <Lock size={14} /> Change Password
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -307,7 +307,7 @@ function ProfileSettingsView() {
           <button
             type="submit"
             disabled={isPending}
-            className="h-14 px-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-[20px] font-bold text-[14px] flex items-center gap-2 transition-all shadow-xl shadow-blue-100 disabled:opacity-50"
+            className="h-14 px-10 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-[20px] font-bold text-[14px] flex items-center gap-2 transition-all shadow-xl shadow-blue-100 disabled:opacity-50"
           >
             {isPending ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
             Hifadhi Mabadiliko
@@ -358,7 +358,7 @@ function HotelSettingsView() {
 
         {/* Contact & Location */}
         <div className="space-y-6 pt-6 border-t border-gray-50">
-           <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+           <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
               <MapPin size={14} /> Contacts & Location
            </h3>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -374,7 +374,7 @@ function HotelSettingsView() {
                 name="address" 
                 defaultValue={hotel?.address}
                 rows={3}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all resize-none"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
               />
            </div>
         </div>
@@ -383,7 +383,7 @@ function HotelSettingsView() {
            <button 
              type="submit" 
              disabled={isPending}
-             className="h-14 px-10 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-[20px] font-bold text-[14px] flex items-center gap-2 transition-all shadow-xl shadow-blue-100 disabled:opacity-50"
+             className="h-14 px-10 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-[20px] font-bold text-[14px] flex items-center gap-2 transition-all shadow-xl shadow-blue-100 disabled:opacity-50"
            >
              {isPending ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
              Hifadhi Mabadiliko
@@ -465,7 +465,7 @@ function StaffManagementView() {
             onClick={() => setIsAdding(!isAdding)}
             className={cn(
               "h-10 px-4 rounded-xl text-[12px] font-bold flex items-center gap-2 transition-all shadow-sm border",
-              isAdding ? "bg-white text-gray-500 border-gray-200" : "bg-[#2563eb] text-white border-blue-500 shadow-blue-100"
+              isAdding ? "bg-white text-gray-500 border-gray-200" : "bg-[#8b4530] text-white border-blue-500 shadow-blue-100"
             )}
           >
             {isAdding ? <X size={16} /> : <Plus size={16} />}
@@ -502,7 +502,7 @@ function StaffManagementView() {
                   ))}
                </FormSelect>
             </div>
-            <button type="submit" disabled={isCreating} className="h-12 bg-[#2563eb] text-white rounded-2xl font-bold text-[13px] hover:bg-[#1d4ed8] shadow-md shadow-blue-100">
+            <button type="submit" disabled={isCreating} className="h-12 bg-[#8b4530] text-white rounded-2xl font-bold text-[13px] hover:bg-[#6e3323] shadow-md shadow-blue-100">
                {isCreating ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Send Invite'}
             </button>
           </form>
@@ -524,7 +524,7 @@ function StaffManagementView() {
               <tr key={u.id} className="group hover:bg-gray-50/50 transition-all">
                 <td className="px-8 py-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-[13px] font-bold text-[#2563eb]">
+                    <div className="w-10 h-10 rounded-2xl bg-white border border-gray-100 shadow-sm flex items-center justify-center text-[13px] font-bold text-[#8b4530]">
                       {u.fullName.split(' ').map((n:any)=>n[0]).join('')}
                     </div>
                     <div>
@@ -581,7 +581,7 @@ function FinancialSettingsView() {
          </div>
 
          <div className="space-y-4 pt-6 border-t border-gray-50">
-            <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
                <Shield size={14} /> EFD & Compliance
             </h3>
             <div className="bg-amber-50 rounded-2xl p-5 border border-amber-100 flex items-start gap-4">
@@ -616,12 +616,12 @@ function BookingPolicyView() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
          <div className="space-y-6">
-            <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em]">Check-in Rules</h3>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em]">Check-in Rules</h3>
             <FormInput label="Standard Check-in Time" defaultValue="14:00" icon={Clock} />
             <FormInput label="Standard Check-out Time" defaultValue="11:00" icon={Clock} />
          </div>
          <div className="space-y-6">
-            <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em]">Cancellation</h3>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em]">Cancellation</h3>
             <FormSelect label="Grace Period (Hours)" defaultValue="24">
                <option value="12">12 Hours before</option>
                <option value="24">24 Hours before</option>
@@ -670,14 +670,14 @@ function AuditLogView() {
                 </td>
                 <td className="px-8 py-5">
                   <div className="flex items-center gap-2">
-                     <div className="w-7 h-7 rounded-full bg-blue-50 text-[10px] font-bold text-[#2563eb] flex items-center justify-center border border-blue-100">
+                     <div className="w-7 h-7 rounded-full bg-blue-50 text-[10px] font-bold text-[#8b4530] flex items-center justify-center border border-blue-100">
                         {(log.user?.fullName || 'SY')[0]}
                      </div>
                      <span className="text-[13px] font-bold text-gray-700">{log.user?.fullName || 'Automated System'}</span>
                   </div>
                 </td>
                 <td className="px-8 py-5">
-                   <span className="font-mono text-[11px] font-bold text-[#2563eb] px-2 py-0.5 bg-blue-50 rounded-md border border-blue-100 uppercase tracking-tighter">
+                   <span className="font-mono text-[11px] font-bold text-[#8b4530] px-2 py-0.5 bg-blue-50 rounded-md border border-blue-100 uppercase tracking-tighter">
                       {log.action}
                    </span>
                 </td>
@@ -707,7 +707,7 @@ function FormInput({ label, icon: Icon, className, ...props }: any) {
          <input
            {...props}
            className={cn(
-             "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all placeholder:text-[#9ca3af]/60",
+             "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60",
              Icon && "pl-11",
              className
            )}
@@ -724,7 +724,7 @@ function FormSelect({ label, children, ...props }: any) {
       <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">{label}</label>
       <select
         {...props}
-        className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none cursor-pointer appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+        className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-[#111827] outline-none cursor-pointer appearance-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
       >
         {children}
       </select>

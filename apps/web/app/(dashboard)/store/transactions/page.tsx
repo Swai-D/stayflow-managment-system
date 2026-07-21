@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 
 const TYPE_FILTERS = ['All', 'STOCK_IN', 'STOCK_OUT', 'ADJUSTMENT', 'WASTAGE']
-const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#8B4530] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
 // ── New Transaction Modal ────────────────────────────────────────────────────
 function NewTransactionModal({ onClose }: { onClose: () => void }) {
@@ -100,7 +100,7 @@ function NewTransactionModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={handleRecord} disabled={!itemId || !qty || ((type === 'ADJUSTMENT' || type === 'WASTAGE') && !notes.trim()) || createTx.isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createTx.isPending ? 'Recording...' : 'Record Transaction'}
             </button>
           </div>
@@ -170,7 +170,7 @@ export default function TransactionsPage() {
       <div className="grid grid-cols-3 gap-4">
         {[
           { label:'Stock In Value (this month)',  value: formatTZS(totalIn),   color:'text-green-600', bg:'bg-green-50' },
-          { label:'Stock Out Transactions',       value: totalOut,              color:'text-[#2563EB]', bg:'bg-blue-50'  },
+          { label:'Stock Out Transactions',       value: totalOut,              color:'text-[#8B4530]', bg:'bg-blue-50'  },
           { label:'Wastage Value (this month)',   value: formatTZS(wastage),    color:'text-red-500',   bg:'bg-red-50'   },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.07)]">
@@ -204,7 +204,7 @@ export default function TransactionsPage() {
               className="text-[12px] outline-none text-gray-700 placeholder:text-gray-400 bg-transparent flex-1"/>
           </div>
           <button onClick={() => setShowModal(true)}
-            className="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors whitespace-nowrap">
+            className="flex items-center gap-1.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors whitespace-nowrap">
             <Plus size={13}/> New Transaction
           </button>
         </div>

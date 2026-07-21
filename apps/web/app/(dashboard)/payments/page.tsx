@@ -42,7 +42,7 @@ const STATUS_LABELS: Record<string, string> = {
   partial: 'Partial'
 }
 
-const CHART_COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
+const CHART_COLORS = ['#8b4530', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
 
 export default function PaymentsPage() {
   const printRef = useRef<HTMLDivElement>(null)
@@ -232,8 +232,8 @@ export default function PaymentsPage() {
                 <AreaChart data={trendData}>
                   <defs>
                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#8b4530" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#8b4530" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -243,7 +243,7 @@ export default function PaymentsPage() {
                     formatter={(v: any) => [formatTZS(v), 'Amount']}
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
-                  <Area type="monotone" dataKey="amount" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" />
+                  <Area type="monotone" dataKey="amount" stroke="#8b4530" strokeWidth={2} fillOpacity={1} fill="url(#colorAmount)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -321,21 +321,21 @@ export default function PaymentsPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
-              className="bg-subtle/50 border border-border rounded-xl px-3 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#2563eb]/50"
+              className="bg-subtle/50 border border-border rounded-xl px-3 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#8b4530]/50"
             />
             <span className="text-gray-400">→</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
-              className="bg-subtle/50 border border-border rounded-xl px-3 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#2563eb]/50"
+              className="bg-subtle/50 border border-border rounded-xl px-3 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#8b4530]/50"
             />
           </div>
         )}
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[200px] focus-within:border-[#2563eb]/50 transition-all">
+        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[200px] focus-within:border-[#8b4530]/50 transition-all">
           <Search size={14} className="text-[#9ca3af]" />
           <input
             value={search}
@@ -348,7 +348,7 @@ export default function PaymentsPage() {
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-          className="bg-subtle/50 border border-border rounded-xl px-4 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#2563eb]/50"
+          className="bg-subtle/50 border border-border rounded-xl px-4 py-2 text-[12px] font-medium text-[#6b7280] outline-none focus:border-[#8b4530]/50"
         >
           <option value="">All Status</option>
           <option value="completed">Completed</option>
@@ -429,7 +429,7 @@ export default function PaymentsPage() {
             <button
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all"
             >
               <ChevronLeft size={16} />
             </button>
@@ -439,7 +439,7 @@ export default function PaymentsPage() {
             <button
               disabled={page >= meta.totalPages}
               onClick={() => setPage(p => p + 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all"
             >
               <ChevronRight size={16} />
             </button>

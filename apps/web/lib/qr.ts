@@ -11,7 +11,7 @@ export async function generateRoomQR(qrToken?: string | null) {
       margin: 1,
       width: 120,
       color: {
-        dark: '#1a2b4a',
+        dark: '#26120c',
         light: '#ffffff'
       }
     })

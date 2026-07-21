@@ -73,7 +73,7 @@ export default function GuestPortalPage() {
                 <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', card.bg)}>
                   <Icon size={20} className={card.color} />
                 </div>
-                <ArrowRight size={16} className="text-gray-300 group-hover:text-[#2563EB] transition-colors" />
+                <ArrowRight size={16} className="text-gray-300 group-hover:text-[#8B4530] transition-colors" />
               </div>
               <p className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-wider">{card.label}</p>
               <p className="text-[26px] font-bold text-[#111827] tracking-tight mt-1">
@@ -86,8 +86,8 @@ export default function GuestPortalPage() {
 
       <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center">
-            <Smartphone size={20} className="text-[#2563EB]" />
+          <div className="w-10 h-10 rounded-xl bg-[#FBF1EA] flex items-center justify-center">
+            <Smartphone size={20} className="text-[#8B4530]" />
           </div>
           <div>
             <h2 className="text-[16px] font-bold text-[#111827]">How it works</h2>
@@ -96,13 +96,13 @@ export default function GuestPortalPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[13px] text-gray-600">
           <div className="p-4 bg-gray-50 rounded-xl">
-            <span className="font-bold text-[#2563EB]">1.</span> Guest checks in → Room QR code is activated and linked to their booking.
+            <span className="font-bold text-[#8B4530]">1.</span> Guest checks in → Room QR code is activated and linked to their booking.
           </div>
           <div className="p-4 bg-gray-50 rounded-xl">
-            <span className="font-bold text-[#2563EB]">2.</span> Guest scans QR in the room → Auto-login to the guest portal dashboard.
+            <span className="font-bold text-[#8B4530]">2.</span> Guest scans QR in the room → Auto-login to the guest portal dashboard.
           </div>
           <div className="p-4 bg-gray-50 rounded-xl">
-            <span className="font-bold text-[#2563EB]">3.</span> Guest orders & requests appear here and are posted to the room folio.
+            <span className="font-bold text-[#8B4530]">3.</span> Guest orders & requests appear here and are posted to the room folio.
           </div>
         </div>
       </div>

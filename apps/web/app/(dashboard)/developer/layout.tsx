@@ -19,7 +19,7 @@ export default function DeveloperLayout({ children }: { children: React.ReactNod
     <div className="h-full flex flex-col">
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-1">
-          <Code2 size={20} className="text-[#2563EB]"/>
+          <Code2 size={20} className="text-[#8B4530]"/>
           <h1 className="text-[18px] font-bold text-gray-900">Developer Portal</h1>
         </div>
         <p className="text-[12px] text-gray-500">
@@ -39,7 +39,7 @@ export default function DeveloperLayout({ children }: { children: React.ReactNod
                 className={cn(
                   'flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-semibold border-b-2 transition-colors',
                   isActive
-                    ? 'text-[#2563EB] border-[#2563EB]'
+                    ? 'text-[#8B4530] border-[#8B4530]'
                     : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
                 )}
               >

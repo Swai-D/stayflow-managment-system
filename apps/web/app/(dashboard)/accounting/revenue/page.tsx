@@ -74,7 +74,7 @@ export default function RevenuePage() {
               <option value={30}>Last 30 Days</option>
               <option value={90}>Last 90 Days</option>
            </select>
-           <button className="h-10 px-4 bg-[#2563eb] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-100">
+           <button className="h-10 px-4 bg-[#8b4530] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#6e3323] transition-all shadow-lg shadow-blue-100">
               <Download size={16} /> Export Statement
            </button>
         </div>
@@ -84,7 +84,7 @@ export default function RevenuePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
          
          {/* Net Profit Card (Main Hero) */}
-         <div className="lg:col-span-4 bg-[#1a2b4a] rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl flex flex-col justify-between">
+         <div className="lg:col-span-4 bg-[#26120c] rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl flex flex-col justify-between">
             <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-3xl" />
             <div className="relative z-10">
                <div className="flex items-center gap-3 mb-8">
@@ -124,7 +124,7 @@ export default function RevenuePage() {
          {/* Business Matrix (KPI Grid) */}
          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { label: 'ADR (Avg Daily Rate)', value: formatTZS(fin?.adr ?? 0), sub: 'Mapato kwa kila chumba kilichouzwa', icon: Banknote, color: 'text-[#2563eb]', bg: 'bg-blue-50' },
+              { label: 'ADR (Avg Daily Rate)', value: formatTZS(fin?.adr ?? 0), sub: 'Mapato kwa kila chumba kilichouzwa', icon: Banknote, color: 'text-[#8b4530]', bg: 'bg-blue-50' },
               { label: 'RevPAR', value: formatTZS(fin?.revpar ?? 0), sub: 'Mapato kwa jumla ya vyumba vyote', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
               { label: 'Expense Ratio', value: `${(fin?.expenseRatio ?? 0).toFixed(1)}%`, sub: 'Asilimia ya pesa inayopotea kwenye matumizi', icon: TrendingDown, color: 'text-red-500', bg: 'bg-red-50' },
               { label: 'Rooms Sold', value: `${fin?.totalNightsSold ?? 0} Nights`, sub: 'Idadi ya vyumba vilivyouzwa katika kipindi hiki', icon: Briefcase, color: 'text-emerald-500', bg: 'bg-emerald-50' },
@@ -171,7 +171,7 @@ export default function RevenuePage() {
                <button
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="h-10 px-4 bg-[#2563eb] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#1d4ed8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+                  className="h-10 px-4 bg-[#8b4530] text-white rounded-xl text-[12px] font-bold flex items-center gap-2 hover:bg-[#6e3323] transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
                >
                   {isRefreshing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                   {isRefreshing ? 'Inachambua...' : 'Pata Ushauri Mpya'}
@@ -294,7 +294,7 @@ export default function RevenuePage() {
             </div>
             <div className="flex items-center gap-6">
                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#2563eb]" />
+                  <div className="w-3 h-3 rounded-full bg-[#8b4530]" />
                   <span className="text-[11px] font-bold text-[#6b7280] uppercase">Daily Revenue</span>
                </div>
             </div>
@@ -305,8 +305,8 @@ export default function RevenuePage() {
                <AreaChart data={revenueData || []}>
                   <defs>
                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8b4530" stopOpacity={0.15}/>
+                        <stop offset="95%" stopColor="#8b4530" stopOpacity={0}/>
                      </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -331,7 +331,7 @@ export default function RevenuePage() {
                   <Area 
                      type="monotone" 
                      dataKey="total" 
-                     stroke="#2563eb" 
+                     stroke="#8b4530" 
                      strokeWidth={4} 
                      fillOpacity={1} 
                      fill="url(#colorRev)" 

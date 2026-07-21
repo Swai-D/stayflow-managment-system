@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 
-const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#8B4530] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
 const STATUS_FLOW: POStatus[] = ['PENDING','RECEIVED','CLOSED']
 
@@ -71,14 +71,14 @@ function PODetailModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void
                   )}>
                     <div className={cn(
                       'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2',
-                      isCurrent ? 'bg-[#2563EB] border-[#2563EB] text-white'
+                      isCurrent ? 'bg-[#8B4530] border-[#8B4530] text-white'
                         : isPast ? 'bg-green-500 border-green-500 text-white'
                         : 'bg-white border-gray-200 text-gray-300'
                     )}>
                       {isPast ? <CheckCircle size={13}/> : i + 1}
                     </div>
                     <span className={cn('text-[9px] font-semibold whitespace-nowrap',
-                      isCurrent ? 'text-[#2563EB]' : isPast ? 'text-green-600' : 'text-gray-300')}>
+                      isCurrent ? 'text-[#8B4530]' : isPast ? 'text-green-600' : 'text-gray-300')}>
                       {sCfg.label.split(' ')[0]}
                     </span>
                   </div>
@@ -162,7 +162,7 @@ function PODetailModal({ po, onClose }: { po: PurchaseOrder; onClose: () => void
             </button>
             {next && (
               <button onClick={handleAction} disabled={receivePO.isPending || updateStatus.isPending}
-                className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+                className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
                 {receivePO.isPending || updateStatus.isPending ? 'Processing...' : next.label}
               </button>
             )}
@@ -244,7 +244,7 @@ function NewPOModal({ onClose }: { onClose: () => void }) {
             <div className="flex items-center justify-between mb-3">
               <label className="text-[11.5px] font-semibold text-gray-700">Order Items</label>
               <button onClick={addItem}
-                className="flex items-center gap-1 text-[11px] text-[#2563EB] font-semibold hover:underline">
+                className="flex items-center gap-1 text-[11px] text-[#8B4530] font-semibold hover:underline">
                 <Plus size={11}/> Add item
               </button>
             </div>
@@ -308,7 +308,7 @@ function NewPOModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-3">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={handleCreate} disabled={!supplierId || items.every(i => !i.itemId) || createPO.isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createPO.isPending ? 'Creating...' : 'Create Purchase Order'}
             </button>
           </div>
@@ -369,7 +369,7 @@ export default function PurchaseOrdersPage() {
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label:'Active Orders',     value: totalPending,           color:'text-[#2563EB]' },
+          { label:'Active Orders',     value: totalPending,           color:'text-[#8B4530]' },
           { label:'Total Value (Open)',value: formatTZS(totalValue),  color:'text-gray-900'  },
           { label:'Received This Month',value: totalReceived,         color:'text-green-600' },
         ].map(s => (
@@ -405,7 +405,7 @@ export default function PurchaseOrdersPage() {
                 className="text-[12px] outline-none text-gray-700 placeholder:text-gray-400 bg-transparent flex-1"/>
             </div>
             <button onClick={() => setShowNewPO(true)}
-              className="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors whitespace-nowrap">
+              className="flex items-center gap-1.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors whitespace-nowrap">
               <Plus size={13}/> New PO
             </button>
           </div>
@@ -457,7 +457,7 @@ export default function PurchaseOrdersPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <button onClick={e => { e.stopPropagation(); setSelectedPO(po) }}
-                        className="flex items-center gap-1 text-[11px] text-[#2563EB] font-semibold bg-[#EFF6FF] hover:bg-[#DBEAFE] px-2.5 py-1.5 rounded-lg transition-colors">
+                        className="flex items-center gap-1 text-[11px] text-[#8B4530] font-semibold bg-[#FBF1EA] hover:bg-[#F5DFCE] px-2.5 py-1.5 rounded-lg transition-colors">
                         <Eye size={11}/> View
                       </button>
                     </td>

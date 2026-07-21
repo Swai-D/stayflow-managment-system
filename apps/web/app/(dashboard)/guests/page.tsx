@@ -19,7 +19,7 @@ type SortKey = 'fullName' | 'checkIn' | 'checkOut' | 'status' | 'nationality' | 
 type SortDir = 'asc' | 'desc'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const CHART_COLORS = ['#2563eb', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#64748b']
+const CHART_COLORS = ['#8b4530', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#64748b']
 
 export default function GuestsPage() {
   const [search, setSearch] = useState('')
@@ -243,10 +243,10 @@ export default function GuestsPage() {
   const SortHeader = ({ label, sortKeyValue }: { label: string; sortKeyValue: SortKey }) => (
     <button
       onClick={() => toggleSort(sortKeyValue)}
-      className="flex items-center gap-1 hover:text-[#2563EB] transition-colors"
+      className="flex items-center gap-1 hover:text-[#8B4530] transition-colors"
     >
       {label}
-      <ArrowUpDown size={11} className={cn(sortKey === sortKeyValue ? 'text-[#2563EB]' : 'text-[#d1d5db]')} />
+      <ArrowUpDown size={11} className={cn(sortKey === sortKeyValue ? 'text-[#8B4530]' : 'text-[#d1d5db]')} />
     </button>
   )
 
@@ -255,7 +255,7 @@ export default function GuestsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827]">Guests Management</h1>
+          <h1 className="text-[22px] font-bold text-[#111827]">🧑‍🤝‍🧑 Guests Management</h1>
           <p className="text-[12px] text-[#9ca3af] font-medium mt-0.5">
             Complete directory of every guest who has stayed at Buffalo Hotel
           </p>
@@ -265,13 +265,13 @@ export default function GuestsPage() {
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] font-semibold text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827] transition-colors shadow-sm"
           >
-            <Printer size={14} /> Print List
+            <Printer size={14} /> 🖨️ Print List
           </button>
           <button
             onClick={() => { setSearch(''); setFilterStatus('all'); setFilterType('all'); setSortKey('checkIn'); setSortDir('desc'); setPage(1); setPageSize(10) }}
             className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] font-semibold text-[#6b7280] hover:bg-[#f9fafb] hover:text-[#111827] transition-colors shadow-sm"
           >
-            <RotateCcw size={14} /> Reset
+            <RotateCcw size={14} /> 🔄 Reset
           </button>
         </div>
       </div>
@@ -283,7 +283,7 @@ export default function GuestsPage() {
           value={stats?.totalRegisteredGuests?.toLocaleString() || 0}
           subtext="All-time stays"
           icon={Users}
-          iconBg="bg-[#2563eb]"
+          iconBg="bg-[#8b4530]"
         />
         <MetricCard
           label="Active Guests Today"
@@ -312,7 +312,7 @@ export default function GuestsPage() {
           value={stats?.totalPrimaryGuests?.toLocaleString() || 0}
           subtext="Unique bookers"
           icon={User}
-          iconBg="bg-[#1a2b4a]"
+          iconBg="bg-[#26120c]"
         />
       </div>
 
@@ -328,15 +328,15 @@ export default function GuestsPage() {
                 <AreaChart data={monthlyChartData}>
                   <defs>
                     <linearGradient id="guestGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#8b4530" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#8b4530" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <ReTooltip formatter={(v: any) => [`${v} guests`, '']} contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }} />
-                  <Area type="monotone" dataKey="guests" stroke="#2563eb" strokeWidth={2} fill="url(#guestGradient)" />
+                  <Area type="monotone" dataKey="guests" stroke="#8b4530" strokeWidth={2} fill="url(#guestGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -379,7 +379,7 @@ export default function GuestsPage() {
                   <YAxis dataKey="name" type="category" width={60} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                   <ReTooltip />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24}>
-                    {ageChartData.map((_d: any, i: number) => <Cell key={i} fill={i === 0 ? '#2563eb' : '#f59e0b'} />)}
+                    {ageChartData.map((_d: any, i: number) => <Cell key={i} fill={i === 0 ? '#8b4530' : '#f59e0b'} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -396,7 +396,7 @@ export default function GuestsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={typeChartData} cx="50%" cy="45%" outerRadius={65} paddingAngle={3} dataKey="value">
-                    {typeChartData.map((_d: any, i: number) => <Cell key={i} fill={i === 0 ? '#2563eb' : '#f59e0b'} />)}
+                    {typeChartData.map((_d: any, i: number) => <Cell key={i} fill={i === 0 ? '#8b4530' : '#f59e0b'} />)}
                   </Pie>
                   <ReTooltip />
                   <Legend verticalAlign="bottom" height={40} iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} />
@@ -416,14 +416,14 @@ export default function GuestsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, phone, email, booking ref or room..."
-              className="w-full pl-9 pr-4 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#2563EB] focus:ring-[3px] focus:ring-[#dbeafe] transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#8B4530] focus:ring-[3px] focus:ring-[#f5dfce] transition-all"
             />
           </div>
           <div className="flex items-center gap-2">
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] text-[#6b7280] outline-none focus:border-[#2563EB]"
+              className="px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] text-[#6b7280] outline-none focus:border-[#8B4530]"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -435,7 +435,7 @@ export default function GuestsPage() {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] text-[#6b7280] outline-none focus:border-[#2563EB]"
+              className="px-3 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[12px] text-[#6b7280] outline-none focus:border-[#8B4530]"
             >
               <option value="all">All Types</option>
               <option value="adult">Adults</option>
@@ -449,7 +449,7 @@ export default function GuestsPage() {
       <div ref={tableRef} className="bg-white rounded-xl shadow-card overflow-hidden">
         <div className="p-4 border-b border-[#f3f4f6] flex items-center justify-between">
           <h3 className="text-[14px] font-bold text-[#111827]">Guest Directory</h3>
-          <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-1 rounded-full">
+          <span className="text-[11px] font-bold text-[#8B4530] bg-[#FBF1EA] px-2.5 py-1 rounded-full">
             {filteredGuests.length} Total
           </span>
         </div>
@@ -512,14 +512,14 @@ export default function GuestsPage() {
                         <div className="flex items-center gap-3">
                           <div className={cn(
                             'w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0',
-                            guest.ageCategory === 'child' ? 'bg-[#f59e0b]' : 'bg-[#2563EB]'
+                            guest.ageCategory === 'child' ? 'bg-[#f59e0b]' : 'bg-[#8B4530]'
                           )}>
                             {guest.fullName?.charAt(0) || '?'}
                           </div>
                           <div>
                             <p className="font-semibold text-[#111827]">{guest.fullName}</p>
                             {guest.isPrimary && (
-                              <span className="text-[9px] font-bold text-[#2563EB] bg-[#EFF6FF] px-1.5 py-0.5 rounded">Primary</span>
+                              <span className="text-[9px] font-bold text-[#8B4530] bg-[#FBF1EA] px-1.5 py-0.5 rounded">Primary</span>
                             )}
                           </div>
                         </div>
@@ -532,7 +532,7 @@ export default function GuestsPage() {
                       <td className="p-3">
                         <span className={cn(
                           'text-[10px] font-bold px-2 py-0.5 rounded-full uppercase',
-                          guest.ageCategory === 'child' ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#dbeafe] text-[#2563eb]'
+                          guest.ageCategory === 'child' ? 'bg-[#fef3c7] text-[#92400e]' : 'bg-[#f5dfce] text-[#8b4530]'
                         )}>
                           {guest.ageCategory || 'adult'}
                         </span>
@@ -565,7 +565,7 @@ export default function GuestsPage() {
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="px-2 py-1 bg-white border border-[#e5e7eb] rounded text-[11px] outline-none focus:border-[#2563EB]"
+              className="px-2 py-1 bg-white border border-[#e5e7eb] rounded text-[11px] outline-none focus:border-[#8B4530]"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -604,7 +604,7 @@ export default function GuestsPage() {
                   className={cn(
                     'min-w-[28px] h-7 px-2 rounded-lg text-[11px] font-semibold transition-colors',
                     page === pageNum
-                      ? 'bg-[#2563EB] text-white'
+                      ? 'bg-[#8B4530] text-white'
                       : 'bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f3f4f6] hover:text-[#111827]'
                   )}
                 >
@@ -649,7 +649,7 @@ function GuestDetailContent({ guest, onClose }: { guest: any; onClose: () => voi
     <>
       <div className="p-6 border-b border-[#f3f4f6] flex items-start justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-16 h-16 rounded-2xl bg-[#8B4530] flex items-center justify-center text-white text-2xl font-bold">
             {guest.fullName?.charAt(0)}
           </div>
           <div>
@@ -701,7 +701,7 @@ function RegisteredGuestDetailContent({ guest, onClose }: { guest: any; onClose:
         <div className="flex items-center gap-4">
           <div className={cn(
             'w-16 h-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold',
-            guest.ageCategory === 'child' ? 'bg-[#f59e0b]' : 'bg-[#2563EB]'
+            guest.ageCategory === 'child' ? 'bg-[#f59e0b]' : 'bg-[#8B4530]'
           )}>
             {guest.fullName?.charAt(0)}
           </div>

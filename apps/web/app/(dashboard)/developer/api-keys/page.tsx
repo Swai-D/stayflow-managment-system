@@ -58,7 +58,7 @@ export default function ApiKeysPage() {
       {/* Create Key Card */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-[14px] font-bold text-gray-900 mb-3 flex items-center gap-2">
-          <Plus size={15} className="text-[#2563EB]"/> Create API Key
+          <Plus size={15} className="text-[#8B4530]"/> Create API Key
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
@@ -91,7 +91,7 @@ export default function ApiKeysPage() {
                 className={cn(
                   'px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors',
                   selectedScopes.includes(scope)
-                    ? 'bg-[#EFF6FF] border-[#2563EB] text-[#2563EB]'
+                    ? 'bg-[#FBF1EA] border-[#8B4530] text-[#8B4530]'
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 )}
               >
@@ -104,7 +104,7 @@ export default function ApiKeysPage() {
           onClick={handleCreate}
           disabled={create.isPending || !name.trim() || selectedScopes.length === 0}
           size="sm"
-          className="bg-[#2563EB] hover:bg-[#1D4ED8]"
+          className="bg-[#8B4530] hover:bg-[#6E3323]"
         >
           {create.isPending ? <Loader2 size={14} className="animate-spin"/> : <KeyRound size={14}/>}
           Generate Key
@@ -122,7 +122,7 @@ export default function ApiKeysPage() {
           </div>
           <div className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg px-3 py-2">
             <code className="text-[12px] font-mono text-gray-800 flex-1 break-all">{newKey}</code>
-            <button onClick={() => copy(newKey)} className="text-[#2563EB] hover:text-[#1D4ED8]">
+            <button onClick={() => copy(newKey)} className="text-[#8B4530] hover:text-[#6E3323]">
               <Copy size={14}/>
             </button>
           </div>

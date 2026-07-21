@@ -35,7 +35,7 @@ function StatCard({ icon, label, value, sub, subColor='text-gray-400', bg='bg-gr
         {sub && <span className={cn('text-[11px] font-semibold mb-0.5', subColor)}>{sub}</span>}
       </div>
       {href && (
-        <Link href={href} className="flex items-center gap-1 text-[11px] text-[#2563EB] font-semibold mt-3 hover:underline">
+        <Link href={href} className="flex items-center gap-1 text-[11px] text-[#8B4530] font-semibold mt-3 hover:underline">
           View details <ChevronRight size={11}/>
         </Link>
       )}
@@ -78,7 +78,7 @@ export default function StoreDashboardPage() {
             <RefreshCw size={13}/> Refresh
           </button>
           <Link href="/store/purchase-orders">
-            <button className="flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
+            <button className="flex items-center gap-1.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
               <ShoppingCart size={13}/> New Purchase Order
             </button>
           </Link>
@@ -109,7 +109,7 @@ export default function StoreDashboardPage() {
 
       {/* 4 Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<Package size={16}/>}      label="Total Items"      value={stats.totalItems}                   sub="All categories"      bg="bg-blue-50"   iconColor="text-[#2563EB]" href="/store/items"/>
+        <StatCard icon={<Package size={16}/>}      label="Total Items"      value={stats.totalItems}                   sub="All categories"      bg="bg-blue-50"   iconColor="text-[#8B4530]" href="/store/items"/>
         <StatCard icon={<AlertTriangle size={16}/>} label="Low Stock Alerts" value={stats.lowStockCount}                sub={`${stats.outOfStockCount} out of stock`} subColor={stats.outOfStockCount > 0 ? 'text-red-500' : 'text-gray-400'} bg="bg-amber-50" iconColor="text-amber-600" href="/store/items" alert={stats.lowStockCount > 0}/>
         <StatCard icon={<TrendingUp size={16}/>}    label="Monthly Spend"    value={formatTZSShort(stats.monthlySpend)} sub="Stock purchases this month"   subColor="text-gray-400"  bg="bg-green-50"  iconColor="text-green-600"  href="/store/transactions"/>
         <StatCard icon={<ShoppingCart size={16}/>}  label="Pending Orders"   value={stats.pendingPOs}                   sub="Awaiting delivery"   bg="bg-indigo-50" iconColor="text-indigo-600" href="/store/purchase-orders" alert={stats.pendingPOs > 0}/>
@@ -123,7 +123,7 @@ export default function StoreDashboardPage() {
               <h2 className="text-[14px] font-bold text-gray-900">Top Used Items</h2>
               <p className="text-[11px] text-gray-400">Most issued this month</p>
             </div>
-            <Link href="/store/transactions" className="text-[11px] text-[#2563EB] font-semibold hover:underline flex items-center gap-1">
+            <Link href="/store/transactions" className="text-[11px] text-[#8B4530] font-semibold hover:underline flex items-center gap-1">
               View all <ChevronRight size={11}/>
             </Link>
           </div>
@@ -139,11 +139,11 @@ export default function StoreDashboardPage() {
                 <Tooltip cursor={{fill:'#f8fafc'}} content={({active,payload}) => active && payload?.length ? (
                   <div className="bg-white border border-gray-100 rounded-xl px-3 py-2 shadow-md text-[12px]">
                     <p className="font-semibold text-gray-900">{payload[0].payload.name}</p>
-                    <p className="text-[#2563EB] font-bold">{payload[0].value} units</p>
+                    <p className="text-[#8B4530] font-bold">{payload[0].value} units</p>
                   </div>) : null}
                 />
                 <Bar dataKey="used" radius={[0,5,5,0]} barSize={16}>
-                  {stats.topUsedItems.map((_: any, i: number) => <Cell key={i} fill={i===0?'#2563EB':'#DBEAFE'}/>)}
+                  {stats.topUsedItems.map((_: any, i: number) => <Cell key={i} fill={i===0?'#8B4530':'#F5DFCE'}/>)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -170,7 +170,7 @@ export default function StoreDashboardPage() {
                     {payload.map((p:any) => <p key={p.dataKey} style={{color:p.color}} className="font-bold">{p.dataKey==='fb'?'F&B':'Hotel'}: {formatTZSShort(p.value)}</p>)}
                   </div>) : null}
                 />
-                <Line type="monotone" dataKey="fb"    stroke="#2563EB" strokeWidth={2} dot={{r:3,fill:'#2563EB'}}/>
+                <Line type="monotone" dataKey="fb"    stroke="#8B4530" strokeWidth={2} dot={{r:3,fill:'#8B4530'}}/>
                 <Line type="monotone" dataKey="hotel" stroke="#c4b5fd" strokeWidth={2} dot={{r:3,fill:'#c4b5fd'}}/>
                 <Legend iconType="circle" iconSize={7} formatter={(v) => <span style={{fontSize:10,color:'#6b7280',fontWeight:600}}>{v==='fb'?'F&B':'Hotel'}</span>}/>
               </LineChart>
@@ -188,7 +188,7 @@ export default function StoreDashboardPage() {
               <h2 className="text-[14px] font-bold text-gray-900">Low Stock</h2>
               <p className="text-[11px] text-gray-400">Items needing reorder</p>
             </div>
-            <Link href="/store/items" className="text-[11px] text-[#2563EB] font-semibold hover:underline flex items-center gap-1">
+            <Link href="/store/items" className="text-[11px] text-[#8B4530] font-semibold hover:underline flex items-center gap-1">
               View all <ChevronRight size={11}/>
             </Link>
           </div>
@@ -222,7 +222,7 @@ export default function StoreDashboardPage() {
           </div>
           <div className="px-5 py-3 border-t border-gray-100">
             <Link href="/store/purchase-orders">
-              <button className="w-full h-9 bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#2563EB] text-[12px] font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5">
+              <button className="w-full h-9 bg-[#FBF1EA] hover:bg-[#F5DFCE] text-[#8B4530] text-[12px] font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5">
                 <ShoppingCart size={13}/> Auto-Generate Purchase Order
               </button>
             </Link>
@@ -235,7 +235,7 @@ export default function StoreDashboardPage() {
               <h2 className="text-[14px] font-bold text-gray-900">Recent Transactions</h2>
               <p className="text-[11px] text-gray-400">Latest stock movements</p>
             </div>
-            <Link href="/store/transactions" className="text-[11px] text-[#2563EB] font-semibold hover:underline flex items-center gap-1">
+            <Link href="/store/transactions" className="text-[11px] text-[#8B4530] font-semibold hover:underline flex items-center gap-1">
               View all <ChevronRight size={11}/>
             </Link>
           </div>

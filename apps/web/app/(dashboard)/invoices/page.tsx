@@ -115,7 +115,7 @@ export default function InvoicesPage() {
             className={cn(
               'px-[14px] py-[7px] rounded-xl text-[12px] font-medium flex items-center gap-2 border border-transparent transition-all',
               activeTab === tab.id
-                ? 'bg-[#eff6ff] text-[#2563eb] border-[#dbeafe]'
+                ? 'bg-[#fbf1ea] text-[#8b4530] border-[#f5dfce]'
                 : 'text-[#9ca3af] hover:bg-subtle'
             )}
           >
@@ -126,7 +126,7 @@ export default function InvoicesPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-card p-4 border border-border/20">
-        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#2563eb]/50 transition-all">
+        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#8b4530]/50 transition-all">
           <Search size={14} className="text-[#9ca3af]" />
           <input
             value={search}
@@ -237,7 +237,7 @@ export default function InvoicesPage() {
             <button
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all"
             >
               <ChevronLeft size={16} />
             </button>
@@ -247,7 +247,7 @@ export default function InvoicesPage() {
             <button
               disabled={page >= meta.totalPages}
               onClick={() => setPage(p => p + 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all"
             >
               <ChevronRight size={16} />
             </button>
@@ -288,7 +288,7 @@ export default function InvoicesPage() {
                   link.click()
                   toast.success('Download started')
                 }}
-                className="flex items-center gap-2 h-10 px-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-[12px] font-bold transition-all"
+                className="flex items-center gap-2 h-10 px-4 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl text-[12px] font-bold transition-all"
               >
                 <Download size={14} />
                 Download

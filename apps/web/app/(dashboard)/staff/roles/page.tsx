@@ -180,7 +180,7 @@ function RolesPageContent() {
         {isAdmin && (
           <button
             onClick={startCreate}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+            className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
           >
             <Plus size={16} />
             Create Role
@@ -301,7 +301,7 @@ function RolesPageContent() {
                       <button
                         type="submit"
                         disabled={creating || updating}
-                        className="h-9 px-4 rounded-lg bg-[#2563eb] text-white text-[12px] font-bold hover:bg-[#1d4ed8] disabled:opacity-50 flex items-center gap-1.5"
+                        className="h-9 px-4 rounded-lg bg-[#8b4530] text-white text-[12px] font-bold hover:bg-[#6e3323] disabled:opacity-50 flex items-center gap-1.5"
                       >
                         {creating || updating ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                         {mode === 'create' ? 'Create Role' : 'Update Role'}

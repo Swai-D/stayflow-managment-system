@@ -15,7 +15,7 @@ import { toast } from 'sonner'
 import Link from 'next/link'
 
 const TABS = [
-  { key: 'due', label: 'Due Today', icon: Clock, color: 'bg-[#2563eb]' },
+  { key: 'due', label: 'Due Today', icon: Clock, color: 'bg-[#8b4530]' },
   { key: 'overdue', label: 'Overdue', icon: AlertCircle, color: 'bg-[#ef4444]' },
   { key: 'done', label: 'Checked Out', icon: CheckCircle, color: 'bg-[#22c55e]' },
 ]
@@ -109,7 +109,7 @@ export default function CheckoutsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Due Today" value={summary.dueTodayCount} icon={Clock} color="bg-[#2563eb]" />
+        <StatCard label="Due Today" value={summary.dueTodayCount} icon={Clock} color="bg-[#8b4530]" />
         <StatCard label="Overdue" value={summary.overdueCount} icon={AlertCircle} color="bg-[#ef4444]" />
         <StatCard label="Checked Out" value={summary.checkedOutTodayCount} icon={CheckCircle} color="bg-[#22c55e]" />
         <StatCard label="Pending Invoices" value={summary.pendingInvoiceCount} icon={FileText} color="bg-[#f59e0b]" />
@@ -129,7 +129,7 @@ export default function CheckoutsPage() {
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-semibold transition-all',
                 activeTab === tab.key
-                  ? 'bg-[#EFF6FF] text-[#2563EB]'
+                  ? 'bg-[#FBF1EA] text-[#8B4530]'
                   : 'text-[#6b7280] hover:bg-[#f9fafb]'
               )}
             >
@@ -137,7 +137,7 @@ export default function CheckoutsPage() {
               {tab.label}
               <span className={cn(
                 'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
-                activeTab === tab.key ? 'bg-[#2563EB] text-white' : 'bg-[#f3f4f6] text-[#6b7280]'
+                activeTab === tab.key ? 'bg-[#8B4530] text-white' : 'bg-[#f3f4f6] text-[#6b7280]'
               )}>
                 {count}
               </span>
@@ -154,7 +154,7 @@ export default function CheckoutsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search guest, booking ref or room..."
-            className="w-full pl-9 pr-4 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#2563EB] focus:ring-[3px] focus:ring-[#dbeafe] transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-white border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#8B4530] focus:ring-[3px] focus:ring-[#f5dfce] transition-all"
           />
         </div>
       </div>
@@ -228,7 +228,7 @@ export default function CheckoutsPage() {
                   min={1}
                   value={extraNights}
                   onChange={(e) => setExtraNights(Math.max(1, Number(e.target.value)))}
-                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#2563EB] focus:ring-[3px] focus:ring-[#dbeafe]"
+                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#8B4530] focus:ring-[3px] focus:ring-[#f5dfce]"
                 />
               </div>
               <div>
@@ -237,7 +237,7 @@ export default function CheckoutsPage() {
                   value={extendReason}
                   onChange={(e) => setExtendReason(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#2563EB] focus:ring-[3px] focus:ring-[#dbeafe] resize-none"
+                  className="w-full px-3 py-2 border border-[#e5e7eb] rounded-lg text-[13px] outline-none focus:border-[#8B4530] focus:ring-[3px] focus:ring-[#f5dfce] resize-none"
                 />
               </div>
               <div className="flex gap-2 pt-2">
@@ -271,7 +271,7 @@ function CheckoutRow({ booking, activeTab, onCheckOut, onExtend, isCheckingOut }
     <tr className="border-b border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
       <td className="p-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#2563EB] flex items-center justify-center text-white text-[11px] font-bold">
+          <div className="w-8 h-8 rounded-full bg-[#8B4530] flex items-center justify-center text-white text-[11px] font-bold">
             {booking.guest?.fullName?.charAt(0) || '?'}
           </div>
           <div>
@@ -310,7 +310,7 @@ function CheckoutRow({ booking, activeTab, onCheckOut, onExtend, isCheckingOut }
               <button
                 onClick={() => onCheckOut(booking.id)}
                 disabled={isCheckingOut}
-                className="px-2.5 py-1.5 bg-[#2563EB] text-white rounded-lg text-[11px] font-semibold hover:bg-[#1d4ed8] transition-colors disabled:opacity-50"
+                className="px-2.5 py-1.5 bg-[#8B4530] text-white rounded-lg text-[11px] font-semibold hover:bg-[#6e3323] transition-colors disabled:opacity-50"
               >
                 Check Out
               </button>
@@ -325,7 +325,7 @@ function CheckoutRow({ booking, activeTab, onCheckOut, onExtend, isCheckingOut }
           {invoice && (
             <Link
               href={`/invoices?search=${invoice.invoiceNumber}`}
-              className="px-2.5 py-1.5 bg-[#EFF6FF] text-[#2563EB] rounded-lg text-[11px] font-semibold hover:bg-[#dbeafe] transition-colors"
+              className="px-2.5 py-1.5 bg-[#FBF1EA] text-[#8B4530] rounded-lg text-[11px] font-semibold hover:bg-[#f5dfce] transition-colors"
             >
               Invoice
             </Link>

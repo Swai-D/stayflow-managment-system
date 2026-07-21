@@ -133,7 +133,7 @@ export default function AISettingsView() {
               onChange={e => setForm({ ...form, enabled: e.target.checked })}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2563EB]"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#8B4530]"></div>
           </label>
         </div>
 
@@ -172,7 +172,7 @@ export default function AISettingsView() {
         {/* API Key */}
         <div className="bg-gray-50 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 text-[13px] font-bold text-[#111827]">
-            <KeyRound size={16} className="text-[#2563EB]" />
+            <KeyRound size={16} className="text-[#8B4530]" />
             API Key
           </div>
 
@@ -194,7 +194,7 @@ export default function AISettingsView() {
                     type="button"
                     onClick={() => handleValidate(p.value)}
                     disabled={validating || !keyValue}
-                    className="px-4 py-2 bg-[#2563EB] text-white rounded-xl text-[12px] font-bold hover:bg-[#1d4ed8] disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-4 py-2 bg-[#8B4530] text-white rounded-xl text-[12px] font-bold hover:bg-[#6e3323] disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {validating ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
                     Hakiki
@@ -217,7 +217,7 @@ export default function AISettingsView() {
         {/* Model Configuration */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 text-[13px] font-bold text-[#111827]">
-            <SlidersHorizontal size={16} className="text-[#2563EB]" />
+            <SlidersHorizontal size={16} className="text-[#8B4530]" />
             Model Configuration
           </div>
 
@@ -262,7 +262,7 @@ export default function AISettingsView() {
         {/* Personality */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
           <div className="flex items-center gap-2 text-[13px] font-bold text-[#111827]">
-            <MessageSquare size={16} className="text-[#2563EB]" />
+            <MessageSquare size={16} className="text-[#8B4530]" />
             AI Personality
           </div>
 
@@ -334,7 +334,7 @@ export default function AISettingsView() {
           <button
             type="submit"
             disabled={saving}
-            className="h-12 px-8 bg-[#2563EB] text-white rounded-2xl font-bold text-[14px] hover:bg-[#1d4ed8] disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
+            className="h-12 px-8 bg-[#8B4530] text-white rounded-2xl font-bold text-[14px] hover:bg-[#6e3323] disabled:opacity-50 flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Hifadhi Mipangilio

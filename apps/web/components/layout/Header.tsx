@@ -109,12 +109,12 @@ const TYPE_LABELS: Record<SearchResult['type'], string> = {
 }
 
 const TYPE_COLORS: Record<SearchResult['type'], { bg: string; text: string }> = {
-  booking: { bg: 'bg-[#EFF6FF] dark:bg-blue-900/30', text: 'text-[#2563EB] dark:text-blue-300' },
+  booking: { bg: 'bg-[#FBF1EA] dark:bg-blue-900/30', text: 'text-[#8B4530] dark:text-blue-300' },
   guest: { bg: 'bg-[#dcfce7] dark:bg-green-900/30', text: 'text-[#16a34a] dark:text-green-300' },
   room: { bg: 'bg-[#ede9fe] dark:bg-purple-900/30', text: 'text-[#7c3aed] dark:text-purple-300' },
   store_item: { bg: 'bg-[#f3f4f6] dark:bg-gray-700', text: 'text-[#6b7280] dark:text-gray-300' },
   supplier: { bg: 'bg-[#fef3c7] dark:bg-amber-900/30', text: 'text-[#d97706] dark:text-amber-300' },
-  staff: { bg: 'bg-[#dbeafe] dark:bg-indigo-900/30', text: 'text-[#1d4ed8] dark:text-indigo-300' },
+  staff: { bg: 'bg-[#f5dfce] dark:bg-indigo-900/30', text: 'text-[#6e3323] dark:text-indigo-300' },
   invoice: { bg: 'bg-[#fce7f3] dark:bg-pink-900/30', text: 'text-[#db2777] dark:text-pink-300' },
   payment: { bg: 'bg-[#d1fae5] dark:bg-emerald-900/30', text: 'text-[#059669] dark:text-emerald-300' },
   expense: { bg: 'bg-[#fee2e2] dark:bg-red-900/30', text: 'text-[#dc2626] dark:text-red-300' },
@@ -145,7 +145,7 @@ function SearchResultItem({ result, selected, onSelect }: {
       onClick={() => onSelect(result)}
       className={cn(
         'flex items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer',
-        selected ? 'bg-[#EFF6FF] dark:bg-blue-900/20' : 'hover:bg-[#f9fafb] dark:hover:bg-gray-700/50'
+        selected ? 'bg-[#FBF1EA] dark:bg-blue-900/20' : 'hover:bg-[#f9fafb] dark:hover:bg-gray-700/50'
       )}
     >
       <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', colors.bg, colors.text)}>
@@ -254,7 +254,7 @@ function SearchDropdown({ query, open, onClose }: {
                 onClick={onClose}
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#f9fafb] dark:hover:bg-gray-700/50 text-[12px] text-[#374151] dark:text-gray-300"
               >
-                <span className="w-5 h-5 rounded bg-[#EFF6FF] dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-300 flex items-center justify-center flex-shrink-0">
+                <span className="w-5 h-5 rounded bg-[#FBF1EA] dark:bg-blue-900/30 text-[#8B4530] dark:text-blue-300 flex items-center justify-center flex-shrink-0">
                   <LayoutGrid size={11} />
                 </span>
                 {item.title}
@@ -341,7 +341,7 @@ export default function Header() {
         <div
           className={cn(
             'flex items-center gap-2 w-full h-[38px] bg-white dark:bg-[#1f2937] border rounded-lg px-3 transition-all',
-            searchOpen ? 'border-[#2563EB] ring-2 ring-[#dbeafe] dark:ring-blue-900/40' : 'border-[#e5e7eb] dark:border-gray-700 hover:border-[#d1d5db] dark:hover:border-gray-600'
+            searchOpen ? 'border-[#8B4530] ring-2 ring-[#f5dfce] dark:ring-blue-900/40' : 'border-[#e5e7eb] dark:border-gray-700 hover:border-[#d1d5db] dark:hover:border-gray-600'
           )}
         >
           <Search size={15} className="text-[#9ca3af] dark:text-gray-400 flex-shrink-0" />

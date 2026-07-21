@@ -124,7 +124,7 @@ export default function CompaniesPage() {
         </div>
         <button
           onClick={openCreate}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+          className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
         >
           <Plus size={16} />
           Add Company
@@ -133,7 +133,7 @@ export default function CompaniesPage() {
 
       {/* Search */}
       <div className="bg-white rounded-xl shadow-card p-4 border border-border/20">
-        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#2563eb]/50 transition-all">
+        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#8b4530]/50 transition-all">
           <Search size={14} className="text-[#9ca3af]" />
           <input
             value={search}
@@ -159,7 +159,7 @@ export default function CompaniesPage() {
                     </div>
                     <div>
                       <Link href={`/companies/${company.id}`}>
-                        <h3 className="text-[15px] font-bold text-[#111827] group-hover:text-[#2563eb] transition-colors">{company.name}</h3>
+                        <h3 className="text-[15px] font-bold text-[#111827] group-hover:text-[#8b4530] transition-colors">{company.name}</h3>
                       </Link>
                       {company.contactPerson && (
                         <p className="text-[11px] text-[#9ca3af]">Contact: {company.contactPerson}</p>
@@ -199,7 +199,7 @@ export default function CompaniesPage() {
 
                 <div className="mt-4 pt-3 border-t border-border/30">
                   <Link href={`/companies/${company.id}`}>
-                    <span className="text-[12px] font-bold text-[#2563eb] hover:underline">View details & bookings →</span>
+                    <span className="text-[12px] font-bold text-[#8b4530] hover:underline">View details & bookings →</span>
                   </Link>
                 </div>
               </div>

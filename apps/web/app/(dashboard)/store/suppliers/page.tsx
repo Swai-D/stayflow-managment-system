@@ -8,7 +8,7 @@ import { Search, Plus, X, Phone, Mail, MapPin, Package, Edit2 } from 'lucide-rea
 import { cn } from '@/lib/utils'
 import Pagination from '@/components/ui/Pagination'
 
-const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
+const INPUT = "w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#8B4530] focus:ring-2 focus:ring-blue-100 transition-all bg-white"
 
 // ── Supplier Form Modal ──────────────────────────────────────────────────────
 function SupplierFormModal({ supplier, onClose }: { supplier?: Supplier; onClose: () => void }) {
@@ -90,7 +90,7 @@ function SupplierFormModal({ supplier, onClose }: { supplier?: Supplier; onClose
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 h-10 border border-gray-200 rounded-lg text-[13px] font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={handleSubmit} disabled={!form.name || !form.phone || createSupplier.isPending || updateSupplier.isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors disabled:opacity-40">
               {createSupplier.isPending || updateSupplier.isPending ? 'Saving...' : (isEdit ? 'Save Changes' : 'Add Supplier')}
             </button>
           </div>
@@ -124,8 +124,8 @@ function SupplierPanel({ supplier, onClose, onEdit }: {
       <div className="p-5">
         {/* Name + badge */}
         <div className="flex items-start gap-3 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-[#EFF6FF] flex items-center justify-center flex-shrink-0">
-            <span className="text-[#2563EB] font-bold text-[15px]">
+          <div className="w-12 h-12 rounded-xl bg-[#FBF1EA] flex items-center justify-center flex-shrink-0">
+            <span className="text-[#8B4530] font-bold text-[15px]">
               {supplier.name.split(' ').slice(0,2).map(w => w[0]).join('')}
             </span>
           </div>
@@ -174,7 +174,7 @@ function SupplierPanel({ supplier, onClose, onEdit }: {
 
         {/* Payment terms */}
         <div className="bg-blue-50 rounded-xl px-3.5 py-3 mb-4">
-          <p className="text-[10px] font-semibold text-[#2563EB] mb-0.5">Payment Terms</p>
+          <p className="text-[10px] font-semibold text-[#8B4530] mb-0.5">Payment Terms</p>
           <p className="text-[13px] font-semibold text-gray-900">{supplier.paymentTerms ?? 'Not specified'}</p>
         </div>
 
@@ -246,7 +246,7 @@ export default function SuppliersPage() {
         {[
           { label:'Total Suppliers', value: suppliers.length, color:'text-gray-900' },
           { label:'Active',          value: activeCount,       color:'text-green-600' },
-          { label:'Total Spent',     value: formatTZS(totalSpend), color:'text-[#2563EB]' },
+          { label:'Total Spent',     value: formatTZS(totalSpend), color:'text-[#8B4530]' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.07)]">
             <p className="text-[11px] text-gray-400 font-medium mb-1">{s.label}</p>
@@ -267,7 +267,7 @@ export default function SuppliersPage() {
                 className="text-[12px] outline-none text-gray-700 placeholder:text-gray-400 bg-transparent flex-1"/>
             </div>
             <button onClick={() => setFormModal('new')}
-              className="ml-auto flex items-center gap-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
+              className="ml-auto flex items-center gap-1.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors">
               <Plus size={13}/> Add Supplier
             </button>
           </div>
@@ -280,11 +280,11 @@ export default function SuppliersPage() {
                 onClick={() => setSelected(selected?.id === supplier.id ? null : supplier)}
                 className={cn(
                   'px-5 py-4 hover:bg-gray-50/50 transition-colors cursor-pointer',
-                  selected?.id === supplier.id && 'bg-[#EFF6FF]'
+                  selected?.id === supplier.id && 'bg-[#FBF1EA]'
                 )}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] flex items-center justify-center flex-shrink-0">
-                    <span className="text-[#2563EB] font-bold text-[12px]">
+                  <div className="w-10 h-10 rounded-xl bg-[#FBF1EA] flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#8B4530] font-bold text-[12px]">
                       {supplier.name.split(' ').slice(0,2).map(w => w[0]).join('')}
                     </span>
                   </div>

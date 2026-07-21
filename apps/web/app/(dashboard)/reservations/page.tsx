@@ -143,7 +143,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button onClick={handlePrintInvoice}
-                    className="flex-1 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2">
+                    className="flex-1 py-2.5 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2">
                     <Printer size={15}/> Print Invoice
                   </button>
                   <button onClick={onClose}
@@ -178,7 +178,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
               <div className="border-t border-border/50 pt-4">
                 <div className="flex items-center justify-between mb-3 px-1">
                   <p className="text-[11px] text-[#9ca3af] font-medium uppercase tracking-wider">Registered Guests</p>
-                  <span className="text-[10px] font-bold text-[#2563eb] bg-[#eff6ff] px-2 py-1 rounded-full border border-[#dbeafe]">
+                  <span className="text-[10px] font-bold text-[#8b4530] bg-[#fbf1ea] px-2 py-1 rounded-full border border-[#f5dfce]">
                     {booking.adults} Adults · {booking.children} Children
                   </span>
                 </div>
@@ -190,14 +190,14 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#eff6ff] to-[#dbeafe] text-[#2563eb] flex items-center justify-center font-bold text-sm shrink-0 border border-[#dbeafe]">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fbf1ea] to-[#f5dfce] text-[#8b4530] flex items-center justify-center font-bold text-sm shrink-0 border border-[#f5dfce]">
                             {g.fullName.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-[13px] font-bold text-[#111827]">{g.fullName}</p>
                               {g.isPrimary && (
-                                <span className="text-[9px] font-bold text-[#2563eb] bg-[#eff6ff] px-1.5 py-0.5 rounded border border-[#dbeafe]">
+                                <span className="text-[9px] font-bold text-[#8b4530] bg-[#fbf1ea] px-1.5 py-0.5 rounded border border-[#f5dfce]">
                                   Primary
                                 </span>
                               )}
@@ -319,7 +319,7 @@ function BookingDetailModal({ booking, onClose }: { booking: Booking; onClose: (
 
                   {booking.status === 'checked_in' && (
                     <button onClick={handleCheckOut} disabled={checkingOut}
-                      className="flex-1 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2">
+                      className="flex-1 py-3 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-xl text-[13px] font-bold transition-all shadow-md shadow-blue-100/50 flex items-center justify-center gap-2">
                       <LogOut size={15} />
                       {checkingOut ? 'Checking out...' : 'Check Out'}
                     </button>
@@ -414,15 +414,15 @@ export default function ReservationsPage() {
       {/* Topbar */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div>
-           <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Reservations</h1>
+           <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">📅 Reservations</h1>
            <p className="text-[13px] text-[#9ca3af] font-medium mt-[-2px]">Manage all guest bookings</p>
         </div>
         <button
           onClick={() => setIsNewBookingOpen(true)}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+          className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
         >
           <Plus size={16} />
-          New booking
+          ➕ New booking
         </button>
       </div>
 
@@ -439,7 +439,7 @@ export default function ReservationsPage() {
             className={cn(
               'px-[14px] py-[7px] rounded-xl text-[12px] font-medium flex items-center gap-2 border border-transparent transition-all',
               activeTab === tab.id
-                ? 'bg-[#eff6ff] text-[#2563eb] border-[#dbeafe]'
+                ? 'bg-[#fbf1ea] text-[#8b4530] border-[#f5dfce]'
                 : 'text-[#9ca3af] hover:bg-subtle'
             )}
           >
@@ -448,7 +448,7 @@ export default function ReservationsPage() {
             {tab.count !== undefined && (
               <span className={cn(
                 "ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold",
-                activeTab === tab.id ? "bg-[#2563eb] text-white" : "bg-subtle text-[#9ca3af]"
+                activeTab === tab.id ? "bg-[#8b4530] text-white" : "bg-subtle text-[#9ca3af]"
               )}>
                 {tab.count}
               </span>
@@ -462,7 +462,7 @@ export default function ReservationsPage() {
         {[
           { label: 'Total Checkin', val: bookingStats?.checkInsToday, icon: '🔔', color: '#22c55e', bg: 'bg-green-50' },
           { label: 'Total Checkout', val: bookingStats?.checkOutsToday, icon: '🔄', color: '#ef4444', bg: 'bg-red-50' },
-          { label: 'Total Guest', val: bookingStats?.totalActive, icon: '👤', color: '#2563eb', bg: 'bg-blue-50' },
+          { label: 'Total Guest', val: bookingStats?.totalActive, icon: '👤', color: '#8b4530', bg: 'bg-blue-50' },
           { label: 'Occupancy Rate', val: bookingStats ? `${Math.round((bookingStats.totalActive / 50) * 100)}%` : null, icon: '🏠', color: '#f59e0b', bg: 'bg-amber-50' },
         ].map((s: any) => (
           <div key={s.label} className="bg-white rounded-xl shadow-card p-5 flex flex-col justify-between min-h-[140px]">
@@ -490,7 +490,7 @@ export default function ReservationsPage() {
              <p className="text-[11px] text-[#9ca3af] font-medium mt-0.5">Most recent reservations</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[200px] focus-within:border-[#2563eb]/50 transition-all">
+            <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[200px] focus-within:border-[#8b4530]/50 transition-all">
               <Search size={14} className="text-[#9ca3af]" />
               <input
                 value={search}
@@ -536,7 +536,7 @@ export default function ReservationsPage() {
                         onClick={() => setSelectedBooking(booking)}
                         className="hover:bg-subtle/40 cursor-pointer transition-all group"
                       >
-                        <td className="p-[14px_16px] text-[13px] font-bold text-[#111827] group-hover:text-[#2563eb]">
+                        <td className="p-[14px_16px] text-[13px] font-bold text-[#111827] group-hover:text-[#8b4530]">
                           <div className="flex flex-col">
                             <span>{booking.guest.fullName}</span>
                             {booking.bookingType === 'company' && booking.company && (
@@ -602,7 +602,7 @@ export default function ReservationsPage() {
             <button
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronLeft size={16} />
             </button>
@@ -612,7 +612,7 @@ export default function ReservationsPage() {
             <button
               disabled={page >= meta.totalPages}
               onClick={() => setPage(p => p + 1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+              className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-[#9ca3af] hover:bg-white hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
             >
               <ChevronRight size={16} />
             </button>

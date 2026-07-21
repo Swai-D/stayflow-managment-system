@@ -202,7 +202,7 @@ export default function StaffPage() {
           {isAdmin && (
             <button
               onClick={openCreate}
-              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+              className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
             >
               <Plus size={16} />
               Add Staff
@@ -213,7 +213,7 @@ export default function StaffPage() {
 
       {/* Search */}
       <div className="bg-white rounded-xl shadow-card p-4 border border-border/20">
-        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#2563eb]/50 transition-all">
+        <div className="flex items-center gap-2 bg-subtle/50 border border-border rounded-xl px-4 py-2 min-w-[240px] focus-within:border-[#8b4530]/50 transition-all">
           <Search size={14} className="text-[#9ca3af]" />
           <input
             value={search}

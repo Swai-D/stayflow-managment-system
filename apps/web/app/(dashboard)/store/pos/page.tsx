@@ -32,17 +32,17 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
       <button onClick={() => setOpen(o => !o)}
         className={cn(
           'w-full flex items-center justify-between gap-3 border-2 rounded-xl px-4 py-3.5 transition-all text-left',
-          value ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-gray-200 bg-white hover:border-gray-300'
+          value ? 'border-[#8B4530] bg-[#FBF1EA]' : 'border-gray-200 bg-white hover:border-gray-300'
         )}>
         {value ? (
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-bold text-[#2563EB]">Room {value.room.roomNumber}</span>
-              <span className="text-[11px] text-[#2563EB] bg-white px-2 py-0.5 rounded-full font-medium border border-blue-200">
+              <span className="text-[16px] font-bold text-[#8B4530]">Room {value.room.roomNumber}</span>
+              <span className="text-[11px] text-[#8B4530] bg-white px-2 py-0.5 rounded-full font-medium border border-blue-200">
                 {value.room.type}
               </span>
               {value.company ? (
-                <span className="text-[10px] text-white bg-[#2563EB] px-2 py-0.5 rounded-full font-medium">
+                <span className="text-[10px] text-white bg-[#8B4530] px-2 py-0.5 rounded-full font-medium">
                   Company
                 </span>
               ) : (
@@ -53,7 +53,7 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
             </div>
             <p className="text-[12px] text-gray-600 mt-0.5 font-medium">{value.guest.fullName}</p>
             {value.company && (
-              <p className="text-[11px] text-[#2563EB] font-medium">{value.company.name}</p>
+              <p className="text-[11px] text-[#8B4530] font-medium">{value.company.name}</p>
             )}
             <p className="text-[10px] text-gray-400">Ref: {value.bookingRef}</p>
           </div>
@@ -66,7 +66,7 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
         {isLoading ? (
           <Loader2 size={16} className="animate-spin text-gray-400 flex-shrink-0"/>
         ) : (
-          <ChevronDown size={16} className={cn('flex-shrink-0 transition-transform', open && 'rotate-180', value ? 'text-[#2563EB]' : 'text-gray-400')}/>
+          <ChevronDown size={16} className={cn('flex-shrink-0 transition-transform', open && 'rotate-180', value ? 'text-[#8B4530]' : 'text-gray-400')}/>
         )}
       </button>
       {open && (
@@ -78,17 +78,17 @@ function RoomSelector({ value, onChange, bookings, isLoading }: {
             <div className="px-4 py-4 text-[13px] text-gray-400 text-center">No checked-in guests</div>
           ) : bookings.map(b => (
             <button key={b.id} onClick={() => { onChange(b); setOpen(false) }}
-              className={cn('w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#EFF6FF] transition-colors',
-                value?.id === b.id && 'bg-[#EFF6FF]')}>
-              <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] flex items-center justify-center flex-shrink-0">
-                <span className="text-[#2563EB] font-bold text-[12px]">
+              className={cn('w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FBF1EA] transition-colors',
+                value?.id === b.id && 'bg-[#FBF1EA]')}>
+              <div className="w-9 h-9 rounded-xl bg-[#FBF1EA] flex items-center justify-center flex-shrink-0">
+                <span className="text-[#8B4530] font-bold text-[12px]">
                   {b.room.roomNumber}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-gray-900">{b.guest.fullName}</p>
                 {b.company ? (
-                  <p className="text-[10px] text-[#2563EB] font-medium">{b.company.name}</p>
+                  <p className="text-[10px] text-[#8B4530] font-medium">{b.company.name}</p>
                 ) : null}
                 <p className="text-[10px] text-gray-400">
                   Room {b.room.roomNumber} · {b.room.type} · {b.bookingType === 'company' ? 'Company' : 'Individual'} · {b.bookingRef}
@@ -121,7 +121,7 @@ function ItemCard({ item, qty, onAdd, onRemove }: {
   return (
     <div className={cn(
       'bg-white border-2 rounded-xl p-3.5 cursor-pointer transition-all select-none',
-      qty > 0 ? 'border-[#2563EB] shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow-sm',
+      qty > 0 ? 'border-[#8B4530] shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow-sm',
       (!item.sellingPrice || item.currentStock <= 0) && 'opacity-50 cursor-not-allowed'
     )} onClick={() => {
       if (item.sellingPrice && item.currentStock > 0) onAdd()
@@ -129,7 +129,7 @@ function ItemCard({ item, qty, onAdd, onRemove }: {
       <div className="flex items-start justify-between gap-2 mb-2.5">
         <span className="text-[22px]">{icon}</span>
         {qty > 0 && (
-          <div className="flex items-center gap-1 bg-[#2563EB] rounded-lg px-1.5 py-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center gap-1 bg-[#8B4530] rounded-lg px-1.5 py-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
             <button onClick={e => { e.stopPropagation(); onRemove() }}
               className="w-5 h-5 flex items-center justify-center text-white hover:bg-white/20 rounded transition-colors">
               <Minus size={11}/>
@@ -143,7 +143,7 @@ function ItemCard({ item, qty, onAdd, onRemove }: {
         )}
       </div>
       <p className="text-[12.5px] font-semibold text-gray-900 leading-tight mb-1">{item.name}</p>
-      <p className="text-[13px] font-bold text-[#2563EB]">
+      <p className="text-[13px] font-bold text-[#8B4530]">
         {item.sellingPrice ? formatTZS(item.sellingPrice) : <span className="text-gray-400 font-medium">No price</span>}
       </p>
       {item.currentStock === 0 ? (
@@ -176,20 +176,20 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
         </div>
         <div className="p-6">
           {/* Room info */}
-          <div className="bg-[#EFF6FF] rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#2563EB] flex items-center justify-center flex-shrink-0">
+          <div className="bg-[#FBF1EA] rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#8B4530] flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-[13px]">{booking.room.roomNumber}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-bold text-gray-900">{booking.guest.fullName}</p>
               {booking.company ? (
-                <p className="text-[11px] text-[#2563EB] font-medium truncate">{booking.company.name}</p>
+                <p className="text-[11px] text-[#8B4530] font-medium truncate">{booking.company.name}</p>
               ) : null}
-              <p className="text-[11px] text-[#2563EB] font-medium">Room {booking.room.roomNumber} · {booking.room.type}</p>
+              <p className="text-[11px] text-[#8B4530] font-medium">Room {booking.room.roomNumber} · {booking.room.type}</p>
             </div>
             <span className={cn(
               'text-[10px] font-bold px-2 py-1 rounded-full',
-              booking.company ? 'bg-[#2563EB] text-white' : 'bg-white text-[#6B7280] border border-gray-200'
+              booking.company ? 'bg-[#8B4530] text-white' : 'bg-white text-[#6B7280] border border-gray-200'
             )}>
               {booking.company ? 'Company' : 'Individual'}
             </span>
@@ -208,7 +208,7 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
           {/* Total */}
           <div className="flex items-center justify-between py-3 border-t border-gray-100 border-b border-gray-100 mb-4">
             <span className="text-[14px] font-bold text-gray-900">Total to Post</span>
-            <span className="text-[20px] font-bold text-[#2563EB]">{formatTZS(total)}</span>
+            <span className="text-[20px] font-bold text-[#8B4530]">{formatTZS(total)}</span>
           </div>
 
           {/* Notes */}
@@ -217,7 +217,7 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
               Notes <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
-              className="w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 transition-all"
+              className="w-full h-10 px-3 rounded-[8px] border border-gray-200 text-[13px] focus:outline-none focus:border-[#8B4530] focus:ring-2 focus:ring-blue-100 transition-all"
               value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="e.g. Dinner — 09 June"
             />
@@ -228,7 +228,7 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
               Cancel
             </button>
             <button onClick={() => onConfirm(notes)} disabled={isPending}
-              className="flex-1 h-10 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40">
+              className="flex-1 h-10 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-lg text-[13px] font-semibold transition-colors flex items-center justify-center gap-1.5 disabled:opacity-40">
               {isPending ? (
                 <><Loader2 size={14} className="animate-spin"/> Posting...</>
               ) : (
@@ -261,17 +261,17 @@ function SuccessScreen({ booking, total, onReset, onSendFolio, onPrintFolio, sen
       </div>
       <h2 className="text-[20px] font-bold text-gray-900 mb-2">Charge Posted!</h2>
       <p className="text-[14px] text-gray-500 mb-1">
-        <span className="font-semibold text-[#2563EB]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
+        <span className="font-semibold text-[#8B4530]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
       </p>
       <p className="text-[13px] text-gray-900 font-medium mb-1">{booking.guest.fullName}</p>
       {booking.company && (
-        <p className="text-[12px] text-[#2563EB] font-medium mb-1">{booking.company.name}</p>
+        <p className="text-[12px] text-[#8B4530] font-medium mb-1">{booking.company.name}</p>
       )}
       <p className="text-[13px] text-gray-400 mb-6">{recipientName} · {booking.bookingRef}</p>
 
       <div className="flex flex-col gap-2 w-full max-w-[280px] mb-4">
         <button onClick={onSendFolio} disabled={sendingFolio || !canEmail}
-          className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
+          className="w-full py-2.5 bg-[#8B4530] hover:bg-[#6E3323] disabled:opacity-50 text-white rounded-xl text-[13px] font-semibold transition-colors flex items-center justify-center gap-2">
           {sendingFolio ? (
             <><Loader2 size={15} className="animate-spin"/> Sending...</>
           ) : (
@@ -289,7 +289,7 @@ function SuccessScreen({ booking, total, onReset, onSendFolio, onPrintFolio, sen
       </p>
 
       <button onClick={onReset}
-        className="text-[13px] font-semibold text-gray-500 hover:text-[#2563EB] transition-colors">
+        className="text-[13px] font-semibold text-gray-500 hover:text-[#8B4530] transition-colors">
         New Charge
       </button>
     </div>
@@ -436,7 +436,7 @@ export default function POSPage() {
             {subCats.map(cat => (
               <button key={cat} onClick={() => setCatFilter(cat)}
                 className={cn('h-8 px-3 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors flex-shrink-0',
-                  catFilter === cat ? 'bg-[#2563EB] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50')}>
+                  catFilter === cat ? 'bg-[#8B4530] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50')}>
                 {cat}
               </button>
             ))}
@@ -459,7 +459,7 @@ export default function POSPage() {
                 Items here are pulled from Store. Go to Store → Items, add an F&B item, and enable &ldquo;Show in POS&rdquo;.
               </p>
               <Link href="/store/items">
-                <button className="px-4 py-2 bg-[#2563EB] text-white rounded-xl text-[12px] font-bold hover:bg-[#1D4ED8] transition-colors">
+                <button className="px-4 py-2 bg-[#8B4530] text-white rounded-xl text-[12px] font-bold hover:bg-[#6E3323] transition-colors">
                   Go to Store Items
                 </button>
               </Link>
@@ -490,10 +490,10 @@ export default function POSPage() {
         {/* Cart header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShoppingBag size={15} className="text-[#2563EB]"/>
+            <ShoppingBag size={15} className="text-[#8B4530]"/>
             <h2 className="text-[14px] font-bold text-gray-900">Current Order</h2>
             {cartCount > 0 && (
-              <span className="bg-[#2563EB] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="bg-[#8B4530] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {cartCount}
               </span>
             )}
@@ -530,8 +530,8 @@ export default function POSPage() {
                     </button>
                     <span className="text-[14px] font-bold text-gray-900 min-w-[20px] text-center">{qty}</span>
                     <button onClick={() => addToCart(item)}
-                      className="w-7 h-7 rounded-lg bg-[#EFF6FF] hover:bg-[#DBEAFE] flex items-center justify-center transition-colors">
-                      <Plus size={11} className="text-[#2563EB]"/>
+                      className="w-7 h-7 rounded-lg bg-[#FBF1EA] hover:bg-[#F5DFCE] flex items-center justify-center transition-colors">
+                      <Plus size={11} className="text-[#8B4530]"/>
                     </button>
                   </div>
                   <div className="text-right flex-shrink-0 min-w-[80px]">
@@ -551,7 +551,7 @@ export default function POSPage() {
               <span className="text-[12px] font-semibold text-gray-600 flex items-center gap-1.5">
                 <Receipt size={13}/> Existing folio charges
               </span>
-              <span className="text-[12px] font-bold text-[#2563EB]">{formatTZS(folioTotal)}</span>
+              <span className="text-[12px] font-bold text-[#8B4530]">{formatTZS(folioTotal)}</span>
             </button>
             {showFolio && (
               <div className="px-5 pb-3 space-y-1.5">
@@ -584,7 +584,7 @@ export default function POSPage() {
             className={cn(
               'w-full h-12 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-2',
               cart.length > 0 && selectedBooking && !posting
-                ? 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm'
+                ? 'bg-[#8B4530] hover:bg-[#6E3323] text-white shadow-sm'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             )}>
             {!selectedBooking ? 'Select a room first' :

@@ -5,6 +5,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Buffalo Hotel brand ramp — "Kilimanjaro Clay" (replaces default Tailwind blue-*
+   everywhere blue-50..blue-950 utility classes are used across the app, e.g.
+   bg-blue-600, text-blue-300, ring-blue-500/5, dark:bg-blue-900/20, etc.) */
+@theme {
+  --color-blue-50: #fbf1ea;
+  --color-blue-100: #f5dfce;
+  --color-blue-200: #ebc3a6;
+  --color-blue-300: #dca07a;
+  --color-blue-400: #c77d54;
+  --color-blue-500: #a85d38;
+  --color-blue-600: #8b4530;
+  --color-blue-700: #6e3323;
+  --color-blue-800: #522519;
+  --color-blue-900: #3b1b12;
+  --color-blue-950: #26120c;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -39,11 +56,11 @@
 }
 
 :root {
-  /* Template exact colors */
-  --blue-dark: #1a2b4a;
-  --blue-mid: #2563eb;
-  --blue-light: #dbeafe;
-  --blue-pale: #eff6ff;
+  /* Buffalo Hotel brand colors — Kilimanjaro Clay */
+  --blue-dark: #26120c;
+  --blue-mid: #8b4530;
+  --blue-light: #f5dfce;
+  --blue-pale: #fbf1ea;
   --green: #22c55e;
   --red: #ef4444;
   --orange: #f97316;
@@ -94,8 +111,8 @@
   --secondary-foreground: var(--text-secondary);
   --muted: #374151;
   --muted-foreground: var(--text-muted);
-  --accent: #1e3a8a;
-  --accent-foreground: #dbeafe;
+  --accent: #3b1b12;
+  --accent-foreground: #f5dfce;
   --input: var(--border);
 }
 
@@ -125,7 +142,7 @@
   }
   .hover-lift:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 4px 12px rgba(37,99,235,0.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08), 0 4px 12px rgba(139,69,48,0.08);
   }
 }
 

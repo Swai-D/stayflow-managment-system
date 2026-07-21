@@ -25,7 +25,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; border: string; 
   available:   { bg: 'bg-[#ecfdf5]', text: 'text-[#10b981]', border: 'border-[#d1fae5]', iconBg: 'bg-[#dcfce7]', sub: 'text-[#10b981]/60', badge: 'bg-[#ecfdf5] text-[#10b981] border-[#d1fae5]' },
   dirty:       { bg: 'bg-[#fffbeb]', text: 'text-[#d97706]', border: 'border-[#fef3c7]', iconBg: 'bg-[#fef3c7]', sub: 'text-[#d97706]/60', badge: 'bg-[#fffbeb] text-[#d97706] border-[#fef3c7]' },
   maintenance: { bg: 'bg-[#fef2f2]', text: 'text-[#dc2626]', border: 'border-[#fee2e2]', iconBg: 'bg-[#fee2e2]', sub: 'text-[#dc2626]/60', badge: 'bg-[#fef2f2] text-[#dc2626] border-[#fee2e2]' },
-  occupied:    { bg: 'bg-[#1a2b4a]', text: 'text-white', border: 'border-[#1a2b4a]', iconBg: 'bg-white/10', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
+  occupied:    { bg: 'bg-[#26120c]', text: 'text-white', border: 'border-[#26120c]', iconBg: 'bg-white/10', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
   cleaning:    { bg: 'bg-[#f5f3ff]', text: 'text-[#5b21b6]', border: 'border-[#ddd6fe]', iconBg: 'bg-[#ede9fe]', sub: 'text-[#5b21b6]/60', badge: 'bg-[#ede9fe] text-[#5b21b6] border-[#ddd6fe]' },
 }
 
@@ -35,14 +35,14 @@ function RoomStatusBlock({ status, currentBooking, compact = false }: { status: 
     return (
       <div className={cn(
         "rounded-2xl p-4 border flex items-center gap-3",
-        compact ? "bg-[#eff6ff] border-blue-50" : "bg-[#eff6ff] border-blue-100"
+        compact ? "bg-[#fbf1ea] border-blue-50" : "bg-[#fbf1ea] border-blue-100"
       )}>
-        <div className="w-10 h-10 rounded-xl bg-[#2563EB] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-100 shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-[#8B4530] text-white flex items-center justify-center font-bold text-sm shadow-md shadow-blue-100 shrink-0">
           {currentBooking.guest.fullName.charAt(0)}
         </div>
         <div className="overflow-hidden">
-          <p className={cn("font-bold text-[#1A2B4A] truncate", compact ? "text-[13px]" : "text-[15px]")}>{currentBooking.guest.fullName}</p>
-          <p className="text-[10px] text-[#2563EB] font-bold">{format(new Date(currentBooking.checkIn), 'dd MMM')} – {format(new Date(currentBooking.checkOut), 'dd MMM')}</p>
+          <p className={cn("font-bold text-[#26120C] truncate", compact ? "text-[13px]" : "text-[15px]")}>{currentBooking.guest.fullName}</p>
+          <p className="text-[10px] text-[#8B4530] font-bold">{format(new Date(currentBooking.checkIn), 'dd MMM')} – {format(new Date(currentBooking.checkOut), 'dd MMM')}</p>
           {!compact && <p className="text-[9px] text-[#6b7280] mt-0.5">REF: {currentBooking.bookingRef}</p>}
         </div>
       </div>
@@ -51,7 +51,7 @@ function RoomStatusBlock({ status, currentBooking, compact = false }: { status: 
 
   const config: Record<RoomStatus, { title: string; subtitle: string; icon: any; bg: string; text: string; border: string; iconBg: string }> = {
     available:   { title: 'Ready for Booking', subtitle: 'Chumba kipo wazi kwa sasa', icon: CheckCircle2, bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-100', iconBg: 'bg-emerald-500' },
-    occupied:    { title: 'Occupied', subtitle: 'Chumba kimejazwa na mgeni', icon: Users, bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-100', iconBg: 'bg-[#2563eb]' },
+    occupied:    { title: 'Occupied', subtitle: 'Chumba kimejazwa na mgeni', icon: Users, bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-100', iconBg: 'bg-[#8b4530]' },
     dirty:       { title: 'Needs Cleaning', subtitle: 'Chumba kinahitaji usafi', icon: Sparkles, bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-100', iconBg: 'bg-amber-500' },
     cleaning:    { title: 'Cleaning in Progress', subtitle: 'Chumba kinasafishwa', icon: Wind, bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-100', iconBg: 'bg-indigo-500' },
     maintenance: { title: 'Under Maintenance', subtitle: 'Chumba kina matengenezo', icon: Wrench, bg: 'bg-red-50', text: 'text-red-800', border: 'border-red-100', iconBg: 'bg-red-500' },
@@ -137,15 +137,15 @@ export default function RoomsPage() {
       {/* Header Section */}
       <div className="px-1 flex justify-between items-start">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Room Management</h1>
+          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">🚪 Room Management</h1>
           <p className="text-[12px] text-[#9ca3af] font-medium mt-[-2px]">Live updates and occupancy control</p>
         </div>
         <button
           onClick={() => { setRoomToEdit(null); setIsFormOpen(true) }}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
+          className="bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-xl px-5 py-2.5 text-[12px] font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100/50"
         >
           <Plus size={16} />
-          Add Room
+          ➕ Add Room
         </button>
       </div>
 
@@ -154,7 +154,7 @@ export default function RoomsPage() {
         {[
           { label: 'Total room', value: stats?.total ?? 0, icon: '🚪', bg: 'bg-[#f3f4f6]' },
           { label: 'Available', value: stats?.available ?? 0, icon: '✅', bg: 'bg-[#ecfdf5]' },
-          { label: 'Occupied', value: stats?.occupied ?? 0, icon: '🏠', bg: 'bg-[#eff6ff]' },
+          { label: 'Occupied', value: stats?.occupied ?? 0, icon: '🏠', bg: 'bg-[#fbf1ea]' },
           { label: 'Need cleaning', value: stats?.dirty ?? 0, icon: '🧹', bg: 'bg-[#fff7ed]' },
         ].map((s: any) => (
           <div key={s.label} className="bg-white rounded-xl p-[16px_18px] shadow-[0_1px_3px_rgba(0,0,0,0.07)] border border-gray-50 flex flex-col justify-between h-[110px]">
@@ -170,7 +170,7 @@ export default function RoomsPage() {
       {/* ── Controls Row ──────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 bg-white/40 p-4 rounded-2xl border border-gray-50/50 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 w-full justify-between">
-          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2.5 min-w-[280px] shadow-sm focus-within:border-[#2563eb]/30 transition-all">
+          <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-4 py-2.5 min-w-[280px] shadow-sm focus-within:border-[#8b4530]/30 transition-all">
             <Search size={16} className="text-[#9ca3af]" />
             <input 
               value={search}
@@ -186,7 +186,7 @@ export default function RoomsPage() {
                 onClick={() => setViewType('grid')}
                 className={cn(
                   "p-2 rounded-[6px] transition-all",
-                  viewType === 'grid' ? "bg-white text-[#2563eb] shadow-sm" : "text-[#9ca3af] hover:text-[#111827]"
+                  viewType === 'grid' ? "bg-white text-[#8b4530] shadow-sm" : "text-[#9ca3af] hover:text-[#111827]"
                 )}
               >
                 <LayoutGrid size={16} />
@@ -195,7 +195,7 @@ export default function RoomsPage() {
                 onClick={() => setViewType('cards')}
                 className={cn(
                   "p-2 rounded-[6px] transition-all",
-                  viewType === 'cards' ? "bg-white text-[#2563eb] shadow-sm" : "text-[#9ca3af] hover:text-[#111827]"
+                  viewType === 'cards' ? "bg-white text-[#8b4530] shadow-sm" : "text-[#9ca3af] hover:text-[#111827]"
                 )}
               >
                 <LayoutList size={16} />
@@ -257,14 +257,14 @@ export default function RoomsPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
               >
                  <ChevronLeft size={18} />
               </button>
               <button 
                 disabled={page >= meta.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] disabled:opacity-30 transition-all shadow-sm"
+                className="w-9 h-9 flex items-center justify-center rounded-xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#8b4530] disabled:opacity-30 transition-all shadow-sm"
               >
                  <ChevronRight size={18} />
               </button>
@@ -323,7 +323,7 @@ export default function RoomsPage() {
 
 // ─── Compact Grid Item ───────────────────────────────
 function CompactRoomItem({ room, onClick, index }: { room: Room; onClick: () => void; index: number }) {
-  const occupiedShades = ['bg-[#1a2b4a] text-white', 'bg-[#2563eb] text-white', 'bg-[#bfdbfe] text-[#1e40af]']
+  const occupiedShades = ['bg-[#26120c] text-white', 'bg-[#8b4530] text-white', 'bg-[#ebc3a6] text-[#522519]']
   const status = room.status
   const isOccupied = status === 'occupied'
   
@@ -357,9 +357,9 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
 
   // Alternating shades for occupied matching template
   const occupiedColors = [
-    { bg: 'bg-[#1a2b4a]', text: 'text-white', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
-    { bg: 'bg-[#2563eb]', text: 'text-white', sub: 'text-white/50', badge: 'bg-white/10 border-white/20 text-white' },
-    { bg: 'bg-[#bfdbfe]', text: 'text-[#1e40af]', sub: 'text-[#1e40af]/40', badge: 'bg-[#dbeafe] border-[#93c5fd] text-[#1e40af]' }
+    { bg: 'bg-[#26120c]', text: 'text-white', sub: 'text-blue-100/50', badge: 'bg-white/10 border-white/20 text-white' },
+    { bg: 'bg-[#8b4530]', text: 'text-white', sub: 'text-white/50', badge: 'bg-white/10 border-white/20 text-white' },
+    { bg: 'bg-[#ebc3a6]', text: 'text-[#522519]', sub: 'text-[#522519]/40', badge: 'bg-[#f5dfce] border-[#93c5fd] text-[#522519]' }
   ]
   const occ = occupiedColors[index % 3]
 
@@ -442,7 +442,7 @@ function HighInfoRoomCard({ room, onClick, index, onEdit }: { room: Room; onClic
                    })
                  }}
                  disabled={generatingQR}
-                 className="text-[10px] font-bold text-[#2563EB] hover:text-[#1D4ED8] disabled:opacity-50"
+                 className="text-[10px] font-bold text-[#8B4530] hover:text-[#6E3323] disabled:opacity-50"
                >
                  {generatingQR ? '...' : 'Generate QR'}
                </button>
@@ -486,7 +486,7 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
               <X size={18} />
            </button>
            <div className="absolute bottom-4 left-5 right-5">
-              <span className="px-2.5 py-1 bg-[#2563eb] rounded-lg text-[10px] font-bold uppercase tracking-widest mb-2 inline-block text-white shadow-lg">Room Profile</span>
+              <span className="px-2.5 py-1 bg-[#8b4530] rounded-lg text-[10px] font-bold uppercase tracking-widest mb-2 inline-block text-white shadow-lg">Room Profile</span>
               <h2 className="text-[24px] font-bold tracking-tighter text-white leading-none">#{room.roomNumber} — {room.name}</h2>
               <div className="flex items-center gap-2 mt-1.5 text-white/70 text-[11px] font-medium uppercase tracking-wider">
                  <span>{room.type}</span>
@@ -509,7 +509,7 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
                 </span>
              </div>
              <div className="flex items-center gap-2">
-                <button onClick={onEdit} className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center hover:bg-[#2563eb] hover:text-white transition-all border border-blue-100 shadow-sm" title="Edit Room">
+                <button onClick={onEdit} className="w-9 h-9 rounded-xl bg-blue-50 text-[#8b4530] flex items-center justify-center hover:bg-[#8b4530] hover:text-white transition-all border border-blue-100 shadow-sm" title="Edit Room">
                    <Edit size={16} />
                 </button>
                 <button onClick={onDelete} className="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm" title="Delete Room">
@@ -575,7 +575,7 @@ function RoomDetailModalDetailed({ room, onClose, onBook, onEdit, onDelete }: { 
         <div className="p-5 border-t border-[#f3f4f6] bg-white shrink-0 flex gap-3">
            <button 
               onClick={onBook}
-              className="flex-1 h-11 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl font-bold text-[13px] transition-all shadow-lg shadow-blue-200/50 flex items-center justify-center gap-2"
+              className="flex-1 h-11 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-xl font-bold text-[13px] transition-all shadow-lg shadow-blue-200/50 flex items-center justify-center gap-2"
            >
               Reserve Now
            </button>

@@ -66,43 +66,43 @@ export const ROOM_STATUS_CONFIG: Record<RoomStatus, {
   borderClass: string
 }> = {
   available:   { 
-    label: 'Available',    
-    labelSw: 'Inapatikana',    
+    label: '✅ Available',    
+    labelSw: '✅ Inapatikana',    
     bgClass: 'bg-[#ecfdf5]',       
     textClass: 'text-[#10b981]',   
     borderClass: 'border-[#d1fae5]' 
   },
   occupied:    { 
-    label: 'Occupied',     
-    labelSw: 'Imejazwa',       
-    bgClass: 'bg-[#1a2b4a]',     
+    label: '🔴 Occupied',     
+    labelSw: '🔴 Imejazwa',       
+    bgClass: 'bg-[#26120c]',     
     textClass: 'text-white',   
-    borderClass: 'border-[#1a2b4a]' 
+    borderClass: 'border-[#26120c]' 
   },
   dirty:       { 
-    label: 'Dirty',        
-    labelSw: 'Chafu',          
+    label: '🧹 Dirty',        
+    labelSw: '🧹 Chafu',          
     bgClass: 'bg-[#fffbeb]',    
     textClass: 'text-[#d97706]',  
     borderClass: 'border-[#fef3c7]' 
   },
   cleaning:    { 
-    label: 'Cleaning',     
-    labelSw: 'Inasafishwa',    
+    label: '🧼 Cleaning',     
+    labelSw: '🧼 Inasafishwa',    
     bgClass: 'bg-[#e0e7ff]',   
     textClass: 'text-[#3730a3]', 
     borderClass: 'border-indigo-200' 
   },
   maintenance: { 
-    label: 'Maintenance',  
-    labelSw: 'Matengenezo',    
+    label: '🔧 Maintenance',  
+    labelSw: '🔧 Matengenezo',    
     bgClass: 'bg-[#fef2f2]',      
     textClass: 'text-[#dc2626]',    
     borderClass: 'border-[#fee2e2]' 
   },
   blocked:     { 
-    label: 'Blocked',      
-    labelSw: 'Imezuiwa',       
+    label: '🚫 Blocked',      
+    labelSw: '🚫 Imezuiwa',       
     bgClass: 'bg-gray-100',    
     textClass: 'text-gray-500',   
     borderClass: 'border-gray-300' 

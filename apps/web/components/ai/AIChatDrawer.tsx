@@ -56,7 +56,7 @@ export default function AIChatDrawer() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        className="relative w-[34px] h-[34px] flex items-center justify-center bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 rounded-lg text-[#2563EB] hover:bg-[#EFF6FF] dark:hover:bg-blue-900/20 transition-colors"
+        className="relative w-[34px] h-[34px] flex items-center justify-center bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 rounded-lg text-[#8B4530] hover:bg-[#FBF1EA] dark:hover:bg-blue-900/20 transition-colors"
         title="Buffalo AI Assistant"
       >
         <Sparkles size={16} />
@@ -65,7 +65,7 @@ export default function AIChatDrawer() {
         <SheetHeader className="px-4 py-3 border-b border-[#f3f4f6] dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] flex items-center justify-center text-[#2563EB]">
+              <div className="w-8 h-8 rounded-lg bg-[#FBF1EA] flex items-center justify-center text-[#8B4530]">
                 <Bot size={16} />
               </div>
               <div>
@@ -120,7 +120,7 @@ export default function AIChatDrawer() {
                   <div
                     className={cn(
                       'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
-                      msg.role === 'user' ? 'bg-[#2563EB] text-white' : 'bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#2563EB] dark:text-blue-300'
+                      msg.role === 'user' ? 'bg-[#8B4530] text-white' : 'bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#8B4530] dark:text-blue-300'
                     )}
                   >
                     {msg.role === 'user' ? <User size={13} /> : <Bot size={13} />}
@@ -129,7 +129,7 @@ export default function AIChatDrawer() {
                     className={cn(
                       'max-w-[80%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed',
                       msg.role === 'user'
-                        ? 'bg-[#2563EB] text-white rounded-br-md'
+                        ? 'bg-[#8B4530] text-white rounded-br-md'
                         : 'bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#374151] dark:text-gray-200 rounded-bl-md'
                     )}
                   >
@@ -140,7 +140,7 @@ export default function AIChatDrawer() {
 
               {isPending && (
                 <div className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#2563EB] dark:text-blue-300 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 text-[#8B4530] dark:text-blue-300 flex items-center justify-center flex-shrink-0">
                     <Bot size={13} />
                   </div>
                   <div className="bg-white dark:bg-[#1f2937] border border-[#e5e7eb] dark:border-gray-700 rounded-2xl rounded-bl-md px-4 py-2.5 flex items-center gap-2">
@@ -156,7 +156,7 @@ export default function AIChatDrawer() {
 
         {/* Input */}
         <form onSubmit={handleSubmit} className="p-3 bg-white dark:bg-[#1f2937] border-t border-[#f3f4f6] dark:border-gray-700">
-          <div className="flex items-center gap-2 bg-[#f8f9fa] dark:bg-[#111827] border border-[#e5e7eb] dark:border-gray-700 rounded-xl px-3 py-2 focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#dbeafe] dark:focus-within:ring-blue-900/40">
+          <div className="flex items-center gap-2 bg-[#f8f9fa] dark:bg-[#111827] border border-[#e5e7eb] dark:border-gray-700 rounded-xl px-3 py-2 focus-within:border-[#8B4530] focus-within:ring-2 focus-within:ring-[#f5dfce] dark:focus-within:ring-blue-900/40">
             <input
               type="text"
               value={input}
@@ -168,7 +168,7 @@ export default function AIChatDrawer() {
             <button
               type="submit"
               disabled={!input.trim() || isPending || loadingSettings || !status?.enabled}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#2563EB] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#1d4ed8] transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#8B4530] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#6e3323] transition-colors"
             >
               {isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             </button>

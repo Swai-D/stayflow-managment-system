@@ -33,7 +33,7 @@ export function CountrySelect({ value, onChange, placeholder = 'Chagua nchi...',
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         className={cn(
-          "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all flex items-center justify-between",
+          "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all flex items-center justify-between",
           className
         )}
       >
@@ -59,7 +59,7 @@ export function CountrySelect({ value, onChange, placeholder = 'Chagua nchi...',
                   className="cursor-pointer text-sm"
                 >
                   <span className="flex-1">{country.name}</span>
-                  {value === country.name && <Check size={16} className="text-[#2563eb]" />}
+                  {value === country.name && <Check size={16} className="text-[#8b4530]" />}
                 </CommandItem>
               ))}
             </CommandGroup>

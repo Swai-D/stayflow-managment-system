@@ -15,7 +15,7 @@ export default function ApiLogsPage() {
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-[14px] font-bold text-gray-900 flex items-center gap-2">
-          <Activity size={15} className="text-[#2563EB]"/> API Request Logs
+          <Activity size={15} className="text-[#8B4530]"/> API Request Logs
         </h2>
         {data?.meta && (
           <p className="text-[11px] text-gray-500">

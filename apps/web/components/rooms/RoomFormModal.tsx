@@ -110,7 +110,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
         <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div>
             <div className="flex items-center gap-2 mb-1">
-               <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center">
+               <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#8b4530] flex items-center justify-center">
                   {isEditing ? <Sparkles size={18} /> : <PlusIcon size={18} />}
                </span>
                <h2 className="text-[22px] font-bold text-[#111827] tracking-tight">
@@ -132,7 +132,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
           
           {/* Section: Basic Identity */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
                 <Home size={14} /> Basic Identity
              </h3>
              <div className="grid grid-cols-2 gap-5">
@@ -142,7 +142,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                     {...register('roomNumber')}
                     placeholder="e.g. 101"
                     className={cn(
-                      "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all placeholder:text-[#9ca3af]/60",
+                      "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60",
                       errors.roomNumber && "border-red-200 bg-red-50/30"
                     )}
                   />
@@ -154,7 +154,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('floor')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
              </div>
@@ -164,14 +164,14 @@ export default function RoomFormModal({ room, onClose }: Props) {
                 <input
                   {...register('name')}
                   placeholder="e.g. Executive Mountain View"
-                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                 />
              </div>
           </div>
 
           {/* Section: Category & Capacity */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
                 <Tag size={14} /> Category & Limits
              </h3>
              <div className="grid grid-cols-2 gap-5">
@@ -179,7 +179,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Room Category</label>
                   <select
                     {...register('type')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all cursor-pointer appearance-none"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all cursor-pointer appearance-none"
                   >
                     {Object.entries(ROOM_TYPE_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -193,7 +193,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                      <input
                        type="number"
                        {...register('capacity')}
-                       className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                       className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                      />
                      <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
                   </div>
@@ -204,7 +204,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('beds')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
              </div>
@@ -212,7 +212,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
 
           {/* Section: Pricing */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
                 <Banknote size={14} /> Financial Configuration
              </h3>
              <div className={cn("grid gap-5", selectedType === 'conference' ? "grid-cols-2" : "grid-cols-1")}>
@@ -221,7 +221,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('pricePerNight')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
 
@@ -230,7 +230,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('specialRate')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
              </div>
@@ -241,7 +241,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('fullBoardRate')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
 
@@ -250,7 +250,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     {...register('nonResidentRate')}
                     placeholder="e.g. 30USD"
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all placeholder:text-[#9ca3af]/60"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60"
                   />
                 </div>
              </div>
@@ -261,7 +261,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                   <input
                     type="number"
                     {...register('pricePerHour')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
                 </div>
              )}
@@ -269,7 +269,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
 
           {/* Section: Amenities & Details */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#2563eb] uppercase tracking-[0.2em] flex items-center gap-2">
+             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
                 <Info size={14} /> Features & Descriptions
              </h3>
              <div className="space-y-2">
@@ -277,7 +277,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                 <textarea
                   {...register('amenities')}
                   rows={2}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all resize-none"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
                   placeholder="WiFi, AC, Smart TV, Mini Bar..."
                 />
              </div>
@@ -287,7 +287,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
                 <textarea
                   {...register('description')}
                   rows={3}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#2563eb] transition-all resize-none"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
                   placeholder="Eleza sifa za kipekee za chumba hiki..."
                 />
              </div>
@@ -307,7 +307,7 @@ export default function RoomFormModal({ room, onClose }: Props) {
           <button
             onClick={handleSubmit(onSubmit)}
             disabled={isPending}
-            className="flex-[2] h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[20px] font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2 disabled:opacity-70"
+            className="flex-[2] h-14 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-[20px] font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {isPending ? (
                <Loader2 size={20} className="animate-spin" />

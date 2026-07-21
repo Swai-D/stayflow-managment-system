@@ -25,7 +25,7 @@ const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon:
   dirty:       { 
     label: 'Need Cleaning', 
     bg: 'bg-[#fffbeb]', text: 'text-[#92400e]', icon: AlertTriangle, color: '#F59E0B', 
-    action: 'Start Cleaning', btn: 'bg-[#2563eb] text-white shadow-blue-100',
+    action: 'Start Cleaning', btn: 'bg-[#8b4530] text-white shadow-blue-100',
     image: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=800&q=80'
   },
   cleaning:    { 
@@ -36,14 +36,14 @@ const HK_CONFIG: Record<string, { label: string; bg: string; text: string; icon:
   },
   occupied:    { 
     label: 'Occupied',      
-    bg: 'bg-[#f8fafc]', text: 'text-[#1a2b4a]', icon: Clock, color: '#1A2B4A', 
+    bg: 'bg-[#f8fafc]', text: 'text-[#26120c]', icon: Clock, color: '#26120C', 
     action: 'View Guest', btn: 'bg-gray-100 text-gray-500',
     image: 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80'
   },
   maintenance: { 
     label: 'Maintenance',   
     bg: 'bg-[#fef2f2]', text: 'text-[#991b1b]', icon: ShieldAlert, color: '#EF4444', 
-    action: 'Fix Completed', btn: 'bg-[#2563eb] text-white',
+    action: 'Fix Completed', btn: 'bg-[#8b4530] text-white',
     image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ec4?auto=format&fit=crop&w=800&q=80'
   },
 }
@@ -118,7 +118,7 @@ function SupplyModal({ room, onClose }: { room: Room; onClose: () => void }) {
                 <button
                   onClick={() => toggleItem(item.id, (selected[item.id] || 0) + 1)}
                   disabled={item.currentStock <= (selected[item.id] || 0)}
-                  className="w-7 h-7 rounded-lg bg-[#eff6ff] hover:bg-[#dbeafe] flex items-center justify-center text-[#2563eb] disabled:opacity-40"
+                  className="w-7 h-7 rounded-lg bg-[#fbf1ea] hover:bg-[#f5dfce] flex items-center justify-center text-[#8b4530] disabled:opacity-40"
                 >
                   +
                 </button>
@@ -134,7 +134,7 @@ function SupplyModal({ room, onClose }: { room: Room; onClose: () => void }) {
           <button
             onClick={handleSave}
             disabled={!hasSelection || isPending}
-            className="flex-[1.5] h-11 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-2xl text-[13px] font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-[1.5] h-11 bg-[#8b4530] hover:bg-[#6e3323] text-white rounded-2xl text-[13px] font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
             Save Consumption
@@ -188,7 +188,7 @@ export default function HousekeepingPage() {
         </div>
         
         {/* Search Input */}
-        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 min-w-[280px] shadow-sm focus-within:border-[#2563eb]/30 transition-all">
+        <div className="flex items-center gap-2 bg-white border border-gray-100 rounded-2xl px-4 py-2.5 min-w-[280px] shadow-sm focus-within:border-[#8b4530]/30 transition-all">
           <Search size={16} className="text-[#9ca3af]" />
           <input 
             value={search}
@@ -214,7 +214,7 @@ export default function HousekeepingPage() {
             className={cn(
               "flex items-center gap-2 px-5 py-2.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap border shadow-sm",
               filter === s.key 
-                ? "bg-[#1a2b4a] text-white border-[#1a2b4a] shadow-lg shadow-blue-900/20" 
+                ? "bg-[#26120c] text-white border-[#26120c] shadow-lg shadow-blue-900/20" 
                 : "bg-white text-[#6b7280] border-gray-100 hover:border-blue-200"
             )}
           >
@@ -233,7 +233,7 @@ export default function HousekeepingPage() {
         </div>
       ) : rooms.length === 0 ? (
         <div className="py-24 text-center bg-white rounded-[32px] border border-dashed border-gray-200">
-           <div className="w-20 h-20 bg-blue-50 text-[#2563eb] rounded-full flex items-center justify-center mx-auto mb-6">
+           <div className="w-20 h-20 bg-blue-50 text-[#8b4530] rounded-full flex items-center justify-center mx-auto mb-6">
               <Sparkles size={40} />
            </div>
            <h3 className="text-xl font-bold text-[#111827]">Usimamizi Umekamilika</h3>
@@ -285,7 +285,7 @@ export default function HousekeepingPage() {
                       <p className="text-[11px] font-bold text-[#9ca3af] uppercase tracking-[0.1em] mb-2">Occupant Context</p>
                       {currentBooking ? (
                         <div className="flex items-center gap-3">
-                           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#2563eb] flex items-center justify-center font-bold text-sm">
+                           <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#8b4530] flex items-center justify-center font-bold text-sm">
                               {currentBooking.guest.fullName.charAt(0)}
                            </div>
                            <div className="overflow-hidden">
@@ -320,7 +320,7 @@ export default function HousekeepingPage() {
                    </button>
                    <button
                      onClick={() => setSupplyRoom(room)}
-                     className="w-full h-10 rounded-2xl font-semibold text-[12px] text-[#2563eb] bg-[#eff6ff] hover:bg-[#dbeafe] transition-all flex items-center justify-center gap-2"
+                     className="w-full h-10 rounded-2xl font-semibold text-[12px] text-[#8b4530] bg-[#fbf1ea] hover:bg-[#f5dfce] transition-all flex items-center justify-center gap-2"
                    >
                      <Package size={14} /> Record Supplies
                    </button>
@@ -349,7 +349,7 @@ export default function HousekeepingPage() {
               <button 
                 disabled={page === 1}
                 onClick={() => setPage(p => p - 1)}
-                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#8b4530] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
               >
                  <ChevronLeft size={20} />
               </button>
@@ -360,7 +360,7 @@ export default function HousekeepingPage() {
                        onClick={() => setPage(i + 1)}
                        className={cn(
                           "w-8 h-8 rounded-lg text-[12px] font-bold transition-all",
-                          page === i + 1 ? "bg-[#2563eb] text-white shadow-md shadow-blue-100" : "text-[#9ca3af] hover:bg-gray-50"
+                          page === i + 1 ? "bg-[#8b4530] text-white shadow-md shadow-blue-100" : "text-[#9ca3af] hover:bg-gray-50"
                        )}
                     >
                        {i + 1}
@@ -370,7 +370,7 @@ export default function HousekeepingPage() {
               <button 
                 disabled={page >= meta.totalPages}
                 onClick={() => setPage(p => p + 1)}
-                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#2563eb] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
+                className="w-11 h-11 flex items-center justify-center rounded-2xl border border-gray-200 bg-white text-[#9ca3af] hover:text-[#8b4530] hover:border-blue-200 disabled:opacity-30 transition-all shadow-sm"
               >
                  <ChevronRight size={20} />
               </button>

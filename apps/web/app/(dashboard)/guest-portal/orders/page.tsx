@@ -76,7 +76,7 @@ export default function GuestPortalOrdersPage() {
               onClick={() => setStatus(s)}
               className={cn(
                 'px-3 py-2 rounded-xl text-[12px] font-bold whitespace-nowrap transition-colors',
-                status === s ? 'bg-[#2563EB] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                status === s ? 'bg-[#8B4530] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               )}
             >
               {s}
@@ -131,7 +131,7 @@ export default function GuestPortalOrdersPage() {
                     {order.notes && <p className="text-[11px] text-gray-400 mt-1">Note: {order.notes}</p>}
                   </td>
                   <td className="px-5 py-4">
-                    <p className="text-[13px] font-bold text-[#2563EB]">{formatTZS(order.totalAmount)}</p>
+                    <p className="text-[13px] font-bold text-[#8B4530]">{formatTZS(order.totalAmount)}</p>
                   </td>
                   <td className="px-5 py-4">
                     <select
