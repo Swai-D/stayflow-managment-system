@@ -15,7 +15,7 @@ export default function ApiLogsPage() {
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
         <h2 className="text-[14px] font-bold text-gray-900 flex items-center gap-2">
-          <Activity size={15} className="text-[#8B4530]"/> API Request Logs
+          <Activity size={15} className="text-[#8B4530]" /> API Request Logs
         </h2>
         {data?.meta && (
           <p className="text-[11px] text-gray-500">
@@ -25,7 +25,7 @@ export default function ApiLogsPage() {
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center text-gray-400"><Loader2 size={16} className="animate-spin inline"/> Loading...</div>
+        <div className="p-8 text-center text-gray-400"><Loader2 size={16} className="animate-spin inline" /> Loading...</div>
       ) : data?.logs.length === 0 ? (
         <div className="p-8 text-center text-gray-400 text-[13px]">No API requests logged yet.</div>
       ) : (
@@ -58,8 +58,8 @@ export default function ApiLogsPage() {
                     className={cn(
                       'text-[10px]',
                       log.statusCode && log.statusCode >= 200 && log.statusCode < 300 ? 'bg-green-100 text-green-700 hover:bg-green-100' :
-                      log.statusCode && log.statusCode >= 400 ? 'bg-red-100 text-red-700 hover:bg-red-100' :
-                      'bg-gray-100 text-gray-700 hover:bg-gray-100'
+                        log.statusCode && log.statusCode >= 400 ? 'bg-red-100 text-red-700 hover:bg-red-100' :
+                          'bg-gray-100 text-gray-700 hover:bg-gray-100'
                     )}
                   >
                     {log.statusCode || '—'}
@@ -79,14 +79,14 @@ export default function ApiLogsPage() {
                 disabled={page === 1}
                 className="flex items-center gap-1 text-[12px] font-medium text-gray-600 disabled:text-gray-300 hover:text-gray-900"
               >
-                <ChevronLeft size={14}/> Previous
+                <ChevronLeft size={14} /> Previous
               </button>
               <button
                 onClick={() => setPage(p => Math.min(data?.meta.totalPages || 1, p + 1))}
                 disabled={!data || page === data.meta.totalPages}
                 className="flex items-center gap-1 text-[12px] font-medium text-gray-600 disabled:text-gray-300 hover:text-gray-900"
               >
-                Next <ChevronRight size={14}/>
+                Next <ChevronRight size={14} />
               </button>
             </div>
           )}

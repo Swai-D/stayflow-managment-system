@@ -105,17 +105,17 @@ export default function RoomFormModal({ room, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-[#111827]/40 animate-in fade-in duration-300">
       <div className="relative bg-white rounded-[32px] shadow-2xl w-full max-w-[640px] max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-        
+
         {/* Header - Template Style */}
         <div className="flex items-center justify-between p-8 border-b border-gray-100">
           <div>
             <div className="flex items-center gap-2 mb-1">
-               <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#8b4530] flex items-center justify-center">
-                  {isEditing ? <Sparkles size={18} /> : <PlusIcon size={18} />}
-               </span>
-               <h2 className="text-[22px] font-bold text-[#111827] tracking-tight">
-                  {isEditing ? 'Hariri Profaili ya Chumba' : 'Sajili Chumba Kipya'}
-               </h2>
+              <span className="w-8 h-8 rounded-lg bg-blue-50 text-[#8b4530] flex items-center justify-center">
+                {isEditing ? <Sparkles size={18} /> : <PlusIcon size={18} />}
+              </span>
+              <h2 className="text-[22px] font-bold text-[#111827] tracking-tight">
+                {isEditing ? 'Hariri Profaili ya Chumba' : 'Sajili Chumba Kipya'}
+              </h2>
             </div>
             <p className="text-[13px] text-[#9ca3af] font-medium">Jaza taarifa sahihi za chumba kulingana na muundo wa hoteli</p>
           </div>
@@ -129,168 +129,168 @@ export default function RoomFormModal({ room, onClose }: Props) {
 
         {/* Scrollable Content */}
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-8 font-sans text-left thin-scrollbar">
-          
+
           {/* Section: Basic Identity */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Home size={14} /> Basic Identity
-             </h3>
-             <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Room Number</label>
-                  <input
-                    {...register('roomNumber')}
-                    placeholder="e.g. 101"
-                    className={cn(
-                      "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60",
-                      errors.roomNumber && "border-red-200 bg-red-50/30"
-                    )}
-                  />
-                  {errors.roomNumber && <p className="text-[11px] text-red-500 font-bold ml-1">{errors.roomNumber.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Floor Level</label>
-                  <input
-                    type="number"
-                    {...register('floor')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                  />
-                </div>
-             </div>
-
-             <div className="space-y-2">
-                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Internal Name</label>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Home size={14} /> Basic Identity
+            </h3>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Room Number</label>
                 <input
-                  {...register('name')}
-                  placeholder="e.g. Executive Mountain View"
+                  {...register('roomNumber')}
+                  placeholder="e.g. 101"
+                  className={cn(
+                    "w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60",
+                    errors.roomNumber && "border-red-200 bg-red-50/30"
+                  )}
+                />
+                {errors.roomNumber && <p className="text-[11px] text-red-500 font-bold ml-1">{errors.roomNumber.message}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Floor Level</label>
+                <input
+                  type="number"
+                  {...register('floor')}
                   className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                 />
-             </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Internal Name</label>
+              <input
+                {...register('name')}
+                placeholder="e.g. Executive Mountain View"
+                className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+              />
+            </div>
           </div>
 
           {/* Section: Category & Capacity */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Tag size={14} /> Category & Limits
-             </h3>
-             <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Room Category</label>
-                  <select
-                    {...register('type')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all cursor-pointer appearance-none"
-                  >
-                    {Object.entries(ROOM_TYPE_LABELS).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
-                    ))}
-                  </select>
-                </div>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Tag size={14} /> Category & Limits
+            </h3>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Room Category</label>
+                <select
+                  {...register('type')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all cursor-pointer appearance-none"
+                >
+                  {Object.entries(ROOM_TYPE_LABELS).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Max Guests</label>
-                  <div className="relative">
-                     <input
-                       type="number"
-                       {...register('capacity')}
-                       className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                     />
-                     <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">No. of Beds</label>
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Max Guests</label>
+                <div className="relative">
                   <input
                     type="number"
-                    {...register('beds')}
+                    {...register('capacity')}
                     className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
                   />
+                  <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
                 </div>
-             </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">No. of Beds</label>
+                <input
+                  type="number"
+                  {...register('beds')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Section: Pricing */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Banknote size={14} /> Financial Configuration
-             </h3>
-             <div className={cn("grid gap-5", selectedType === 'conference' ? "grid-cols-2" : "grid-cols-1")}>
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Rate per Night (TZS)</label>
-                  <input
-                    type="number"
-                    {...register('pricePerNight')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                  />
-                </div>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Banknote size={14} /> Financial Configuration
+            </h3>
+            <div className={cn("grid gap-5", selectedType === 'conference' ? "grid-cols-2" : "grid-cols-1")}>
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Rate per Night (TZS)</label>
+                <input
+                  type="number"
+                  {...register('pricePerNight')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Special / STO Rate (TZS)</label>
-                  <input
-                    type="number"
-                    {...register('specialRate')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                  />
-                </div>
-             </div>
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Special / STO Rate (TZS)</label>
+                <input
+                  type="number"
+                  {...register('specialRate')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+                />
+              </div>
+            </div>
 
-             <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Full Board Rate (TZS)</label>
-                  <input
-                    type="number"
-                    {...register('fullBoardRate')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Full Board Rate (TZS)</label>
+                <input
+                  type="number"
+                  {...register('fullBoardRate')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Non-Resident Rate</label>
-                  <input
-                    {...register('nonResidentRate')}
-                    placeholder="e.g. 30USD"
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60"
-                  />
-                </div>
-             </div>
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Non-Resident Rate</label>
+                <input
+                  {...register('nonResidentRate')}
+                  placeholder="e.g. 30USD"
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all placeholder:text-[#9ca3af]/60"
+                />
+              </div>
+            </div>
 
-             {selectedType === 'conference' && (
-                <div className="space-y-2">
-                  <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Hourly Rate (TZS)</label>
-                  <input
-                    type="number"
-                    {...register('pricePerHour')}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
-                  />
-                </div>
-             )}
+            {selectedType === 'conference' && (
+              <div className="space-y-2">
+                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Hourly Rate (TZS)</label>
+                <input
+                  type="number"
+                  {...register('pricePerHour')}
+                  className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all"
+                />
+              </div>
+            )}
           </div>
 
           {/* Section: Amenities & Details */}
           <div className="space-y-5">
-             <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
-                <Info size={14} /> Features & Descriptions
-             </h3>
-             <div className="space-y-2">
-                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Amenities (Comma separated)</label>
-                <textarea
-                  {...register('amenities')}
-                  rows={2}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
-                  placeholder="WiFi, AC, Smart TV, Mini Bar..."
-                />
-             </div>
+            <h3 className="text-[11px] font-bold text-[#8b4530] uppercase tracking-[0.2em] flex items-center gap-2">
+              <Info size={14} /> Features & Descriptions
+            </h3>
+            <div className="space-y-2">
+              <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Amenities (Comma separated)</label>
+              <textarea
+                {...register('amenities')}
+                rows={2}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-bold text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
+                placeholder="WiFi, AC, Smart TV, Mini Bar..."
+              />
+            </div>
 
-             <div className="space-y-2">
-                <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Additional Details</label>
-                <textarea
-                  {...register('description')}
-                  rows={3}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
-                  placeholder="Eleza sifa za kipekee za chumba hiki..."
-                />
-             </div>
+            <div className="space-y-2">
+              <label className="text-[12px] font-bold text-[#111827] uppercase tracking-wider ml-1">Additional Details</label>
+              <textarea
+                {...register('description')}
+                rows={3}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium text-[#111827] outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-[#8b4530] transition-all resize-none"
+                placeholder="Eleza sifa za kipekee za chumba hiki..."
+              />
+            </div>
           </div>
         </form>
 
@@ -310,9 +310,9 @@ export default function RoomFormModal({ room, onClose }: Props) {
             className="flex-[2] h-14 bg-[#8B4530] hover:bg-[#6E3323] text-white rounded-[20px] font-bold text-[14px] transition-all shadow-xl shadow-blue-200/50 flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {isPending ? (
-               <Loader2 size={20} className="animate-spin" />
+              <Loader2 size={20} className="animate-spin" />
             ) : (
-               isEditing ? 'Sasisha Taarifa' : 'Kamilisha Usajili'
+              isEditing ? 'Sasisha Taarifa' : 'Kamilisha Usajili'
             )}
           </button>
         </div>

@@ -14,10 +14,10 @@ import { toast } from 'sonner'
 import { useState } from 'react'
 
 const STATUS_STYLES: Record<string, string> = {
-  draft:    'bg-gray-100 text-gray-600',
-  sent:     'bg-blue-50 text-blue-700',
-  paid:     'bg-green-50 text-green-700',
-  cancelled:'bg-red-50 text-red-700'
+  draft: 'bg-gray-100 text-gray-600',
+  sent: 'bg-blue-50 text-blue-700',
+  paid: 'bg-green-50 text-green-700',
+  cancelled: 'bg-red-50 text-red-700'
 }
 
 export default function CompanyDetailPage() {
