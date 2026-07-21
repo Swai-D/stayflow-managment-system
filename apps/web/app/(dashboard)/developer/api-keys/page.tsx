@@ -132,7 +132,7 @@ export default function ApiKeysPage() {
       {/* Keys List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="text-[14px] font-bold text-gray-900">Active Keys</h2>
+          <h2 className="text-[14px] font-bold text-gray-900">🔑 Active Keys</h2>
         </div>
         {isLoading ? (
           <div className="p-8 text-center text-gray-400 flex items-center justify-center gap-2">

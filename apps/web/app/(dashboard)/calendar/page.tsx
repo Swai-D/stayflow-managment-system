@@ -90,7 +90,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">Calendar View</h1>
+          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">🗓️ Calendar View</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Tazama upatikanaji wa vyumba kwa mwaka mzima</p>
         </div>
 

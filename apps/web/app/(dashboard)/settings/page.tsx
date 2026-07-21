@@ -60,7 +60,7 @@ function SettingsPageContent() {
       
       {/* Header */}
       <div className="px-1">
-        <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">System Settings</h1>
+        <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">⚙️ System Settings</h1>
         <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Control center for Buffalo Hotel application powerhouse</p>
       </div>
 

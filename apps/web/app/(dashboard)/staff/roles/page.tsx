@@ -173,7 +173,7 @@ function RolesPageContent() {
             <ArrowLeft size={18} className="text-[#6b7280]" />
           </Link>
           <div>
-            <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Roles & Permissions</h1>
+            <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">🔐 Roles & Permissions</h1>
             <p className="text-[13px] text-[#9ca3af] font-medium">Create roles and assign permissions from the catalog.</p>
           </div>
         </div>

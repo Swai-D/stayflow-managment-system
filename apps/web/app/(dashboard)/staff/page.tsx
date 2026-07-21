@@ -185,7 +185,7 @@ export default function StaffPage() {
     <div className="space-y-4 font-sans text-left pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Staff Management</h1>
+          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">🧑‍💼 Staff Management</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-[-2px]">Manage team members, roles and employment details</p>
         </div>
         <div className="flex items-center gap-2">

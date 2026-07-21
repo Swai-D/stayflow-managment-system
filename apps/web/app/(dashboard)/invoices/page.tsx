@@ -101,7 +101,7 @@ export default function InvoicesPage() {
     <div className="space-y-4 font-sans text-left">
       <div className="flex items-center justify-between mb-4 px-1">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Invoices</h1>
+          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">🧾 Invoices</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-[-2px]">Individual and company invoices</p>
         </div>
       </div>

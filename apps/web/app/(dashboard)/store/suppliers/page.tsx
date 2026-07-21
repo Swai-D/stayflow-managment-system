@@ -46,7 +46,7 @@ function SupplierFormModal({ supplier, onClose }: { supplier?: Supplier; onClose
     <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[500px]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-[16px] font-bold text-gray-900">{isEdit ? 'Edit Supplier' : 'Add Supplier'}</h2>
+          <h2 className="text-[16px] font-bold text-gray-900">{isEdit ? '✏️ Edit Supplier' : '➕ Add Supplier'}</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500">
             <X size={13}/>
           </button>
@@ -109,7 +109,7 @@ function SupplierPanel({ supplier, onClose, onEdit }: {
   return (
     <div className="bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.07)] border border-gray-100 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h3 className="text-[14px] font-bold text-gray-900">Supplier Details</h3>
+        <h3 className="text-[14px] font-bold text-gray-900">🚚 Supplier Details</h3>
         <div className="flex items-center gap-2">
           <button onClick={onEdit}
             className="flex items-center gap-1 text-[11px] text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1.5 rounded-lg font-semibold transition-colors">

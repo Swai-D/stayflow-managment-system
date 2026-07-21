@@ -21,6 +21,7 @@
     "db:fresh": "prisma db push --force-reset --accept-data-loss && npm run db:seed",
     "db:fresh:full": "prisma db push --force-reset --accept-data-loss && npm run db:seed:full",
     "db:seed:store": "ts-node src/prisma/seed-store.ts",
+    "db:check": "ts-node src/prisma/check-counts.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {

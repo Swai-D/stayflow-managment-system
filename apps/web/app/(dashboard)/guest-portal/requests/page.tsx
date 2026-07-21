@@ -58,7 +58,7 @@ export default function GuestPortalRequestsPage() {
     <div className="space-y-6 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Guest Portal Requests</h1>
+          <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">🛎️ Guest Portal Requests</h1>
           <p className="text-[12px] text-[#9ca3af] font-medium">Service requests placed by guests</p>
         </div>
         <button

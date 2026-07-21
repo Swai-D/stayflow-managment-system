@@ -92,7 +92,7 @@ export default function CheckoutsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[22px] font-bold text-[#111827]">Checkout Management</h1>
+          <h1 className="text-[22px] font-bold text-[#111827]">🧳 Checkout Management</h1>
           <p className="text-[12px] text-[#9ca3af] font-medium mt-0.5">
             Track today’s checkouts, overdue guests, invoices and extensions
           </p>

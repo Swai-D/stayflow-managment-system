@@ -169,7 +169,7 @@ function ConfirmModal({ booking, cart, total, onConfirm, onCancel, isPending }: 
     <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50 p-4" onClick={onCancel}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[440px]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-[16px] font-bold text-gray-900">Post to Room</h2>
+          <h2 className="text-[16px] font-bold text-gray-900">🧾 Post to Room</h2>
           <button onClick={onCancel} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500">
             <X size={13}/>
           </button>
@@ -259,7 +259,7 @@ function SuccessScreen({ booking, total, onReset, onSendFolio, onPrintFolio, sen
       <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-4">
         <CheckCircle size={40} className="text-green-500"/>
       </div>
-      <h2 className="text-[20px] font-bold text-gray-900 mb-2">Charge Posted!</h2>
+      <h2 className="text-[20px] font-bold text-gray-900 mb-2">✅ Charge Posted!</h2>
       <p className="text-[14px] text-gray-500 mb-1">
         <span className="font-semibold text-[#8B4530]">{formatTZS(total)}</span> added to Room {booking.room.roomNumber}
       </p>
@@ -454,7 +454,7 @@ export default function POSPage() {
               <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                 <Package size={28} className="text-gray-300"/>
               </div>
-              <h3 className="text-[15px] font-bold text-gray-900 mb-1">No sellable items</h3>
+              <h3 className="text-[15px] font-bold text-gray-900 mb-1">📭 No sellable items</h3>
               <p className="text-[12px] text-gray-500 max-w-[280px] mb-4">
                 Items here are pulled from Store. Go to Store → Items, add an F&B item, and enable &ldquo;Show in POS&rdquo;.
               </p>

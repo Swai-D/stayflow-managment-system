@@ -31,7 +31,7 @@ export default function DeveloperDocsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h2 className="text-[14px] font-bold text-blue-900 mb-1">Buffalo Hotel External API</h2>
+        <h2 className="text-[14px] font-bold text-blue-900 mb-1">🔌 Buffalo Hotel External API</h2>
         <p className="text-[12px] text-blue-700">
           Use the endpoints below to integrate Buffalo Hotel with accounting systems, channel managers,
           CRMs, or custom dashboards. Authentication is via API keys.
@@ -39,7 +39,7 @@ export default function DeveloperDocsPage() {
       </div>
 
       <section>
-        <h3 className="text-[14px] font-bold text-gray-900 mb-2">Authentication</h3>
+        <h3 className="text-[14px] font-bold text-gray-900 mb-2">🔑 Authentication</h3>
         <p className="text-[12px] text-gray-600 mb-2">
           Include your API key in the <code>Authorization</code> header as a Bearer token, or use the <code>X-API-Key</code> header.
         </p>
@@ -47,7 +47,7 @@ export default function DeveloperDocsPage() {
       </section>
 
       <section>
-        <h3 className="text-[14px] font-bold text-gray-900 mb-2">Available Endpoints</h3>
+        <h3 className="text-[14px] font-bold text-gray-900 mb-2">🧭 Available Endpoints</h3>
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden text-[12px]">
           <div className="grid grid-cols-12 px-4 py-2 bg-gray-50 border-b border-gray-100 font-semibold text-gray-600">
             <span className="col-span-2">Method</span>

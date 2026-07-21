@@ -120,7 +120,7 @@ export default function StoreDashboardPage() {
         <div className="lg:col-span-3 bg-white rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.07)]">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-[14px] font-bold text-gray-900">Top Used Items</h2>
+              <h2 className="text-[14px] font-bold text-gray-900">🔥 Top Used Items</h2>
               <p className="text-[11px] text-gray-400">Most issued this month</p>
             </div>
             <Link href="/store/transactions" className="text-[11px] text-[#8B4530] font-semibold hover:underline flex items-center gap-1">
@@ -153,7 +153,7 @@ export default function StoreDashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.07)]">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-[14px] font-bold text-gray-900">Monthly Spend</h2>
+              <h2 className="text-[14px] font-bold text-gray-900">💰 Monthly Spend</h2>
               <p className="text-[11px] text-gray-400">F&B vs Hotel Inventory</p>
             </div>
             <button className="text-gray-400"><MoreHorizontal size={15}/></button>
@@ -185,7 +185,7 @@ export default function StoreDashboardPage() {
         <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.07)] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <div>
-              <h2 className="text-[14px] font-bold text-gray-900">Low Stock</h2>
+              <h2 className="text-[14px] font-bold text-gray-900">⚠️ Low Stock</h2>
               <p className="text-[11px] text-gray-400">Items needing reorder</p>
             </div>
             <Link href="/store/items" className="text-[11px] text-[#8B4530] font-semibold hover:underline flex items-center gap-1">

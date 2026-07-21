@@ -46,7 +46,7 @@ function NewTransactionModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[480px]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-[16px] font-bold text-gray-900">New Transaction</h2>
+          <h2 className="text-[16px] font-bold text-gray-900">💱 New Transaction</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500"><X size={13}/></button>
         </div>
         <div className="p-6 space-y-4">

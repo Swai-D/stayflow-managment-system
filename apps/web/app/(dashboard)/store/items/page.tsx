@@ -46,7 +46,7 @@ function StockModal({ item, onClose }: { item: StoreItem; onClose: () => void })
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[440px]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-[16px] font-bold text-gray-900">Update Stock</h2>
+            <h2 className="text-[16px] font-bold text-gray-900">📦 Update Stock</h2>
             <p className="text-[11px] text-gray-400 mt-0.5">{item.name}</p>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500">
@@ -164,7 +164,7 @@ function ItemFormModal({ item, onClose }: { item?: StoreItem; onClose: () => voi
     <div className="fixed inset-0 bg-black/25 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[560px] max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <h2 className="text-[16px] font-bold text-gray-900">{isEdit ? 'Edit Item' : 'Add New Item'}</h2>
+          <h2 className="text-[16px] font-bold text-gray-900">{isEdit ? '✏️ Edit Item' : '➕ Add New Item'}</h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500"><X size={13}/></button>
         </div>
         <div className="p-6">

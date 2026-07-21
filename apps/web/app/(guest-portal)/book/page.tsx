@@ -168,7 +168,7 @@ export default function PublicBookingPage() {
               {step === 1 && (
                 <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
                   <div className="space-y-1">
-                    <h1 className="text-3xl font-bold text-gray-900">Choose your room</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">🛏️ Choose your room</h1>
                     <p className="text-gray-500">Select the perfect accommodation for your stay.</p>
                   </div>
 
@@ -220,7 +220,7 @@ export default function PublicBookingPage() {
               {step === 2 && (
                 <form onSubmit={handleGuestSubmit} className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                    <div className="space-y-1">
-                    <h1 className="text-3xl font-bold text-gray-900">Your details</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">📝 Your details</h1>
                     <p className="text-gray-500">Please provide your information to secure the booking.</p>
                   </div>
 
@@ -389,7 +389,7 @@ export default function PublicBookingPage() {
               {step === 3 && (
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                   <div className="space-y-1">
-                    <h1 className="text-3xl font-bold text-gray-900">Preview your details</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">👀 Preview your details</h1>
                     <p className="text-gray-500">Please confirm everything is correct before proceeding to payment.</p>
                   </div>
 

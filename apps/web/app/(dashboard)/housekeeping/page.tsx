@@ -183,7 +183,7 @@ export default function HousekeepingPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
         <div>
-          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">Housekeeping Panel</h1>
+          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">🧹 Housekeeping Panel</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-0.5">Manage room hygiene and service status</p>
         </div>
         

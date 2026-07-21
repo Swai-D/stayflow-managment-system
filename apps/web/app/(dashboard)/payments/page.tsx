@@ -160,7 +160,7 @@ export default function PaymentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-1 no-print">
         <div>
-          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">Payments</h1>
+          <h1 className="text-[24px] font-bold text-[#111827] tracking-tight">💳 Payments</h1>
           <p className="text-[13px] text-[#9ca3af] font-medium mt-[-2px]">Track, filter and analyze all payments</p>
         </div>
         <button

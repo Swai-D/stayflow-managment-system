@@ -94,7 +94,7 @@ export default function WebhooksPage() {
       {/* Webhooks List */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="text-[14px] font-bold text-gray-900">Configured Webhooks</h2>
+          <h2 className="text-[14px] font-bold text-gray-900">🔗 Configured Webhooks</h2>
         </div>
         {isLoading ? (
           <div className="p-8 text-center text-gray-400"><Loader2 size={16} className="animate-spin inline"/> Loading...</div>

@@ -53,7 +53,7 @@ export default function GuestPortalPage() {
   return (
     <div className="space-y-6 pb-10">
       <div>
-        <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">Guest Portal</h1>
+        <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">📱 Guest Portal</h1>
         <p className="text-[12px] text-[#9ca3af] font-medium">Monitor guest orders, requests and portal activity</p>
       </div>
 
